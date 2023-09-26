@@ -8,7 +8,7 @@ struct GameLoop {
 // main graphics engine driving the game
 struct GraphicsEngine {
 	float clear_depth = 1;
-	float clear_color[4] = { 0.50f, 0.0f, 1.0f, 1 };
+	float clear_color[4] = { 0.20f, 0.20f, 0.20f, 1 };
 	GW::GRAPHICS::GDirectX11Surface surface;
 };
 
