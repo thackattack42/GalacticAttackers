@@ -43,7 +43,7 @@ bool CreateRandomShapes(unsigned int count, float x_range, float y_range,
 		float scale = RAND_FLOAT(min_scale, max_scale);
 		float angle = RAND_FLOAT(0, G_PI_F);
 		int type = rand() % 3; // line, circle, rectangle
-		LINE l; CIRCLE c; RECTANGLE r;
+		LINE l; CIRCLE c; RECTANGLE r; 
 		// pick a random shape type
 		switch (type) {
 		case 0: // LINE
