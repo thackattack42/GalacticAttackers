@@ -31,24 +31,54 @@ def print_heir(ob, levels=10):
         # send to file
         file.write(spaces + ob.type + "\n")
         file.write(spaces + ob.name + "\n")
-        
+       
         # swap from blender space to vulkan/d3d 
         # { rx, ry, rz, 0 } to { rx, rz, ry, 0 }  
         # { ux, uy, uz, 0 }    { ux, uz, uy, 0 }
         # { lx, ly, lz, 0 }    { lx, lz, ly, 0 } 
         # { px, py, pz, 1 }    { px, pz, py, 1 }  
+        
         row_world = ob.matrix_world.transposed()
         converted = mathutils.Matrix.Identity(4)
-        converted[0][0:3] = row_world[0][0], row_world[0][2], row_world[0][1]
-        converted[1][0:3] = row_world[1][0], row_world[1][2], row_world[1][1] 
-        converted[2][0:3] = row_world[2][0], row_world[2][2], row_world[2][1] 
-        converted[3][0:3] = row_world[3][0], row_world[3][2], row_world[3][1]  
-        
+        if(ob.type == "MESH"):    
+            converted[0][0:3] = row_world[0][0], row_world[0][2], row_world[0][1]
+            converted[1][0:3] = row_world[1][0], row_world[1][2], row_world[1][1] 
+            converted[2][0:3] = row_world[2][0], row_world[2][2], row_world[2][1] 
+            converted[3][0:3] = row_world[3][0], row_world[3][2], row_world[3][1]  
+        if(ob.type == "LIGHT"):
+            if(ob.data.type == "POINT"):
+                radius = ob.data.cutoff_distance
+                converted[0][0:4] = ob.data.color.r, ob.data.color.g, ob.data.color.b, 0
+                converted[1][0:4] = ob.location[0], ob.location[2], ob.location[1], 0
+                converted[2][0:4] = ob.rotation_euler[0], ob.rotation_euler[2], ob.rotation_euler[1], 0
+                converted[3][0:4] = ob.data.shadow_soft_size, 0, 0, radius
+            if(ob.data.type == "SUN"):
+                converted[0][0:4] = ob.data.color.r, ob.data.color.g, ob.data.color.b, 1
+                converted[1][0:4] = ob.location[0], ob.location[2], ob.location[1], 0
+                converted[2][0:4] = ob.rotation_euler[0], ob.rotation_euler[2], ob.rotation_euler[1], 0
+                converted[3][0:4] = ob.data.shadow_soft_size, 0, 0, 0
+            if(ob.data.type == "SPOT"):
+                inner = math.cos((ob.data.spot_size - ob.data.spot_blend) * 0.5)
+                outer = math.cos(ob.data.spot_size * 0.5)
+                radius = ob.data.cutoff_distance
+                converted[0][0:4] = ob.data.color.r, ob.data.color.g, ob.data.color.b, 2
+                converted[1][0:4] = ob.location[0], ob.location[2], ob.location[1], 0 
+                converted[2][0:4] = row_world[2][0], row_world[2][2], row_world[2][1] , 0
+                converted[3][0:4] = ob.data.shadow_soft_size, inner, outer, radius
+            if(ob.data.type == "AREA"):
+                converted[0][0:4] = ob.data.color.r, ob.data.color.g, ob.data.color.b, 3
+                converted[1][0:4] = ob.location[0], ob.location[2], ob.location[1], 0 
+                converted[2][0:4] = ob.rotation_euler[0], ob.rotation_euler[2], ob.rotation_euler[1], 0
+                converted[3][0:4] = 0, 0, 0, 0
         # flip the local Z axis for winding and transpose for export
         scaleZ = mathutils.Matrix.Scale(-1.0, 4, (0.0, 0.0, 1.0))
         converted = scaleZ.transposed() @ converted  
         file.write(spaces + str(converted) + "\n")
-        
+                
+        #if(ob.type == "SPEAKER"):
+            #file.write(spaces + str(ob.data["music"]) + "\n")
+            #file.write(spaces + str(ob.data.volume) + "\n")
+            #file.write(spaces + str(ob.data.sound.name) + "\n")
         # adding export of object aligned bounding data 
         # only do this for a MESH
         if ob.type == "MESH":
@@ -131,6 +161,7 @@ for obj in bpy.context.scene.objects:
             
             # Deselect the object
             obj.select_set(False)
+            
 
 print("----------End Model Export----------")
 
