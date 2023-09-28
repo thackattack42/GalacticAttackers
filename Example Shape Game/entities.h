@@ -46,12 +46,20 @@ bool CreateRandomShapes(unsigned int count, float x_range, float y_range,
 		LINE l; CIRCLE c; RECTANGLE r;
 		// pick a random shape type
 		switch (type) {
-		case 0: // LINE
+		case 0: // Oven Dial
 			l.start.x = x_loc - cosf(angle) * scale;
 			l.start.y = y_loc - sinf(angle) * scale;
 			l.end.x = x_loc + cosf(angle) * scale;
 			l.end.y = y_loc + sinf(angle) * scale;
 			registry.emplace<LINE>(entity, l);
+
+			c.pos = { x_loc, y_loc };
+			c.radius = scale;
+			registry.emplace<CIRCLE>(entity, c);
+
+			r.min = { x_loc - scale, y_loc - scale };
+			r.max = { x_loc + scale, y_loc + scale };
+			registry.emplace<RECTANGLE>(entity, r);
 			break;
 		case 1: // CIRCLE
 			c.pos = { x_loc, y_loc };
