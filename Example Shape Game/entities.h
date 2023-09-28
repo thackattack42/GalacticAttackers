@@ -8,8 +8,8 @@ entt::registry registry; // globals are not ideal but this is the only one
 bool CreateCursor(GameLoop loop) {
 	// create a small orange circle to be locked to our mouse
 	auto entity = registry.create();
-	registry.emplace<COLOR>(entity, GW::MATH::GVECTORF{ 0.990f, 0.578f, 0.0396f, 1 });
-	registry.emplace<CIRCLE>(entity, GW::MATH2D::GCIRCLE2F{ 0, 0, 0.05f });
+	registry.emplace<COLOR>(entity, GW::MATH::GVECTORF{ 1.0f, 0.578f, 1.0f, 1 });
+	registry.emplace<CIRCLE>(entity, GW::MATH2D::GCIRCLE2F{ 0, 0, 10.0f });
 	registry.emplace<GW::MATH2D::GVECTOR2F>(entity); // previous X,Y location of the 3D cursor
 	// add a component with input system and event cache to control the cursor
 	GW::INPUT::GBufferedInput mouse;
