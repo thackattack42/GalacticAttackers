@@ -162,7 +162,7 @@ bool CreateGameLoop() {
 	if (CreateGraphicsEngine(loop) == false)
 		return false;
 	// Create random game entities (ideally would read from .ini file)
-	if (CreateRandomShapes(100, 12, 5, 0.25, 1.5) == false)
+	if (CreateRandomShapes(50, 12, 5, 0.1, 2.0) == false)
 		return false;
 	// Create our Cursor
 	if (CreateCursor(loop) == false)
