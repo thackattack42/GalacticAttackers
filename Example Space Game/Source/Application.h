@@ -22,7 +22,8 @@ class Application
 {
 	// gateware libs used to access operating system
 	GW::SYSTEM::GWindow window; // gateware multi-platform window
-	GW::GRAPHICS::GVulkanSurface vulkan; // gateware vulkan API wrapper
+	GW::GRAPHICS::GDirectX11Surface d3d11;
+	//GW::GRAPHICS::GVulkanSurface vulkan; // gateware vulkan API wrapper
 	GW::INPUT::GController gamePads; // controller support
 	GW::INPUT::GInput immediateInput; // twitch keybaord/mouse
 	GW::INPUT::GBufferedInput bufferedInput; // event keyboard/mouse
@@ -36,7 +37,7 @@ class Application
 	ESG::EnemyData enemies;
 	// specific ECS systems used to run the game
 	ESG::PlayerLogic playerSystem;
-	ESG::VulkanRendererLogic vkRenderingSystem;
+	ESG::D3DRendererLogic d3dRenderingSystem;
 	ESG::LevelLogic levelSystem;
 	ESG::PhysicsLogic physicsSystem;
 	ESG::BulletLogic bulletSystem;
