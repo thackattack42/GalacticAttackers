@@ -1,21 +1,83 @@
-// Pulled directly from the "VulkanDescriptorSets" sample.
-// Removing the arrays & using HLSL StructuredBuffer<> would be better.
-#define MAX_INSTANCE_PER_DRAW 240
-cbuffer INSTANCE_UNIFORMS
+#pragma pack_matrix(row_major)
+// an ultra simple hlsl vertex shader
+
+
+struct ATTRIBUTES
 {
-	matrix instance_transforms[MAX_INSTANCE_PER_DRAW];
-	vector instance_colors[MAX_INSTANCE_PER_DRAW];
+    float3 Kd; // diffuse reflectivity
+    float d; // dissolve (transparency) 
+    float3 Ks; // specular reflectivity
+    float Ns; // specular exponent
+    float3 Ka; // ambient reflectivity
+    float sharpness; // local reflection map sharpness
+    float3 Tf; // transmission filter
+    float Ni; // optical density (index of refraction)
+    float3 Ke; // emissive reflectivity
+    unsigned int illum; // illumination model
 };
-struct V_OUT { 
-	float4 hpos : SV_POSITION;
-	nointerpolation uint pixelInstanceID : INSTANCE;
-}; 
-V_OUT main(	float2 inputVertex : POSITION, 
-			uint vertexInstanceID : SV_INSTANCEID)
+
+struct LIGHT_SETTINGS
 {
-	V_OUT send = (V_OUT)0;
-	send.hpos = mul(instance_transforms[vertexInstanceID], 
-					float4(inputVertex,0,1));
-	send.pixelInstanceID = vertexInstanceID;
-	return send;
+    float red, green, blue, lightType,
+			posX, posY, posZ, padding1,
+			rotX, rotY, rotZ, rotW,
+			radius, innerRatio, outerRatio, cutoff;
+};
+
+struct OutputToRasterizer
+{
+    float4 posH : SV_POSITION;
+    float3 posW : WORLD;
+    float3 normW : NORMAL;
+};
+
+cbuffer SceneData : register(b0)
+{
+    float4 sunDirection, sunColor, sunAmbient;
+    float4 camerPos;
+    float4x4 viewMatrix, projectionMatrix;
+};
+
+cbuffer MeshData : register(b1)
+{
+    float4x4 worldMatrix[300];
+    ATTRIBUTES material[300];
+};
+
+cbuffer MODEL_IDS : register(b2)
+{
+    uint mod_id;
+    uint mat_id;
+    uint numLights;
+    float padding;
+};
+
+cbuffer LightData : register(b3)
+{
+    LIGHT_SETTINGS myLights[400];
+};
+
+struct VERTEX_IN
+{
+    float3 pos : POSITION;
+    float3 uvm : UV;
+    float3 nrm : NORMAL;
+};
+
+OutputToRasterizer main(VERTEX_IN vert, uint id : SV_InstanceID)
+{
+    float4 inputVertex = float4(vert.pos, 1.0f);
+    inputVertex = mul(inputVertex, worldMatrix[mod_id + id]);
+
+    OutputToRasterizer output;
+
+    output.posW = inputVertex.xyz;
+
+    output.normW = float3(vert.nrm.x, vert.nrm.y, vert.nrm.z);
+    output.normW = mul(float4(output.normW, 0.0f), worldMatrix[mod_id + id]).xyz;
+
+    inputVertex = mul(inputVertex, viewMatrix);
+    inputVertex = mul(inputVertex, projectionMatrix);
+    output.posH = inputVertex;
+    return output;
 }

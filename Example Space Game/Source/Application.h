@@ -11,7 +11,7 @@
 #include "Entities/EnemyData.h"
 // Include all systems used by the game and their associated components
 #include "Systems/PlayerLogic.h"
-#include "Systems/VulkanRendererLogic.h"
+#include "Systems/RendererLogic.h"
 #include "Systems/LevelLogic.h"
 #include "Systems/PhysicsLogic.h"
 #include "Systems/BulletLogic.h"
@@ -23,6 +23,7 @@ class Application
 	// gateware libs used to access operating system
 	GW::SYSTEM::GWindow window; // gateware multi-platform window
 	GW::GRAPHICS::GDirectX11Surface d3d11;
+	Level_Data levelData;
 	//GW::GRAPHICS::GVulkanSurface vulkan; // gateware vulkan API wrapper
 	GW::INPUT::GController gamePads; // controller support
 	GW::INPUT::GInput immediateInput; // twitch keybaord/mouse

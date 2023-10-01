@@ -200,7 +200,7 @@ bool Application::InitSystems()
 		return false;
 	if (levelSystem.Init(game, gameConfig, audioEngine) == false)
 		return false;
-	if (d3dRenderingSystem.Init(game, gameConfig, d3d11, window) == false)
+	if (d3dRenderingSystem.Init(game, gameConfig, d3d11, window, levelData) == false)
 		return false;
 	if (physicsSystem.Init(game, gameConfig) == false)
 		return false;

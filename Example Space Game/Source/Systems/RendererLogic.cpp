@@ -1,4 +1,4 @@
-#include "VulkanRendererLogic.h"
+#include "RendererLogic.h"
 #include "../Components/Identification.h"
 #include "../Components/Visuals.h"
 #include "../Components/Physics.h"
@@ -17,14 +17,61 @@ void PrintLabeledDebugString(const char* label, const char* toPrint)
 
 bool ESG::D3DRendererLogic::Init(	std::shared_ptr<flecs::world> _game, 
 								std::weak_ptr<const GameConfig> _gameConfig,
-								GW::GRAPHICS::GDirectX11Surface _direct11,
-								GW::SYSTEM::GWindow _window)
+								GW::GRAPHICS::GDirectX11Surface d3d11,
+								GW::SYSTEM::GWindow _window, Level_Data& _levelData)
 {
 	// save a handle to the ECS & game settings
 	game = _game;
 	gameConfig = _gameConfig;
-	direct11 = _direct11;
+	direct11 = d3d11;
 	window = _window;
+	levelData = _levelData;
+	proxy.Create();
+
+	viewTranslation = { 55.0f,5.0f, 25.0f, 1.0f };
+
+	//ViewMatrix
+	GW::MATH::GVECTORF viewCenter = { 0.15f, 0.75f, 0.0f, 1.0f };
+	GW::MATH::GVECTORF viewUp = { 0.0f, 1.0f, 0.0f, 1.0f };
+	proxy.IdentityF(viewMatrix);
+	proxy.LookAtLHF(viewTranslation, viewCenter, viewUp, viewMatrix);
+
+	float ratio;
+	direct11.GetAspectRatio(ratio);
+	proxy.ProjectionDirectXLHF(G_DEGREE_TO_RADIAN(65.0f), ratio, 0.1f, 200.0f, projectionMatrix);
+
+	lightDir = { -1.0f, -1.0f, -2.0f, 1.0f };
+	lightColor = { 0.9f, 0.9f,1.0f, 1.0f };
+	for (int i = 0; i < levelData.levelMaterials.size(); ++i)
+	{
+		mesh.material[i] = levelData.levelMaterials[i].attrib;
+	}
+
+	for (int i = 0; i < levelData.levelTransforms.size(); ++i)
+	{
+		mesh.worldMatrix[i] = levelData.levelTransforms[i];
+	}
+
+
+
+	for (int i = 0; i < levelData.levelLighting.size(); ++i)
+	{
+		lights.myLights[i] = levelData.levelLighting[i];
+	}
+
+	scene.viewMatrix = viewMatrix;
+	scene.projectionMatrix = projectionMatrix;
+	scene.sunColor = lightColor;
+	scene.sunDirection = lightDir;
+	modelID.mat_id = levelData.levelMeshes[0].materialIndex;
+	modelID.mod_id = levelData.levelInstances[0].modelIndex;
+	modelID.numLights = levelData.levelLighting.size();
+
+	lightAmbient = { 0.25f, 0.25f, 0.35f, 1.0f };
+	scene.sunAmbient = lightAmbient;
+	scene.camerPos = viewTranslation;
+
+	InitializeGraphics();
 	// Setup all vulkan resources
 	if (LoadShaders() == false) 
 		return false;
@@ -33,7 +80,7 @@ bool ESG::D3DRendererLogic::Init(	std::shared_ptr<flecs::world> _game,
 	if (LoadGeometry() == false)
 		return false;
 	//if (SetupPipeline() == false)
-		//return false;
+	//	return false;
 	// Setup drawing engine
 	if (SetupDrawcalls() == false)
 		return false;
@@ -88,8 +135,8 @@ std::string ESG::D3DRendererLogic::ShaderAsString(const char* shaderFilePath)
 bool ESG::D3DRendererLogic::LoadShaders()
 {
 	std::shared_ptr<const GameConfig> readCfg = gameConfig.lock();
-	std::string vertexShaderSource = (*readCfg).at("Shaders").at("vertex").as<std::string>();
-	std::string pixelShaderSource = (*readCfg).at("Shaders").at("pixel").as<std::string>();
+	vertexShaderSource = (*readCfg).at("Shaders").at("vertex").as<std::string>();
+	pixelShaderSource = (*readCfg).at("Shaders").at("pixel").as<std::string>();
 	
 	if (vertexShaderSource.empty() || pixelShaderSource.empty())
 		return false;
@@ -100,65 +147,21 @@ bool ESG::D3DRendererLogic::LoadShaders()
 	if (vertexShaderSource.empty() || pixelShaderSource.empty())
 		return false;
 	
+
+}
+
+void ESG::D3DRendererLogic::InitializeGraphics()
+{
 	ID3D11Device* creator;
 	direct11.GetDevice((void**)&creator);
-	UINT compilerFlags = D3DCOMPILE_ENABLE_STRICTNESS;
-#if _DEBUG
-	compilerFlags |= D3DCOMPILE_DEBUG;
-#endif
-	Microsoft::WRL::ComPtr<ID3DBlob> vsBlob = CompileVertexShader(creator, compilerFlags, vertexShaderSource);
-	Microsoft::WRL::ComPtr<ID3DBlob> psBlob = CompilePixelShader(creator, compilerFlags, pixelShaderSource);
-	//CreateVertexInputLayout(creator, vsBlob);
+	InitializeVertexBuffer(creator);
+	InitializeIndexBuffer(creator);
+	InitializeConstantBuffer(creator);
+	InitializePipeline(creator);
+
+	// free temporary handle
+	creator->Release();
 }
-Microsoft::WRL::ComPtr<ID3DBlob>  ESG::D3DRendererLogic::CompileVertexShader(ID3D11Device* creator, UINT compilerFlags, std::string vertexShaderSource)
-{
-	Microsoft::WRL::ComPtr<ID3DBlob> vsBlob, errors;
-
-	HRESULT compilationResult =
-		D3DCompile(vertexShaderSource.c_str(), vertexShaderSource.length(),
-			nullptr, nullptr, nullptr, "main", "vs_4_0", compilerFlags, 0,
-			vsBlob.GetAddressOf(), errors.GetAddressOf());
-
-	if (SUCCEEDED(compilationResult))
-	{
-		creator->CreateVertexShader(vsBlob->GetBufferPointer(),
-			vsBlob->GetBufferSize(), nullptr, vertexShader.GetAddressOf());
-	}
-	else
-	{
-		PrintLabeledDebugString("Vertex Shader Errors:\n", (char*)errors->GetBufferPointer());
-		abort();
-		return nullptr;
-	}
-
-	return vsBlob;
-}
-	// Create Pixel Shader
-Microsoft::WRL::ComPtr<ID3DBlob> ESG::D3DRendererLogic::CompilePixelShader(ID3D11Device* creator, UINT compilerFlags, std::string pixelShaderSource)
-{
-
-	Microsoft::WRL::ComPtr<ID3DBlob> psBlob, errors;
-
-	HRESULT compilationResult =
-		D3DCompile(pixelShaderSource.c_str(), pixelShaderSource.length(),
-			nullptr, nullptr, nullptr, "main", "ps_4_0", compilerFlags, 0,
-			psBlob.GetAddressOf(), errors.GetAddressOf());
-
-	if (SUCCEEDED(compilationResult))
-	{
-		creator->CreatePixelShader(psBlob->GetBufferPointer(),
-			psBlob->GetBufferSize(), nullptr, pixelShader.GetAddressOf());
-	}
-	else
-	{
-		PrintLabeledDebugString("Pixel Shader Errors:\n", (char*)errors->GetBufferPointer());
-		abort();
-		return nullptr;
-	}
-
-	return psBlob;
-}
-
 bool ESG::D3DRendererLogic::LoadUniforms()
 {
 //	VkDevice device = nullptr;
@@ -184,7 +187,150 @@ bool ESG::D3DRendererLogic::LoadUniforms()
 //			return false; 
 //	}
 //	// uniform buffers created
+	ID3D11Device* creator;
+	direct11.GetDevice((void**)&creator);
+	InitializeConstantBuffer(creator);
 	return true;
+}
+
+void  ESG::D3DRendererLogic::InitializeVertexBuffer(ID3D11Device* creator)
+{
+	CreateVertexBuffer(creator, levelData.levelVertices.data(), sizeof(H2B::VERTEX) * levelData.levelVertices.size());
+}
+
+void  ESG::D3DRendererLogic::InitializeIndexBuffer(ID3D11Device* creator)
+{
+	CreateIndexBuffer(creator, levelData.levelIndices.data(), sizeof(unsigned int) * levelData.levelIndices.size());
+}
+
+void  ESG::D3DRendererLogic::InitializeConstantBuffer(ID3D11Device* creator)
+{
+
+	D3D11_SUBRESOURCE_DATA cSceneData = { &scene, 0, 0 };
+	CD3D11_BUFFER_DESC cSceneDesc(sizeof(SceneData), D3D11_BIND_CONSTANT_BUFFER);
+	creator->CreateBuffer(&cSceneDesc, &cSceneData, constantSceneBuffer.ReleaseAndGetAddressOf());
+
+	D3D11_SUBRESOURCE_DATA cMeshData = { &mesh, 0, 0 };
+	CD3D11_BUFFER_DESC cMeshDesc(sizeof(MeshData), D3D11_BIND_CONSTANT_BUFFER);
+	creator->CreateBuffer(&cMeshDesc, &cMeshData, constantMeshBuffer.ReleaseAndGetAddressOf());
+
+	D3D11_SUBRESOURCE_DATA cModelData = { &modelID, 0, 0 };
+	CD3D11_BUFFER_DESC cModelDesc(sizeof(MODEL_IDS), D3D11_BIND_CONSTANT_BUFFER);
+	creator->CreateBuffer(&cModelDesc, &cModelData, constantModelBuffer.ReleaseAndGetAddressOf());
+
+	D3D11_SUBRESOURCE_DATA cLightData = { &lights, 0, 0 };
+	CD3D11_BUFFER_DESC cLightlDesc(sizeof(LightData), D3D11_BIND_CONSTANT_BUFFER);
+	creator->CreateBuffer(&cLightlDesc, &cLightData, constantLightBuffer.ReleaseAndGetAddressOf());
+
+}
+
+void ESG::D3DRendererLogic::CreateVertexBuffer(ID3D11Device* creator, const void* data, unsigned int sizeInBytes)
+{
+	D3D11_SUBRESOURCE_DATA bData = { data, 0, 0 };
+	CD3D11_BUFFER_DESC bDesc(sizeInBytes, D3D11_BIND_VERTEX_BUFFER);
+	creator->CreateBuffer(&bDesc, &bData, vertexBuffer.ReleaseAndGetAddressOf());
+}
+
+void  ESG::D3DRendererLogic::CreateIndexBuffer(ID3D11Device* creator, const void* data, unsigned int sizeInBytes)
+{
+	D3D11_SUBRESOURCE_DATA iData = { data, 0, 0 };
+	CD3D11_BUFFER_DESC iDesc(sizeInBytes, D3D11_BIND_INDEX_BUFFER);
+	creator->CreateBuffer(&iDesc, &iData, indexBuffer.ReleaseAndGetAddressOf());
+}
+
+
+void ESG::D3DRendererLogic::InitializePipeline(ID3D11Device* creator)
+{
+	//Initialixe pipeline
+	direct11.GetDevice((void**)&creator);
+	UINT compilerFlags = D3DCOMPILE_ENABLE_STRICTNESS;
+#if _DEBUG
+	compilerFlags |= D3DCOMPILE_DEBUG;
+#endif
+	Microsoft::WRL::ComPtr<ID3DBlob> vsBlob = CompileVertexShader(creator, compilerFlags);
+	Microsoft::WRL::ComPtr<ID3DBlob> psBlob = CompilePixelShader(creator, compilerFlags);
+	CreateVertexInputLayout(creator, vsBlob);
+}
+
+Microsoft::WRL::ComPtr<ID3DBlob> ESG::D3DRendererLogic::CompilePixelShader(ID3D11Device* creator, UINT compilerFlags)
+{
+
+	Microsoft::WRL::ComPtr<ID3DBlob> psBlob, errors;
+
+	HRESULT compilationResult =
+		D3DCompile(pixelShaderSource.c_str(), pixelShaderSource.length(),
+			nullptr, nullptr, nullptr, "main", "ps_4_0", compilerFlags, 0,
+			psBlob.GetAddressOf(), errors.GetAddressOf());
+
+	if (SUCCEEDED(compilationResult))
+	{
+		creator->CreatePixelShader(psBlob->GetBufferPointer(),
+			psBlob->GetBufferSize(), nullptr, pixelShader.GetAddressOf());
+	}
+	else
+	{
+		PrintLabeledDebugString("Pixel Shader Errors:\n", (char*)errors->GetBufferPointer());
+		abort();
+		return nullptr;
+	}
+
+	return psBlob;
+}
+Microsoft::WRL::ComPtr<ID3DBlob>  ESG::D3DRendererLogic::CompileVertexShader(ID3D11Device* creator, UINT compilerFlags)
+{
+	Microsoft::WRL::ComPtr<ID3DBlob> vsBlob, errors;
+
+	HRESULT compilationResult =
+		D3DCompile(vertexShaderSource.c_str(), vertexShaderSource.length(),
+			nullptr, nullptr, nullptr, "main", "vs_4_0", compilerFlags, 0,
+			vsBlob.GetAddressOf(), errors.GetAddressOf());
+
+	if (SUCCEEDED(compilationResult))
+	{
+		creator->CreateVertexShader(vsBlob->GetBufferPointer(),
+			vsBlob->GetBufferSize(), nullptr, vertexShader.GetAddressOf());
+	}
+	else
+	{
+		PrintLabeledDebugString("Vertex Shader Errors:\n", (char*)errors->GetBufferPointer());
+		abort();
+		return nullptr;
+	}
+
+	return vsBlob;
+}
+
+void ESG::D3DRendererLogic::CreateVertexInputLayout(ID3D11Device* creator, Microsoft::WRL::ComPtr<ID3DBlob>& vsBlob)
+{
+	D3D11_INPUT_ELEMENT_DESC attributes[3];
+
+	attributes[0].SemanticName = "POSITION";
+	attributes[0].SemanticIndex = 0;
+	attributes[0].Format = DXGI_FORMAT_R32G32B32_FLOAT;
+	attributes[0].InputSlot = 0;
+	attributes[0].AlignedByteOffset = D3D11_APPEND_ALIGNED_ELEMENT;
+	attributes[0].InputSlotClass = D3D11_INPUT_PER_VERTEX_DATA;
+	attributes[0].InstanceDataStepRate = 0;
+
+	attributes[1].SemanticName = "UV";
+	attributes[1].SemanticIndex = 0;
+	attributes[1].Format = DXGI_FORMAT_R32G32B32_FLOAT;
+	attributes[1].InputSlot = 0;
+	attributes[1].AlignedByteOffset = D3D11_APPEND_ALIGNED_ELEMENT;
+	attributes[1].InputSlotClass = D3D11_INPUT_PER_VERTEX_DATA;
+	attributes[1].InstanceDataStepRate = 0;
+
+	attributes[2].SemanticName = "NORMAL";
+	attributes[2].SemanticIndex = 0;
+	attributes[2].Format = DXGI_FORMAT_R32G32B32_FLOAT;
+	attributes[2].InputSlot = 0;
+	attributes[2].AlignedByteOffset = D3D11_APPEND_ALIGNED_ELEMENT;
+	attributes[2].InputSlotClass = D3D11_INPUT_PER_VERTEX_DATA;
+	attributes[2].InstanceDataStepRate = 0;
+
+	creator->CreateInputLayout(attributes, ARRAYSIZE(attributes),
+		vsBlob->GetBufferPointer(), vsBlob->GetBufferSize(),
+		vertexFormat.GetAddressOf());
 }
 
 bool ESG::D3DRendererLogic::LoadGeometry()
@@ -199,26 +345,36 @@ bool ESG::D3DRendererLogic::LoadGeometry()
 		0.5f, -0.5f
 	};
 	// Transfer triangle data to the vertex buffer. (staging buffer would be prefered here)
-	D3D11_SUBRESOURCE_DATA bData = { &verts[0], 0, 0 };
-	CD3D11_BUFFER_DESC bDesc(sizeof(float) * verts.size(), D3D11_BIND_VERTEX_BUFFER);
-	creator->CreateBuffer(&bDesc, &bData, vertexBuffer.GetAddressOf());
+	InitializeVertexBuffer(creator);
 
 	return true;
 }
 
-//void ESG::D3DRendererLogic::SetUpPipeline(PipelineHandles handles, Microsoft::WRL::ComPtr<ID3DBlob> vsBlob)
-//{
-	//ID3D11RenderTargetView* const views[] = { handles.targetView };
-	//handles.context->OMSetRenderTargets(ARRAYSIZE(views), views, handles.depthStencil);
-	//
-	//const UINT strides[] = { sizeof(float) };
-	//const UINT offsets[] = { 0 };
-	//ID3D11Buffer* const buffs[] = { vertexBuffer.Get() };
-	//handles.context->IASetVertexBuffers(0, ARRAYSIZE(buffs), buffs, strides, offsets);
-	//handles.context->IASetIndexBuffer(indexBuffer.Get(), DXGI_FORMAT_R32_UINT, 0);
+ESG::D3DRendererLogic::PipelineHandles ESG::D3DRendererLogic::GetCurrentPipelineHandles()
+{
+	PipelineHandles retval;
+	direct11.GetImmediateContext((void**)&retval.context);
+	direct11.GetRenderTargetView((void**)&retval.targetView);
+	direct11.GetDepthStencilView((void**)&retval.depthStencil);
+	return retval;
+}
 
-	//handles.context->VSSetShader(vertexShader.Get(), nullptr, 0);
-	//handles.context->PSSetShader(pixelShader.Get(), nullptr, 0);
+void ESG::D3DRendererLogic::SetUpPipeline(PipelineHandles handles)
+{
+	//Set Render Targets
+	ID3D11RenderTargetView* const views[] = { handles.targetView };
+	handles.context->OMSetRenderTargets(ARRAYSIZE(views), views, handles.depthStencil);
+	
+	//Set Vertex Buffers
+	const UINT strides[] = { sizeof(float) };
+	const UINT offsets[] = { 0 };
+	ID3D11Buffer* const buffs[] = { vertexBuffer.Get() };
+	handles.context->IASetVertexBuffers(0, ARRAYSIZE(buffs), buffs, strides, offsets);
+	handles.context->IASetIndexBuffer(indexBuffer.Get(), DXGI_FORMAT_R32_UINT, 0);
+
+	//Set Shaders
+	handles.context->VSSetShader(vertexShader.Get(), nullptr, 0);
+	handles.context->PSSetShader(pixelShader.Get(), nullptr, 0);
 
 	//// Create Stage Info for Vertex Shader
 	//
@@ -226,40 +382,12 @@ bool ESG::D3DRendererLogic::LoadGeometry()
 	//// Create Stage Info for Fragment Shader
 
 
-	//// Assembly State
-	//handles.context->IASetInputLayout(vertexFormat.Get());
-	//handles.context->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
-	//// Vertex Input State
-	//D3D11_INPUT_ELEMENT_DESC attributes[3];
+	// Assembly State
+	handles.context->IASetInputLayout(vertexFormat.Get());
+	handles.context->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+	// Vertex Input State
 
-	//attributes[0].SemanticName = "POSITION";
-	//attributes[0].SemanticIndex = 0;
-	//attributes[0].Format = DXGI_FORMAT_R32G32B32_FLOAT;
-	//attributes[0].InputSlot = 0;
-	//attributes[0].AlignedByteOffset = D3D11_APPEND_ALIGNED_ELEMENT;
-	//attributes[0].InputSlotClass = D3D11_INPUT_PER_VERTEX_DATA;
-	//attributes[0].InstanceDataStepRate = 0;
-
-	//attributes[1].SemanticName = "UV";
-	//attributes[1].SemanticIndex = 0;
-	//attributes[1].Format = DXGI_FORMAT_R32G32B32_FLOAT;
-	//attributes[1].InputSlot = 0;
-	//attributes[1].AlignedByteOffset = D3D11_APPEND_ALIGNED_ELEMENT;
-	//attributes[1].InputSlotClass = D3D11_INPUT_PER_VERTEX_DATA;
-	//attributes[1].InstanceDataStepRate = 0;
-
-	//attributes[2].SemanticName = "NORMAL";
-	//attributes[2].SemanticIndex = 0;
-	//attributes[2].Format = DXGI_FORMAT_R32G32B32_FLOAT;
-	//attributes[2].InputSlot = 0;
-	//attributes[2].AlignedByteOffset = D3D11_APPEND_ALIGNED_ELEMENT;
-	//attributes[2].InputSlotClass = D3D11_INPUT_PER_VERTEX_DATA;
-	//attributes[2].InstanceDataStepRate = 0;
-
-	//creator->CreateInputLayout(attributes, ARRAYSIZE(attributes),
-	//	vsBlob->GetBufferPointer(), vsBlob->GetBufferSize(),
-	//	vertexFormat.GetAddressOf());
-	//// Viewport State (we still need to set this up even though we will overwrite the values)
+	//// viewport state (we still need to set this up even though we will overwrite the values)
 	//
 
 	//// Rasterizer State
@@ -390,7 +518,14 @@ bool ESG::D3DRendererLogic::LoadGeometry()
 	//	return false; // something went wrong
 
 //	return true;
-//}
+}
+
+void ESG::D3DRendererLogic::ReleasePipelineHandles(PipelineHandles toRelease)
+{
+	toRelease.depthStencil->Release();
+	toRelease.targetView->Release();
+	toRelease.context->Release();
+}
 
 bool ESG::D3DRendererLogic::SetupDrawcalls() // I SCREWED THIS UP MAKES SO MUCH SENSE NOW
 {
@@ -503,5 +638,6 @@ bool ESG::D3DRendererLogic::FreeResources()
 	//vkDestroyShaderModule(device, pixelShader, nullptr);
 	//vkDestroyPipelineLayout(device, pipelineLayout, nullptr);
 	//vkDestroyPipeline(device, pipeline, nullptr);
+
 	return true;
 }
