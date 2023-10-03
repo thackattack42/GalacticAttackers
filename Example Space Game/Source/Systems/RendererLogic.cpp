@@ -558,25 +558,25 @@ bool ESG::D3DRendererLogic::SetupDrawcalls() // I SCREWED THIS UP MAKES SO MUCH 
 	updateDraw = game->system<Position, Orientation, Material>().kind(flecs::OnUpdate)
 		.each([this](flecs::entity e, Position& p, Orientation& o, Material& m) {
 		// copy all data to our instancing array
-		//int i = draw_counter; 
-		//instanceData.instance_transforms[i] = GW::MATH::GIdentityMatrixF;
-		//instanceData.instance_transforms[i].row4.x = p.value.x;
-		//instanceData.instance_transforms[i].row4.y = p.value.y;
-		//// transfer 2D orientation to 4x4
-		//instanceData.instance_transforms[i].row1.x = o.value.row1.x;
-		//instanceData.instance_transforms[i].row1.y = o.value.row1.y;
-		//instanceData.instance_transforms[i].row2.x = o.value.row2.x;
-		//instanceData.instance_transforms[i].row2.y = o.value.row2.y;
-		//// set color
-		//instanceData.instance_colors[i].x = m.diffuse.value.x;
-		//instanceData.instance_colors[i].y = m.diffuse.value.y;
-		//instanceData.instance_colors[i].z = m.diffuse.value.z;
-		//instanceData.instance_colors[i].w = 1; // opaque
-		//// increment the shared draw counter but don't go over (branchless) 
-		//int v = static_cast<int>(Instance_Max) - static_cast<int>(draw_counter + 2);
-		//// if v < 0 then 0, else 1, https://graphics.stanford.edu/~seander/bithacks.html
-		//int sign = 1 ^ ((unsigned int)v >> (sizeof(int) * CHAR_BIT - 1)); 
-		//draw_counter += sign;
+		int i = draw_counter; 
+		instanceData.instance_transforms[i] = GW::MATH::GIdentityMatrixF;
+		instanceData.instance_transforms[i].row4.x = p.value.x;
+		instanceData.instance_transforms[i].row4.y = p.value.y;
+		// transfer 2D orientation to 4x4
+		instanceData.instance_transforms[i].row1.x = o.value.row1.x;
+		instanceData.instance_transforms[i].row1.y = o.value.row1.y;
+		instanceData.instance_transforms[i].row2.x = o.value.row2.x;
+		instanceData.instance_transforms[i].row2.y = o.value.row2.y;
+		// set color
+		instanceData.instance_colors[i].x = m.diffuse.value.x;
+		instanceData.instance_colors[i].y = m.diffuse.value.y;
+		instanceData.instance_colors[i].z = m.diffuse.value.z;
+		instanceData.instance_colors[i].w = 1; // opaque
+		// increment the shared draw counter but don't go over (branchless) 
+		int v = static_cast<int>(Instance_Max) - static_cast<int>(draw_counter + 2);
+		// if v < 0 then 0, else 1, https://graphics.stanford.edu/~seander/bithacks.html
+		int sign = 1 ^ ((unsigned int)v >> (sizeof(int) * CHAR_BIT - 1)); 
+		draw_counter += sign;
 	});
 	// runs once per frame after updateDraw
 	completeDraw = game->system<RenderingSystem>().kind(flecs::PostUpdate)
