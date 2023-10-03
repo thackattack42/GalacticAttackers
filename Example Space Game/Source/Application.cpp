@@ -16,6 +16,7 @@ bool Application::Init()
 	// create the ECS system
 	game = std::make_shared<flecs::world>(); 
 	levelData = std::make_shared<Level_Data>();
+	//for changing level data				level positioning		level obj/mtl
 	bool success = levelData->LoadLevel("../GameLevel_1.txt", "../Models", log);
 	// init all other systems
 	if (InitWindow() == false) 
