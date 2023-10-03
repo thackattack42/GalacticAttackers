@@ -7,7 +7,7 @@
 #define GATEWARE_ENABLE_INPUT // Enables all Input Libraries
 #define GATEWARE_ENABLE_AUDIO // Enables all Audio Libraries
 // Ignore some GRAPHICS libraries we aren't going to use
-#define GATEWARE_DISABLE_GDIRECTX11SURFACE 
+#define GATEWARE_DISABLE_GVULKANSURFACE
 #define GATEWARE_DISABLE_GDIRECTX12SURFACE 
 #define GATEWARE_DISABLE_GRASTERSURFACE
 #define GATEWARE_DISABLE_GOPENGLSURFACE
@@ -19,8 +19,10 @@
 #include "../flecs-3.1.4/flecs.h"
 // Library for processing .ini files
 #include "../inifile-cpp-master/include/inicpp.h"
-// used to compile shaders for Vulkan
-#include "shaderc/shaderc.h" // needed for compiling shaders at runtime
-#ifdef _WIN32 // must use MT platform DLL libraries on windows
-	#pragma comment(lib, "shaderc_combined.lib")
-#endif
+#include "FileIntoString.h"
+#include "load_data_oriented.h"
+//// used to compile shaders for Vulkan
+//#include "shaderc/shaderc.h" // needed for compiling shaders at runtime
+//#ifdef _WIN32 // must use MT platform DLL libraries on windows
+//	#pragma comment(lib, "shaderc_combined.lib")
+//#endif

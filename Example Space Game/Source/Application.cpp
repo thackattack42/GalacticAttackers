@@ -6,7 +6,8 @@ using namespace CORE;
 using namespace SYSTEM;
 using namespace GRAPHICS;
 
-bool Application::Init() 
+
+bool Application::Init()
 {
 	eventPusher.Create();
 
@@ -14,6 +15,8 @@ bool Application::Init()
 	gameConfig = std::make_shared<GameConfig>(); 
 	// create the ECS system
 	game = std::make_shared<flecs::world>(); 
+	levelData = std::make_shared<Level_Data>();
+	bool success = levelData->LoadLevel("../GameLevel_1.txt", "../Models", log);
 	// init all other systems
 	if (InitWindow() == false) 
 		return false;
@@ -32,15 +35,17 @@ bool Application::Init()
 
 bool Application::Run() 
 {
-	VkClearValue clrAndDepth[2];
-	clrAndDepth[0].color = { {0, 0, 0, 1} };
-	clrAndDepth[1].depthStencil = { 1.0f, 0u };
+	//VkClearValue clrAndDepth[2];
+	//clrAndDepth[0].color = { {0, 0, 0, 1} };
+	//clrAndDepth[1].depthStencil = { 1.0f, 0u };
 	// grab vsync selection
 	bool vsync = gameConfig->at("Window").at("vsync").as<bool>();
+	float color[4] = { 0,0,0,0 };
 	// set background color from settings
 	const char* channels[] = { "red", "green", "blue" };
 	for (int i = 0; i < std::size(channels); ++i) {
-		clrAndDepth[0].color.float32[i] =
+		/*clrAndDepth[0].color.float32[i] =*/
+		color[i] = 
 			gameConfig->at("BackGroundColor").at(channels[i]).as<float>();
 	}
 	// create an event handler to see if the window was closed early
@@ -56,18 +61,49 @@ bool Application::Run()
 	{
 		if (winClosed == true)
 			return true;
-		if (+vulkan.StartFrame(2, clrAndDepth))
+		//if (+vulkan.StartFrame(2, clrAndDepth))
+		//{
+		//	if (GameLoop() == false) {
+		//		vulkan.EndFrame(vsync);
+		//		return false;
+		//	}
+		//	if (-vulkan.EndFrame(vsync)) {
+		//		// failing EndFrame is not always a critical error, see the GW docs for specifics
+		//	}
+		//}
+		//else
+		//	return false;
+		IDXGISwapChain* swap;
+		DXGI_SWAP_CHAIN_DESC chain;
+		ZeroMemory(&chain, sizeof(DXGI_SWAP_CHAIN_DESC));
+		chain.Flags = DXGI_SWAP_CHAIN_FLAG_ALLOW_MODE_SWITCH;
+		ID3D11DeviceContext* con;
+		ID3D11RenderTargetView* view;
+		ID3D11DepthStencilView* depth;
+		
+		
+		if (+d3d11.GetImmediateContext((void**)&con) &&
+			+d3d11.GetRenderTargetView((void**)&view) &&
+			+d3d11.GetDepthStencilView((void**)&depth) &&
+			+d3d11.GetSwapchain((void**)&swap))
 		{
-			if (GameLoop() == false) {
-				vulkan.EndFrame(vsync);
-				return false;
-			}
-			if (-vulkan.EndFrame(vsync)) {
-				// failing EndFrame is not always a critical error, see the GW docs for specifics
-			}
+			con->ClearRenderTargetView(view, color);
+			con->ClearDepthStencilView(depth, D3D11_CLEAR_DEPTH, 1, 0);
+			//renderer.UpdateWindowSize();
+			//renderer.PlayerSwap();
+			//renderer.UpdateCamera();
+			GameLoop();
+			//renderer.LevelSwitch(log);
+			//renderer.Render();
+			swap->Present(1, 0);
+			// release incremented COM reference counts
+			swap->SetFullscreenState(FALSE, NULL);
+			swap->Release();
+			view->Release();
+			depth->Release();
+			con->Release();
 		}
-		else
-			return false;
+
 	}
 	return true;
 }
@@ -79,7 +115,7 @@ bool Application::Shutdown()
 		return false;
 	if (levelSystem.Shutdown() == false)
 		return false;
-	if (vkRenderingSystem.Shutdown() == false)
+	if (d3dRenderingSystem.Shutdown() == false)
 		return false;
 	if (physicsSystem.Shutdown() == false)
 		return false;
@@ -127,19 +163,23 @@ bool Application::InitAudio()
 
 bool Application::InitGraphics()
 {
-#ifndef NDEBUG
-	const char* debugLayers[] = {
-		"VK_LAYER_KHRONOS_validation", // standard validation layer
-		//"VK_LAYER_RENDERDOC_Capture" // add this if you have installed RenderDoc
-	};
-	if (+vulkan.Create(window, GW::GRAPHICS::DEPTH_BUFFER_SUPPORT,
-		sizeof(debugLayers) / sizeof(debugLayers[0]),
-		debugLayers, 0, nullptr, 0, nullptr, false))
+//#ifndef NDEBUG
+//	const char* debugLayers[] = {
+//		"VK_LAYER_KHRONOS_validation", // standard validation layer
+//		//"VK_LAYER_RENDERDOC_Capture" // add this if you have installed RenderDoc
+//	};
+//	if (+vulkan.Create(window, GW::GRAPHICS::DEPTH_BUFFER_SUPPORT,
+//		sizeof(debugLayers) / sizeof(debugLayers[0]),
+//		debugLayers, 0, nullptr, 0, nullptr, false))
+//		return true;
+//#else
+//	if (+vulkan.Create(window, GW::GRAPHICS::DEPTH_BUFFER_SUPPORT))
+//		return true;
+//#endif
+
+	if (+d3d11.Create(window, GW::GRAPHICS::DEPTH_BUFFER_SUPPORT))
 		return true;
-#else
-	if (+vulkan.Create(window, GW::GRAPHICS::DEPTH_BUFFER_SUPPORT))
-		return true;
-#endif
+
 	return false;
 }
 
@@ -166,7 +206,7 @@ bool Application::InitSystems()
 		return false;
 	if (levelSystem.Init(game, gameConfig, audioEngine) == false)
 		return false;
-	if (vkRenderingSystem.Init(game, gameConfig, vulkan, window) == false)
+	if (d3dRenderingSystem.Init(game, gameConfig, d3d11, window, levelData) == false)
 		return false;
 	if (physicsSystem.Init(game, gameConfig) == false)
 		return false;

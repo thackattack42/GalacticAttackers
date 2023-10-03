@@ -43,15 +43,23 @@ bool CreateRandomShapes(unsigned int count, float x_range, float y_range,
 		float scale = RAND_FLOAT(min_scale, max_scale);
 		float angle = RAND_FLOAT(0, G_PI_F);
 		int type = rand() % 3; // line, circle, rectangle
-		LINE l; CIRCLE c; RECTANGLE r;
+		LINE l; CIRCLE c; RECTANGLE r; 
 		// pick a random shape type
 		switch (type) {
-		case 0: // LINE
+		case 0: // Oven Dial
 			l.start.x = x_loc - cosf(angle) * scale;
 			l.start.y = y_loc - sinf(angle) * scale;
 			l.end.x = x_loc + cosf(angle) * scale;
 			l.end.y = y_loc + sinf(angle) * scale;
 			registry.emplace<LINE>(entity, l);
+
+			c.pos = { x_loc, y_loc };
+			c.radius = scale;
+			registry.emplace<CIRCLE>(entity, c);
+
+			r.min = { x_loc - scale, y_loc - scale };
+			r.max = { x_loc + scale, y_loc + scale };
+			registry.emplace<RECTANGLE>(entity, r);
 			break;
 		case 1: // CIRCLE
 			c.pos = { x_loc, y_loc };
@@ -162,7 +170,7 @@ bool CreateGameLoop() {
 	if (CreateGraphicsEngine(loop) == false)
 		return false;
 	// Create random game entities (ideally would read from .ini file)
-	if (CreateRandomShapes(100, 12, 5, 0.25, 1.5) == false)
+	if (CreateRandomShapes(50, 12, 5, 0.1, 2.0) == false)
 		return false;
 	// Create our Cursor
 	if (CreateCursor(loop) == false)

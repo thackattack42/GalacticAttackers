@@ -208,7 +208,7 @@ bool ProcessCursors(GameLoop& loop) {
 				}
 				case GW::INPUT::GBufferedInput::Events::KEYPRESSED: {
 					// orbit camera 10 degrees with each key press
-					float spinX = 0, spinZ = 0, distance = 0;
+					float spinX = 0, spinZ = 0, spinY = 0, distance = 0;
 					if (d.data == G_KEY_UP || d.data == G_KEY_NUMPAD_8)
 						spinX = 1;
 					else if (d.data == G_KEY_DOWN || d.data == G_KEY_NUMPAD_2)
@@ -217,6 +217,11 @@ bool ProcessCursors(GameLoop& loop) {
 						spinZ = -1;
 					else if (d.data == G_KEY_RIGHT || d.data == G_KEY_NUMPAD_6)
 						spinZ = 1;
+					else if (d.data == G_KEY_SPACE)
+						spinY = 1;
+					else if (d.data == G_KEY_LEFTSHIFT)
+						spinY = -1;
+				
 					// get distance from origin
 					GW::MATH::GVector::MagnitudeF(renderer.camera.row4.xyz(), distance);
 					// place camera at origin
@@ -226,6 +231,9 @@ bool ProcessCursors(GameLoop& loop) {
 						renderer.camera, spinX * G_DEGREE_TO_RADIAN_F(10), renderer.camera);
 					GW::MATH::GMatrix::RotateZGlobalF(
 						renderer.camera, spinZ * G_DEGREE_TO_RADIAN_F(10), renderer.camera);
+					GW::MATH::GMatrix::RotateYGlobalF(
+						renderer.camera, spinY * G_DEGREE_TO_RADIAN_F(10), renderer.camera);
+
 					// translate same distance away from origin along -Z
 					GW::MATH::GMatrix::TranslateLocalF(
 						renderer.camera, GW::MATH::GVECTORF{0,0,-distance,0}, renderer.camera);
