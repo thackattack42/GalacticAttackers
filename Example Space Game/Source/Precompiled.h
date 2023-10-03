@@ -19,6 +19,8 @@
 #include "../flecs-3.1.4/flecs.h"
 // Library for processing .ini files
 #include "../inifile-cpp-master/include/inicpp.h"
+#include "FileIntoString.h"
+#include "load_data_oriented.h"
 //// used to compile shaders for Vulkan
 //#include "shaderc/shaderc.h" // needed for compiling shaders at runtime
 //#ifdef _WIN32 // must use MT platform DLL libraries on windows
