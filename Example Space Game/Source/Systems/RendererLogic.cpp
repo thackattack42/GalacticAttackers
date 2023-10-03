@@ -26,50 +26,6 @@ bool ESG::D3DRendererLogic::Init(	std::shared_ptr<flecs::world> _game,
 	direct11 = d3d11;
 	window = _window;
 	levelData = _levelData;
-	proxy.Create();
-
-	viewTranslation = { 55.0f,5.0f, 25.0f, 1.0f };
-
-	//ViewMatrix
-	GW::MATH::GVECTORF viewCenter = { 0.15f, 0.75f, 0.0f, 1.0f };
-	GW::MATH::GVECTORF viewUp = { 0.0f, 1.0f, 0.0f, 1.0f };
-	proxy.IdentityF(viewMatrix);
-	proxy.LookAtLHF(viewTranslation, viewCenter, viewUp, viewMatrix);
-
-	float ratio;
-	direct11.GetAspectRatio(ratio);
-	proxy.ProjectionDirectXLHF(G_DEGREE_TO_RADIAN(65.0f), ratio, 0.1f, 200.0f, projectionMatrix);
-
-	lightDir = { -1.0f, -1.0f, -2.0f, 1.0f };
-	lightColor = { 0.9f, 0.9f,1.0f, 1.0f };
-	for (int i = 0; i < levelData->levelMaterials.size(); ++i)
-	{
-		mesh.material[i] = levelData->levelMaterials[i].attrib;
-	}
-
-	for (int i = 0; i < levelData->levelTransforms.size(); ++i)
-	{
-		mesh.worldMatrix[i] = levelData->levelTransforms[i];
-	}
-
-
-
-	for (int i = 0; i < levelData->levelLighting.size(); ++i)
-	{
-		lights.myLights[i] = levelData->levelLighting[i];
-	}
-
-	scene.viewMatrix = viewMatrix;
-	scene.projectionMatrix = projectionMatrix;
-	scene.sunColor = lightColor;
-	scene.sunDirection = lightDir;
-	modelID.mat_id = levelData->levelMeshes[0].materialIndex;
-	modelID.mod_id = levelData->levelInstances[0].modelIndex;
-	modelID.numLights = levelData->levelLighting.size();
-
-	lightAmbient = { 0.25f, 0.25f, 0.35f, 1.0f };
-	scene.sunAmbient = lightAmbient;
-	scene.camerPos = viewTranslation;
 
 	
 	// Setup all vulkan resources
@@ -155,8 +111,8 @@ void ESG::D3DRendererLogic::InitializeGraphics()
 {
 	ID3D11Device* creator;
 	direct11.GetDevice((void**)&creator);
-	InitializeVertexBuffer(creator);
-	InitializeIndexBuffer(creator);
+	//InitializeVertexBuffer(creator);
+	//InitializeIndexBuffer(creator);
 	InitializePipeline(creator);
 
 	// free temporary handle
@@ -337,7 +293,50 @@ bool ESG::D3DRendererLogic::LoadGeometry()
 {
 	ID3D11Device* creator;
 	direct11.GetDevice((void**)&creator);
-	
+	proxy.Create();
+
+	viewTranslation = { 55.0f,5.0f, 25.0f, 1.0f };
+
+	//ViewMatrix
+	GW::MATH::GVECTORF viewCenter = { 0.15f, 0.75f, 0.0f, 1.0f };
+	GW::MATH::GVECTORF viewUp = { 0.0f, 1.0f, 0.0f, 1.0f };
+	proxy.IdentityF(viewMatrix);
+	proxy.LookAtLHF(viewTranslation, viewCenter, viewUp, viewMatrix);
+
+	float ratio;
+	direct11.GetAspectRatio(ratio);
+	proxy.ProjectionDirectXLHF(G_DEGREE_TO_RADIAN(65.0f), ratio, 0.1f, 200.0f, projectionMatrix);
+
+	lightDir = { -1.0f, -1.0f, -2.0f, 1.0f };
+	lightColor = { 0.9f, 0.9f,1.0f, 1.0f };
+
+
+	scene.viewMatrix = viewMatrix;
+	scene.projectionMatrix = projectionMatrix;
+	scene.sunColor = lightColor;
+	scene.sunDirection = lightDir;
+	modelID.mat_id = levelData->levelMeshes[0].materialIndex;
+	modelID.mod_id = levelData->levelInstances[0].modelIndex;
+	modelID.numLights = levelData->levelLighting.size();
+
+	lightAmbient = { 0.25f, 0.25f, 0.35f, 1.0f };
+	scene.sunAmbient = lightAmbient;
+	scene.camerPos = viewTranslation;
+
+	for (int i = 0; i < levelData->levelMaterials.size(); ++i)
+	{
+		mesh.material[i] = levelData->levelMaterials[i].attrib;
+	}
+
+	for (int i = 0; i < levelData->levelTransforms.size(); ++i)
+	{
+		mesh.worldMatrix[i] = levelData->levelTransforms[i];
+	}
+
+	for (int i = 0; i < levelData->levelLighting.size(); ++i)
+	{
+		lights.myLights[i] = levelData->levelLighting[i];
+	}
 	//std::vector<float> verts = {
 	//	-0.5f, -0.5f,
 	//	0, 0.5f,
@@ -346,7 +345,7 @@ bool ESG::D3DRendererLogic::LoadGeometry()
 	//};
 	// Transfer triangle data to the vertex buffer. (staging buffer would be prefered here)
 	InitializeVertexBuffer(creator);
-
+	InitializeIndexBuffer(creator);
 	return true;
 }
 
@@ -366,7 +365,7 @@ void ESG::D3DRendererLogic::SetUpPipeline(PipelineHandles handles)
 	handles.context->OMSetRenderTargets(ARRAYSIZE(views), views, handles.depthStencil);
 	
 	//Set Vertex Buffers
-	const UINT strides[] = { sizeof(float) };
+	const UINT strides[] = { sizeof(H2B::VERTEX) };
 	const UINT offsets[] = { 0 };
 	ID3D11Buffer* const buffs[] = { vertexBuffer.Get() };
 	handles.context->IASetVertexBuffers(0, ARRAYSIZE(buffs), buffs, strides, offsets);
@@ -552,31 +551,31 @@ bool ESG::D3DRendererLogic::SetupDrawcalls() // I SCREWED THIS UP MAKES SO MUCH 
 	startDraw = game->system<RenderingSystem>().kind(flecs::PreUpdate)
 		.each([this](flecs::entity e, RenderingSystem& s) {
 		// reset the draw counter only once per frame
-		//draw_counter = 0; 
+	/*	draw_counter = 0; */
 	});
 	// may run multiple times per frame, will run after startDraw
 	updateDraw = game->system<Position, Orientation, Material>().kind(flecs::OnUpdate)
 		.each([this](flecs::entity e, Position& p, Orientation& o, Material& m) {
 		// copy all data to our instancing array
-		int i = draw_counter; 
-		instanceData.instance_transforms[i] = GW::MATH::GIdentityMatrixF;
-		instanceData.instance_transforms[i].row4.x = p.value.x;
-		instanceData.instance_transforms[i].row4.y = p.value.y;
-		// transfer 2D orientation to 4x4
-		instanceData.instance_transforms[i].row1.x = o.value.row1.x;
-		instanceData.instance_transforms[i].row1.y = o.value.row1.y;
-		instanceData.instance_transforms[i].row2.x = o.value.row2.x;
-		instanceData.instance_transforms[i].row2.y = o.value.row2.y;
-		// set color
-		instanceData.instance_colors[i].x = m.diffuse.value.x;
-		instanceData.instance_colors[i].y = m.diffuse.value.y;
-		instanceData.instance_colors[i].z = m.diffuse.value.z;
-		instanceData.instance_colors[i].w = 1; // opaque
-		// increment the shared draw counter but don't go over (branchless) 
-		int v = static_cast<int>(Instance_Max) - static_cast<int>(draw_counter + 2);
-		// if v < 0 then 0, else 1, https://graphics.stanford.edu/~seander/bithacks.html
-		int sign = 1 ^ ((unsigned int)v >> (sizeof(int) * CHAR_BIT - 1)); 
-		draw_counter += sign;
+		//int i = draw_counter; 
+		//instanceData.instance_transforms[i] = GW::MATH::GIdentityMatrixF;
+		//instanceData.instance_transforms[i].row4.x = p.value.x;
+		//instanceData.instance_transforms[i].row4.y = p.value.y;
+		//// transfer 2D orientation to 4x4
+		//instanceData.instance_transforms[i].row1.x = o.value.row1.x;
+		//instanceData.instance_transforms[i].row1.y = o.value.row1.y;
+		//instanceData.instance_transforms[i].row2.x = o.value.row2.x;
+		//instanceData.instance_transforms[i].row2.y = o.value.row2.y;
+		//// set color
+		//instanceData.instance_colors[i].x = m.diffuse.value.x;
+		//instanceData.instance_colors[i].y = m.diffuse.value.y;
+		//instanceData.instance_colors[i].z = m.diffuse.value.z;
+		//instanceData.instance_colors[i].w = 1; // opaque
+		//// increment the shared draw counter but don't go over (branchless) 
+		//int v = static_cast<int>(Instance_Max) - static_cast<int>(draw_counter + 2);
+		//// if v < 0 then 0, else 1, https://graphics.stanford.edu/~seander/bithacks.html
+		//int sign = 1 ^ ((unsigned int)v >> (sizeof(int) * CHAR_BIT - 1)); 
+		//draw_counter += sign;
 	});
 	// runs once per frame after updateDraw
 	completeDraw = game->system<RenderingSystem>().kind(flecs::PostUpdate)
@@ -615,8 +614,6 @@ bool ESG::D3DRendererLogic::SetupDrawcalls() // I SCREWED THIS UP MAKES SO MUCH 
 		//vkCmdDraw(commandBuffer, 4, draw_counter, 0, 0); // draw'em all!
 		PipelineHandles curHandles = GetCurrentPipelineHandles();
 		SetUpPipeline(curHandles);
-		for (int k = 0; k < 2; k++)
-		{
 			curHandles.context->UpdateSubresource(constantSceneBuffer.Get(), 0, nullptr, &scene, 0, 0);
 			curHandles.context->UpdateSubresource(constantMeshBuffer.Get(), 0, nullptr, &mesh, 0, 0);
 			curHandles.context->UpdateSubresource(constantLightBuffer.Get(), 0, nullptr, &lights, 0, 0);
@@ -642,7 +639,6 @@ bool ESG::D3DRendererLogic::SetupDrawcalls() // I SCREWED THIS UP MAKES SO MUCH 
 
 				}
 			}
-		}
 		ReleasePipelineHandles(curHandles);
 	});
 	// NOTE: I went with multi-system approach for the ease of passing lambdas with "this"

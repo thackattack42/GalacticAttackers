@@ -92,6 +92,7 @@ bool Application::Run()
 			//renderer.UpdateWindowSize();
 			//renderer.PlayerSwap();
 			//renderer.UpdateCamera();
+			GameLoop();
 			//renderer.LevelSwitch(log);
 			//renderer.Render();
 			swap->Present(1, 0);
