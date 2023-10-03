@@ -52,7 +52,7 @@ namespace ESG
 		GW::MATH::GMatrix proxy;
 
 		// Directx11 resources used for rendering
-		Level_Data& levelData;
+		std::shared_ptr<const Level_Data> levelData;
 		GW::GRAPHICS::GDirectX11Surface direct11;
 		Microsoft::WRL::ComPtr<ID3D11Buffer>		vertexBuffer;
 		Microsoft::WRL::ComPtr<ID3D11Buffer>	    indexBuffer;
@@ -87,7 +87,7 @@ namespace ESG
 		bool Init(	std::shared_ptr<flecs::world> _game,
 					std::weak_ptr<const GameConfig> _gameConfig,
 					GW::GRAPHICS::GDirectX11Surface _direct11,
-					GW::SYSTEM::GWindow _window, Level_Data& _levelData);
+					GW::SYSTEM::GWindow _window, std::shared_ptr<const Level_Data> _levelData);
 		// control if the system is actively running
 		bool Activate(bool runSystem);
 		// release any resources allocated by the system

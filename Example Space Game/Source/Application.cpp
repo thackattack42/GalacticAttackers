@@ -6,7 +6,8 @@ using namespace CORE;
 using namespace SYSTEM;
 using namespace GRAPHICS;
 
-bool Application::Init() 
+
+bool Application::Init()
 {
 	eventPusher.Create();
 
@@ -14,6 +15,8 @@ bool Application::Init()
 	gameConfig = std::make_shared<GameConfig>(); 
 	// create the ECS system
 	game = std::make_shared<flecs::world>(); 
+	levelData = std::make_shared<Level_Data>();
+	bool success = levelData->LoadLevel("../GameLevel_1.txt", "../Models", log);
 	// init all other systems
 	if (InitWindow() == false) 
 		return false;
@@ -77,6 +80,8 @@ bool Application::Run()
 		ID3D11DeviceContext* con;
 		ID3D11RenderTargetView* view;
 		ID3D11DepthStencilView* depth;
+		
+		
 		if (+d3d11.GetImmediateContext((void**)&con) &&
 			+d3d11.GetRenderTargetView((void**)&view) &&
 			+d3d11.GetDepthStencilView((void**)&depth) &&

@@ -20,18 +20,21 @@
 // Allocates and runs all sub-systems essential to operating the game
 class Application 
 {
+	
 	// gateware libs used to access operating system
 	GW::SYSTEM::GWindow window; // gateware multi-platform window
+	GW::SYSTEM::GLog log;
 	GW::GRAPHICS::GDirectX11Surface d3d11;
-	Level_Data levelData;
+	
 	//GW::GRAPHICS::GVulkanSurface vulkan; // gateware vulkan API wrapper
 	GW::INPUT::GController gamePads; // controller support
 	GW::INPUT::GInput immediateInput; // twitch keybaord/mouse
 	GW::INPUT::GBufferedInput bufferedInput; // event keyboard/mouse
 	GW::AUDIO::GAudio audioEngine; // can create music & sound effects
-	// third-party gameplay & utility libraries
+	// thrd-party gameplay & utility libraries
 	std::shared_ptr<flecs::world> game; // ECS database for gameplay
 	std::shared_ptr<GameConfig> gameConfig; // .ini file game settings
+	std::shared_ptr<Level_Data> levelData;
 	// ECS Entities and Prefabs that need to be loaded
 	ESG::BulletData weapons;
 	ESG::PlayerData players;

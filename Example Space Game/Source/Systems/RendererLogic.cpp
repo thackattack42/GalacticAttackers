@@ -18,7 +18,7 @@ void PrintLabeledDebugString(const char* label, const char* toPrint)
 bool ESG::D3DRendererLogic::Init(	std::shared_ptr<flecs::world> _game, 
 								std::weak_ptr<const GameConfig> _gameConfig,
 								GW::GRAPHICS::GDirectX11Surface d3d11,
-								GW::SYSTEM::GWindow _window, Level_Data& _levelData)
+								GW::SYSTEM::GWindow _window, std::shared_ptr<const Level_Data> _levelData)
 {
 	// save a handle to the ECS & game settings
 	game = _game;
@@ -42,36 +42,36 @@ bool ESG::D3DRendererLogic::Init(	std::shared_ptr<flecs::world> _game,
 
 	lightDir = { -1.0f, -1.0f, -2.0f, 1.0f };
 	lightColor = { 0.9f, 0.9f,1.0f, 1.0f };
-	for (int i = 0; i < levelData.levelMaterials.size(); ++i)
+	for (int i = 0; i < levelData->levelMaterials.size(); ++i)
 	{
-		mesh.material[i] = levelData.levelMaterials[i].attrib;
+		mesh.material[i] = levelData->levelMaterials[i].attrib;
 	}
 
-	for (int i = 0; i < levelData.levelTransforms.size(); ++i)
+	for (int i = 0; i < levelData->levelTransforms.size(); ++i)
 	{
-		mesh.worldMatrix[i] = levelData.levelTransforms[i];
+		mesh.worldMatrix[i] = levelData->levelTransforms[i];
 	}
 
 
 
-	for (int i = 0; i < levelData.levelLighting.size(); ++i)
+	for (int i = 0; i < levelData->levelLighting.size(); ++i)
 	{
-		lights.myLights[i] = levelData.levelLighting[i];
+		lights.myLights[i] = levelData->levelLighting[i];
 	}
 
 	scene.viewMatrix = viewMatrix;
 	scene.projectionMatrix = projectionMatrix;
 	scene.sunColor = lightColor;
 	scene.sunDirection = lightDir;
-	modelID.mat_id = levelData.levelMeshes[0].materialIndex;
-	modelID.mod_id = levelData.levelInstances[0].modelIndex;
-	modelID.numLights = levelData.levelLighting.size();
+	modelID.mat_id = levelData->levelMeshes[0].materialIndex;
+	modelID.mod_id = levelData->levelInstances[0].modelIndex;
+	modelID.numLights = levelData->levelLighting.size();
 
 	lightAmbient = { 0.25f, 0.25f, 0.35f, 1.0f };
 	scene.sunAmbient = lightAmbient;
 	scene.camerPos = viewTranslation;
 
-	InitializeGraphics();
+	
 	// Setup all vulkan resources
 	if (LoadShaders() == false) 
 		return false;
@@ -85,7 +85,8 @@ bool ESG::D3DRendererLogic::Init(	std::shared_ptr<flecs::world> _game,
 	if (SetupDrawcalls() == false)
 		return false;
 	// GVulkanSurface will inform us when to release any allocated resources
-	
+	InitializeGraphics();
+
 	return true;
 }
 
@@ -156,7 +157,6 @@ void ESG::D3DRendererLogic::InitializeGraphics()
 	direct11.GetDevice((void**)&creator);
 	InitializeVertexBuffer(creator);
 	InitializeIndexBuffer(creator);
-	InitializeConstantBuffer(creator);
 	InitializePipeline(creator);
 
 	// free temporary handle
@@ -195,12 +195,12 @@ bool ESG::D3DRendererLogic::LoadUniforms()
 
 void  ESG::D3DRendererLogic::InitializeVertexBuffer(ID3D11Device* creator)
 {
-	CreateVertexBuffer(creator, levelData.levelVertices.data(), sizeof(H2B::VERTEX) * levelData.levelVertices.size());
+	CreateVertexBuffer(creator, levelData->levelVertices.data(), sizeof(H2B::VERTEX) * levelData->levelVertices.size());
 }
 
 void  ESG::D3DRendererLogic::InitializeIndexBuffer(ID3D11Device* creator)
 {
-	CreateIndexBuffer(creator, levelData.levelIndices.data(), sizeof(unsigned int) * levelData.levelIndices.size());
+	CreateIndexBuffer(creator, levelData->levelIndices.data(), sizeof(unsigned int) * levelData->levelIndices.size());
 }
 
 void  ESG::D3DRendererLogic::InitializeConstantBuffer(ID3D11Device* creator)
@@ -338,12 +338,12 @@ bool ESG::D3DRendererLogic::LoadGeometry()
 	ID3D11Device* creator;
 	direct11.GetDevice((void**)&creator);
 	
-	std::vector<float> verts = {
-		-0.5f, -0.5f,
-		0, 0.5f,
-		0, -0.25f,
-		0.5f, -0.5f
-	};
+	//std::vector<float> verts = {
+	//	-0.5f, -0.5f,
+	//	0, 0.5f,
+	//	0, -0.25f,
+	//	0.5f, -0.5f
+	//};
 	// Transfer triangle data to the vertex buffer. (staging buffer would be prefered here)
 	InitializeVertexBuffer(creator);
 
@@ -381,7 +381,16 @@ void ESG::D3DRendererLogic::SetUpPipeline(PipelineHandles handles)
 
 	//// Create Stage Info for Fragment Shader
 
+	handles.context->VSSetConstantBuffers(1, 1, constantMeshBuffer.GetAddressOf());
+	handles.context->VSSetConstantBuffers(0, 1, constantSceneBuffer.GetAddressOf());
+	handles.context->VSSetConstantBuffers(2, 1, constantModelBuffer.GetAddressOf());
+	handles.context->VSSetConstantBuffers(3, 1, constantLightBuffer.GetAddressOf());
 
+
+	handles.context->PSSetConstantBuffers(1, 1, constantMeshBuffer.GetAddressOf());
+	handles.context->PSSetConstantBuffers(0, 1, constantSceneBuffer.GetAddressOf());
+	handles.context->PSSetConstantBuffers(2, 1, constantModelBuffer.GetAddressOf());
+	handles.context->PSSetConstantBuffers(3, 1, constantLightBuffer.GetAddressOf());
 	// Assembly State
 	handles.context->IASetInputLayout(vertexFormat.Get());
 	handles.context->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
@@ -604,6 +613,37 @@ bool ESG::D3DRendererLogic::SetupDrawcalls() // I SCREWED THIS UP MAKES SO MUCH 
 		//VkDeviceSize offsets[] = { 0 };
 		//vkCmdBindVertexBuffers(commandBuffer, 0, 1, &vertexHandle, offsets);
 		//vkCmdDraw(commandBuffer, 4, draw_counter, 0, 0); // draw'em all!
+		PipelineHandles curHandles = GetCurrentPipelineHandles();
+		SetUpPipeline(curHandles);
+		for (int k = 0; k < 2; k++)
+		{
+			curHandles.context->UpdateSubresource(constantSceneBuffer.Get(), 0, nullptr, &scene, 0, 0);
+			curHandles.context->UpdateSubresource(constantMeshBuffer.Get(), 0, nullptr, &mesh, 0, 0);
+			curHandles.context->UpdateSubresource(constantLightBuffer.Get(), 0, nullptr, &lights, 0, 0);
+
+			for (int i = 0; i < levelData->levelInstances.size(); ++i)
+			{
+				const auto& instance = levelData->levelInstances[i];
+				const auto& object = levelData->levelModels[instance.modelIndex];
+				modelID.mod_id = instance.transformStart;
+				for (unsigned int j = 0; j < object.meshCount; ++j)
+				{
+					//auto model = levelData.levelModels[instance.modelIndex];
+					modelID.mat_id = levelData->levelMeshes[object.meshStart + j].materialIndex
+						+ object.materialStart;
+
+					curHandles.context->UpdateSubresource(constantModelBuffer.Get(), 0, nullptr, &modelID, 0, 0);
+
+					curHandles.context->DrawIndexedInstanced(levelData->levelMeshes[object.meshStart + j].drawInfo.indexCount,
+						instance.transformCount,
+						levelData->levelMeshes[object.meshStart + j].drawInfo.indexOffset + object.indexStart,
+						object.vertexStart,
+						0);
+
+				}
+			}
+		}
+		ReleasePipelineHandles(curHandles);
 	});
 	// NOTE: I went with multi-system approach for the ease of passing lambdas with "this"
 	// There is a built-in solution for this problem referred to as a "custom runner":
