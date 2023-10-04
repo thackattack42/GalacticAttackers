@@ -40,7 +40,7 @@ cbuffer SceneData : register(b0)
 
 cbuffer MeshData : register(b1)
 {
-    float4x4 worldMatrix[300];
+    float4x4 worldMatrix[500];
     ATTRIBUTES material[300];
 };
 

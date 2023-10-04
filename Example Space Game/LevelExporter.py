@@ -13,7 +13,7 @@ import math
 print("----------Begin Level Export----------")
 
 path = os.path.dirname(bpy.data.filepath)
-file = open(os.path.join(path, "GameLevel.txt"),"w")
+file = open(os.path.join(path, "GameLevel_1.txt"),"w")
 file.write("# Game Level Exporter v1.3\n")
 
 scene = bpy.context.scene
