@@ -19,7 +19,7 @@ namespace ESG
 
 	struct MeshData
 	{
-		GW::MATH::GMATRIXF worldMatrix[300];
+		GW::MATH::GMATRIXF worldMatrix[500];
 		H2B::ATTRIBUTES material[300];
 	};
 
@@ -61,7 +61,7 @@ namespace ESG
 		Microsoft::WRL::ComPtr<ID3D11InputLayout>	vertexFormat;
 
 
-		GW::MATH::GMATRIXF worldMatrix[300];
+		GW::MATH::GMATRIXF worldMatrix[500];
 		GW::MATH::GMATRIXF viewMatrix;
 		GW::MATH::GVECTORF viewTranslation;
 		GW::MATH::GMATRIXF projectionMatrix;
