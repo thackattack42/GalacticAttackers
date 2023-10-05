@@ -17,7 +17,11 @@ bool Application::Init()
 	game = std::make_shared<flecs::world>(); 
 	levelData = std::make_shared<Level_Data>();
 	//for changing level data				level positioning		level obj/mtl
-	bool success = levelData->LoadLevel("../GameLevel_1.txt", "../Models", log);
+	level = gameConfig->at("LevelFile").at("levelone").as<std::string>();
+	models = gameConfig->at("ModelFolder").at("models").as<std::string>();
+
+	if (levelData->LoadLevel(level.c_str(), models.c_str(), log) == false)
+		return false;
 	// init all other systems
 	if (InitWindow() == false) 
 		return false;
@@ -137,7 +141,7 @@ bool Application::InitWindow()
 	int ystart = gameConfig->at("Window").at("ystart").as<int>();
 	std::string title = gameConfig->at("Window").at("title").as<std::string>();
 	// open window
-	if (+window.Create(xstart, ystart, width, height, GWindowStyle::WINDOWEDLOCKED) &&
+	if (+window.Create(xstart, ystart, width, height, GWindowStyle::WINDOWEDBORDERED) &&
 		+window.SetWindowName(title.c_str())) {
 		return true;
 	}
