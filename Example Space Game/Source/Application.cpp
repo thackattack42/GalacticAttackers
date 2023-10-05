@@ -17,7 +17,22 @@ bool Application::Init()
 	game = std::make_shared<flecs::world>(); 
 	levelData = std::make_shared<Level_Data>();
 	//for changing level data				level positioning		level obj/mtl
-	level = gameConfig->at("LevelFile").at("levelone").as<std::string>();
+	switch (currentLevel)
+	{
+	case 1:
+		level = gameConfig->at("LevelFile").at("levelone").as<std::string>();
+		break;
+	case 2:
+		level = gameConfig->at("LevelFile").at("leveltwo").as<std::string>();
+		break;
+	case 3:
+		level = gameConfig->at("LevelFile").at("levelthree").as<std::string>();
+		break;
+	default:
+		level = gameConfig->at("LevelFile").at("levelone").as<std::string>();
+		break;
+	}
+	
 	models = gameConfig->at("ModelFolder").at("models").as<std::string>();
 
 	if (levelData->LoadLevel(level.c_str(), models.c_str(), log) == false)
