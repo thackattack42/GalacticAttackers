@@ -137,7 +137,7 @@ bool Application::InitWindow()
 	int ystart = gameConfig->at("Window").at("ystart").as<int>();
 	std::string title = gameConfig->at("Window").at("title").as<std::string>();
 	// open window
-	if (+window.Create(xstart, ystart, width, height, GWindowStyle::WINDOWEDLOCKED) &&
+	if (+window.Create(xstart, ystart, width, height, GWindowStyle::WINDOWEDBORDERED) &&
 		+window.SetWindowName(title.c_str())) {
 		return true;
 	}
