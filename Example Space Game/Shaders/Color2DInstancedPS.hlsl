@@ -66,7 +66,7 @@ float4 main(OutputToRasterizer output) : SV_TARGET
     float3 normSunDir = normalize(sunDirection.xyz);
     float3 surfaceNormal = normalize(output.normW);
     float lightRatio = saturate(dot(-normSunDir, surfaceNormal));
-    //direct = lightRatio * sunColor.xyz;
+    direct = lightRatio * sunColor.xyz;
 
     for (int i = 0; i < numLights; ++i)
     {

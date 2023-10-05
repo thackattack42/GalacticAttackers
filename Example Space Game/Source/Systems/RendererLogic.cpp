@@ -295,13 +295,15 @@ bool ESG::D3DRendererLogic::LoadGeometry()
 	direct11.GetDevice((void**)&creator);
 	proxy.Create();
 
-	viewTranslation = { 55.0f,5.0f, 25.0f, 1.0f };
-
+	/*viewTranslation = { 55.0f,5.0f, 25.0f, 1.0f };*/
+	viewTranslation = { 140.0f, 5.0f, 0.0f, 1.0f };
 	//ViewMatrix
-	GW::MATH::GVECTORF viewCenter = { 0.15f, 0.75f, 0.0f, 1.0f };
+	GW::MATH::GVECTORF viewCenter = { 0.0, 1.0f, 0.0f, 1.0f };
 	GW::MATH::GVECTORF viewUp = { 0.0f, 1.0f, 0.0f, 1.0f };
+	GW::MATH::GVECTORF vTranslate = { 0.0, -90.0f, 0.0f, 1.0f };
 	proxy.IdentityF(viewMatrix);
 	proxy.LookAtLHF(viewTranslation, viewCenter, viewUp, viewMatrix);
+	proxy.TranslateLocalF(viewMatrix, vTranslate, viewMatrix);
 
 	float ratio;
 	direct11.GetAspectRatio(ratio);
