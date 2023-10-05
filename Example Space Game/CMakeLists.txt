@@ -15,6 +15,8 @@ file(
 	GLOB_RECURSE SOURCE_FILES CONFIGURE_DEPENDS
 	./Source/*.h
 	./Source/*.cpp
+	./Source/HUD/*.h
+	./Source/HUD/*.cpp
     ./Shaders/*.hlsl
 	./gateware-main/Gateware.h
 	./flecs-3.1.4/flecs.h
