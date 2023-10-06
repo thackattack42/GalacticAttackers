@@ -1,11 +1,13 @@
 #include "Application.h"
+#include "Components\Identification.h"
+#include "Components\Visuals.h"
 // open some Gateware namespaces for conveinence 
 // NEVER do this in a header file!
 using namespace GW;
 using namespace CORE;
 using namespace SYSTEM;
 using namespace GRAPHICS;
-
+using namespace ESG;
 
 bool Application::Init()
 {
@@ -37,6 +39,28 @@ bool Application::Init()
 
 	if (levelData->LoadLevel(level.c_str(), models.c_str(), log) == false)
 		return false;
+
+	for (auto& i : levelData->blenderObjects) {
+		// create entity with same name as blender object
+		auto ent = game->entity(i.blendername);
+		ent.set<BlenderName>({ i.blendername });
+		ent.set<ModelBoundary>({
+			levelData->levelColliders[levelData->levelModels[i.modelIndex].colliderIndex] });
+		ent.set<ModelTransform>({
+			levelData->levelTransforms[i.transformIndex], i.transformIndex });
+		ent.set<Material>({ 1, 1, 1 });
+		ent.add<RenderingSystem>();
+
+	}
+	// for now just print objects added to FLECS
+	auto f = game->filter<BlenderName, ModelTransform>();
+	/*f.each([&log](BlenderName& n, ModelTransform& t) {
+		std::string obj = "FLECS Entity ";
+		obj += n.name + " located at X " + std::to_string(t.matrix.row4.x) +
+			" Y " + std::to_string(t.matrix.row4.y) + " Z " + std::to_string(t.matrix.row4.z);
+		log.LogCategorized("GAMEPLAY", obj.c_str());
+		});*/
+
 	// init all other systems
 	if (InitWindow() == false) 
 		return false;
