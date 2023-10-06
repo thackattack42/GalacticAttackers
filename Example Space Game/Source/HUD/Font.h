@@ -2,8 +2,8 @@
 
 #include <string>
 #include <vector>
-#include "../../../common/gateware/gateware.h"
-#include "../../../common/libraries/tinyxml2/tinyxml2.h"
+#include "../../gateware-main/Gateware.h"
+#include "../../Source/xml/tinyxml2/tinyxml2.h"
 
 struct Character
 {

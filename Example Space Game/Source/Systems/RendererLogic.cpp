@@ -2,6 +2,7 @@
 #include "../Components/Identification.h"
 #include "../Components/Visuals.h"
 #include "../Components/Physics.h"
+#include <DDSTextureLoader.h>
 #include <d3dcompiler.h>
 #pragma comment(lib, "d3dcompiler.lib") 
 using namespace ESG; // Example Space Game
@@ -26,8 +27,6 @@ bool ESG::D3DRendererLogic::Init(	std::shared_ptr<flecs::world> _game,
 	direct11 = d3d11;
 	window = _window;
 	levelData = _levelData;
-
-	
 	// Setup all vulkan resources
 	if (LoadShaders() == false) 
 		return false;

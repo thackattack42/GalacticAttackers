@@ -1,5 +1,5 @@
 #pragma once
-#include "../../../common/gateware/gateware.h"
+#include "../../gateware-main/Gateware.h"
 
 class Sprite
 {

@@ -17,6 +17,8 @@ file(
 	./Source/*.cpp
 	./Source/HUD/*.h
 	./Source/HUD/*.cpp
+	./Source/xml/tinyxml2/tinyxml2.h
+	./Source/xml/tinyxml2/tinyxml2.cpp
     ./Shaders/*.hlsl
 	./gateware-main/Gateware.h
 	./flecs-3.1.4/flecs.h
@@ -28,7 +30,9 @@ file(
 set_source_files_properties(./flecs-3.1.4/flecs.c PROPERTIES SKIP_PRECOMPILE_HEADERS ON)
 # Example: You can use this to remove files so later you can add them individually if needed.
 #list(FILTER SOURCE_FILES EXCLUDE REGEX ".*main.*.cpp$")
-
+include_directories(${CMAKE_SOURCE_DIR}./Source/directxtk11/inc)
+find_library(DDS_LIB_D NAMES DirectXTK11_x64_Debug PATHS ${CMAKE_SOURCE_DIR}./Source/directxtk11/lib)
+find_library(DDS_LIB_R NAMES DirectXTK11_x64_Release PATHS ${CMAKE_SOURCE_DIR}./Source/directxtk11/lib)
 # currently using unicode in some libraries on win32 but will change soon
 ADD_DEFINITIONS(-DUNICODE)
 ADD_DEFINITIONS(-D_UNICODE)
