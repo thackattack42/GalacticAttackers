@@ -2,6 +2,7 @@
 #include "../Components/Identification.h"
 #include "../Components/Visuals.h"
 #include "../Components/Physics.h"
+#include "../Components/Components.h"
 #include <d3dcompiler.h>
 #pragma comment(lib, "d3dcompiler.lib") 
 using namespace ESG; // Example Space Game
@@ -541,7 +542,6 @@ bool ESG::D3DRendererLogic::SetupDrawcalls() // I SCREWED THIS UP MAKES SO MUCH 
 {
 	// create a unique entity for the renderer (just a Tag)
 	// this only exists to ensure we can create systems that will run only once per frame. 
-	struct RenderingSystem {}; // local definition so we control iteration counts
 	game->entity("Rendering System").add<RenderingSystem>();
 	// an instanced renderer is complex and needs to run additional system code once per frame
 	// to do this I create 3 systems:
