@@ -11,8 +11,12 @@ namespace ESG
 		GW::MATH::GMATRIXF matrix;
 		unsigned int rendererIndex;
 	};
-	struct Instance {};
-	struct Object {};
+	struct Instance { 
+		Level_Data::MODEL_INSTANCES instance;
+	};
+	struct Object {
+		Level_Data::LEVEL_MODEL object;
+	};
 	struct RenderingSystem {};
 	//struct Material { float red, greem, blue; };
 }
