@@ -14,5 +14,6 @@ namespace ESG
 	struct Instance {};
 	struct Object {};
 	struct RenderingSystem {};
+	//struct Material { float red, greem, blue; };
 }
 #endif

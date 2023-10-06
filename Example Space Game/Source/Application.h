@@ -17,6 +17,8 @@
 #include "Systems/BulletLogic.h"
 #include "Systems/EnemyLogic.h"
 
+#include "Components/Components.h"
+
 // Allocates and runs all sub-systems essential to operating the game
 class Application 
 {

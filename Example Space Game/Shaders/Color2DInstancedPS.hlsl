@@ -51,6 +51,7 @@ cbuffer MODEL_IDS : register(b2)
     uint mat_id;
     uint numLights;
     float padding;
+    float4 color;
 };
 
 cbuffer LightData : register(b3)
