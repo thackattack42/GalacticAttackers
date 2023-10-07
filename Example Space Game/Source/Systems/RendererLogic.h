@@ -2,9 +2,15 @@
 #ifndef RENDERERLOGIC_H
 #define RENDERERLOGIC_H
 
+
+#define TEXTURES_PATH "../../DDS"
+#define LTEXTURES_PATH L"../../DDS"
+#define XML_PATH "../xml"
+
 // Contains our global game settings
 #include "../GameConfig.h"
-
+#include "../../HUD/Font.h"
+#include "../../HUD/Sprite.h"
 // example space game (avoid name collisions)
 namespace ESG
 {
@@ -35,6 +41,15 @@ namespace ESG
 		Level_Data::LIGHT_SETTINGS myLights[400];
 	};
 
+	using HUD = std::vector<Sprite>;
+
+	struct SPRITE_DATA
+	{
+		GW::MATH::GVECTORF pos_scale;
+		GW::MATH::GVECTORF rotation_depth;
+	};
+
+	enum TEXTURE_ID { DRAGON = 0, HUD_BACKPLATE, HUD_HP_LEFT, HUD_HP_RIGHT, HUD_MP_LEFT, HUD_MP_RIGHT, HUD_STAM_BACKPLATE, HUD_STAM, HUD_CENTER, FONT_CONSOLAS, COUNT };
 
 	class D3DRendererLogic
 	{
@@ -58,6 +73,7 @@ namespace ESG
 		Microsoft::WRL::ComPtr<ID3D11VertexShader>	vertexShader;
 		Microsoft::WRL::ComPtr<ID3D11PixelShader>	pixelShader;
 		Microsoft::WRL::ComPtr<ID3D11InputLayout>	vertexFormat;
+		Microsoft::WRL::ComPtr<ID3D11Buffer>		vertexBufferDynamicText;
 
 
 		GW::MATH::GMATRIXF worldMatrix[500];
@@ -76,12 +92,25 @@ namespace ESG
 		Microsoft::WRL::ComPtr<ID3D11Buffer> constantMeshBuffer;
 		Microsoft::WRL::ComPtr<ID3D11Buffer> constantModelBuffer;
 		Microsoft::WRL::ComPtr<ID3D11Buffer> constantLightBuffer;
+		Microsoft::WRL::ComPtr<ID3D11Buffer> constantHUD;
 
 		std::string vertexShaderSource;
 		std::string pixelShaderSource;
+
+		HUD	hud;
+		Font consolas32;
+		Text dynamicText;
+		SPRITE_DATA	constantBufferData = { 0 };
+		Microsoft::WRL::ComPtr<ID3D11ShaderResourceView> shaderResourceView[TEXTURE_ID::COUNT];
+		
+
 		// used to trigger clean up of vulkan resources
 		GW::CORE::GEventReceiver shutdown;
 	public:
+		std::vector<Sprite>	LoadHudFromXML(std::string filepath);
+		SPRITE_DATA UpdateSpriteConstantBufferData(const Sprite& s);
+		SPRITE_DATA UpdateTextConstantBufferData(const Text& s);
+
 		// attach the required logic to the ECS 
 		bool Init(	std::shared_ptr<flecs::world> _game,
 					std::weak_ptr<const GameConfig> _gameConfig,

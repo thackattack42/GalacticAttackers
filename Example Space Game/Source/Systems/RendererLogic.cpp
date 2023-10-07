@@ -45,6 +45,79 @@ bool ESG::D3DRendererLogic::Init(	std::shared_ptr<flecs::world> _game,
 	return true;
 }
 
+std::vector<Sprite>	ESG::D3DRendererLogic::LoadHudFromXML(std::string filepath)
+{
+	std::vector<Sprite> result;
+
+	tinyxml2::XMLDocument document;
+	tinyxml2::XMLError error_message = document.LoadFile(filepath.c_str());
+	if (error_message != tinyxml2::XML_SUCCESS)
+	{
+		std::cout << "XML file [" + filepath + "] did not load properly." << std::endl;
+		return std::vector<Sprite>();
+	}
+
+	std::string name = document.FirstChildElement("hud")->FindAttribute("name")->Value();
+	GW::MATH2D::GVECTOR2F screen_size;
+	screen_size.x = atof(document.FirstChildElement("hud")->FindAttribute("width")->Value());
+	screen_size.y = atof(document.FirstChildElement("hud")->FindAttribute("height")->Value());
+
+	tinyxml2::XMLElement* current = document.FirstChildElement("hud")->FirstChildElement("element");
+	while (current)
+	{
+		Sprite s = Sprite();
+		name = current->FindAttribute("name")->Value();
+		FLOAT x = atof(current->FindAttribute("pos_x")->Value());
+		FLOAT y = atof(current->FindAttribute("pos_y")->Value());
+		FLOAT sx = atof(current->FindAttribute("scale_x")->Value());
+		FLOAT sy = atof(current->FindAttribute("scale_y")->Value());
+		FLOAT r = atof(current->FindAttribute("rotation")->Value());
+		FLOAT d = atof(current->FindAttribute("depth")->Value());
+		GW::MATH2D::GVECTOR2F s_min, s_max;
+		s_min.x = atof(current->FindAttribute("sr_x")->Value());
+		s_min.y = atof(current->FindAttribute("sr_y")->Value());
+		s_max.x = atof(current->FindAttribute("sr_w")->Value());
+		s_max.y = atof(current->FindAttribute("sr_h")->Value());
+		UINT tid = atoi(current->FindAttribute("textureID")->Value());
+
+		s.SetName(name);
+		s.SetScale(sx, sy);
+		s.SetPosition(x, y);
+		s.SetRotation(r);
+		s.SetDepth(d);
+		s.SetScissorRect({ s_min, s_max });
+		s.SetTextureIndex(tid);
+
+		result.push_back(s);
+
+		current = current->NextSiblingElement();
+	}
+	return result;
+}
+
+SPRITE_DATA ESG::D3DRendererLogic::UpdateSpriteConstantBufferData(const Sprite& s)
+{
+	SPRITE_DATA temp = { 0 };
+	temp.pos_scale.x = s.GetPosition().x;
+	temp.pos_scale.y = s.GetPosition().y;
+	temp.pos_scale.z = s.GetScale().x;
+	temp.pos_scale.w = s.GetScale().y;
+	temp.rotation_depth.x = s.GetRotation();
+	temp.rotation_depth.y = s.GetDepth();
+	return temp;
+}
+SPRITE_DATA ESG::D3DRendererLogic::UpdateTextConstantBufferData(const Text& s)
+{
+	SPRITE_DATA temp = { 0 };
+	temp.pos_scale.x = s.GetPosition().x;
+	temp.pos_scale.y = s.GetPosition().y;
+	temp.pos_scale.z = s.GetScale().x;
+	temp.pos_scale.w = s.GetScale().y;
+	temp.rotation_depth.x = s.GetRotation();
+	temp.rotation_depth.y = s.GetDepth();
+	return temp;
+}
+
 bool ESG::D3DRendererLogic::Activate(bool runSystem)
 {
 	if (startDraw.is_alive() &&
@@ -103,7 +176,7 @@ bool ESG::D3DRendererLogic::LoadShaders()
 	if (vertexShaderSource.empty() || pixelShaderSource.empty())
 		return false;
 	
-
+	return true;
 }
 
 void ESG::D3DRendererLogic::InitializeGraphics()
@@ -347,6 +420,48 @@ bool ESG::D3DRendererLogic::LoadGeometry()
 	// Transfer triangle data to the vertex buffer. (staging buffer would be prefered here)
 	InitializeVertexBuffer(creator);
 	InitializeIndexBuffer(creator);
+
+	
+
+	std::wstring texture_names[] =
+	{
+		L"greendragon.dds",
+		L"HUD_Sharp_backplate.dds",
+		L"Health_left.dds",
+		L"Health_right.dds",
+		L"Mana_left.dds",
+		L"Mana_right.dds",
+		L"Stamina_backplate.dds",
+		L"Stamina.dds",
+		L"Center_top.dds",
+		L"font_consolas_32.dds"
+	};
+
+	for (size_t i = 0; i < ARRAYSIZE(texture_names); i++)
+	{
+		// create a wide string to store the file path and file name
+		std::wstring texturePath = LTEXTURES_PATH;
+		texturePath += texture_names[i];
+		// load texture from disk 
+		DirectX::CreateDDSTextureFromFile(creator, texturePath.c_str(), nullptr, shaderResourceView[i].GetAddressOf());
+	}
+
+	std::string filepath = XML_PATH;
+	filepath += "font_consolas_32.xml";
+	bool success = consolas32.LoadFromXML(filepath);
+
+	dynamicText = Text();
+	dynamicText.SetText("HighScore:");
+	dynamicText.SetFont(&consolas32);
+	dynamicText.SetPosition(10.0f, 100.0f);
+	dynamicText.SetScale(0.75f, 0.75f);
+	dynamicText.SetRotation(0.0f);
+	dynamicText.SetDepth(0.01f);
+
+
+	CD3D11_BUFFER_DESC dvbDesc(sizeof(TextVertex) * 6 * 5000, D3D11_BIND_VERTEX_BUFFER, D3D11_USAGE_DYNAMIC, D3D11_CPU_ACCESS_WRITE);
+	creator->CreateBuffer(&dvbDesc, nullptr, vertexBufferDynamicText.GetAddressOf());
+
 	return true;
 }
 
@@ -394,6 +509,18 @@ void ESG::D3DRendererLogic::SetUpPipeline(PipelineHandles handles)
 	// Assembly State
 	handles.context->IASetInputLayout(vertexFormat.Get());
 	handles.context->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+
+	handles.context->IASetVertexBuffers(0, 1, vertexBufferDynamicText.GetAddressOf(), strides, offsets);
+	// change the topology to a triangle list
+	handles.context->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+	// update the constant buffer data for the text
+	constantBufferData = UpdateTextConstantBufferData(dynamicText);
+	// bind the texture used for rendering the font
+	handles.context->PSSetShaderResources(0, 1, shaderResourceView[TEXTURE_ID::FONT_CONSOLAS].GetAddressOf());
+	// update the constant buffer with the text's data
+	handles.context->UpdateSubresource(constantHUD.Get(), 0, nullptr, &constantBufferData, 0, 0);
+	// draw the static text using the number of vertices
+	handles.context->Draw(dynamicText.GetVertices().size(), 0);
 	// Vertex Input State
 
 	//// viewport state (we still need to set this up even though we will overwrite the values)
