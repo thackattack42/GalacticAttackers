@@ -50,6 +50,8 @@ bool Application::Init()
 			levelData->levelTransforms[i.transformIndex], i.transformIndex });
 		ent.set<Material>({ 1, 1, 1 });
 		ent.add<RenderingSystem>();
+		ent.set<Instance>({ levelData->levelInstances[i.modelIndex] });
+		ent.set<Object>({ levelData->levelModels[levelData->levelInstances[i.modelIndex].modelIndex]});
 
 	}
 	// for now just print objects added to FLECS
