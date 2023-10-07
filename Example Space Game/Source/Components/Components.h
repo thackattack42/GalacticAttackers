@@ -12,10 +12,14 @@ namespace ESG
 		unsigned int rendererIndex;
 	};
 	struct Instance { 
-		Level_Data::MODEL_INSTANCES instance;
+		unsigned int transformStart, transformCount;
 	};
 	struct Object {
-		Level_Data::LEVEL_MODEL object;
+		unsigned vertexCount, indexCount, materialCount, meshCount;
+		unsigned vertexStart, indexStart, materialStart, meshStart;
+	};
+	struct Mesh {
+		unsigned indexCount, indexOffset, materialIndex;
 	};
 	struct RenderingSystem {};
 	//struct Material { float red, greem, blue; };

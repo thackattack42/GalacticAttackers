@@ -1,6 +1,7 @@
 #include "Application.h"
 #include "Components\Identification.h"
 #include "Components\Visuals.h"
+#include "Components\Components.h"
 // open some Gateware namespaces for conveinence 
 // NEVER do this in a header file!
 using namespace GW;
@@ -50,13 +51,26 @@ bool Application::Init()
 			levelData->levelTransforms[i.transformIndex], i.transformIndex });
 		ent.set<Material>({ 1, 1, 1 });
 		ent.add<RenderingSystem>();
-		ent.set<Instance>({ levelData->levelInstances[i.modelIndex] });
-		ent.set<Object>({ levelData->levelModels[levelData->levelInstances[i.modelIndex].modelIndex]});
+		ent.set<Instance>({ levelData->levelInstances[i.modelIndex].transformStart,
+							levelData->levelInstances[i.modelIndex].transformCount });
+
+		ent.set<Object>({ levelData->levelModels[i.modelIndex].vertexCount,
+						levelData->levelModels[i.modelIndex].indexCount,
+						levelData->levelModels[i.modelIndex].materialCount,
+						levelData->levelModels[i.modelIndex].meshCount,
+						levelData->levelModels[i.modelIndex].vertexStart,
+						levelData->levelModels[i.modelIndex].indexStart,
+						levelData->levelModels[i.modelIndex].materialStart,
+						levelData->levelModels[i.modelIndex].meshStart });
+
+		ent.set<Mesh>({ levelData->levelMeshes[i.modelIndex].drawInfo.indexCount,
+						levelData->levelMeshes[i.modelIndex].drawInfo.indexOffset,
+						levelData->levelMeshes[i.modelIndex].materialIndex });
 
 	}
 	// for now just print objects added to FLECS
-	auto f = game->filter<BlenderName, ModelTransform>();
-	/*f.each([&log](BlenderName& n, ModelTransform& t) {
+	/*auto f = game->filter<BlenderName, ModelTransform>();
+	f.each([&log](BlenderName& n, ModelTransform& t) {
 		std::string obj = "FLECS Entity ";
 		obj += n.name + " located at X " + std::to_string(t.matrix.row4.x) +
 			" Y " + std::to_string(t.matrix.row4.y) + " Z " + std::to_string(t.matrix.row4.z);

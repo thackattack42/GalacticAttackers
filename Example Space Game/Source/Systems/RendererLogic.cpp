@@ -620,27 +620,24 @@ bool ESG::D3DRendererLogic::SetupDrawcalls() // I SCREWED THIS UP MAKES SO MUCH 
 			curHandles.context->UpdateSubresource(constantMeshBuffer.Get(), 0, nullptr, &mesh, 0, 0);
 			curHandles.context->UpdateSubresource(constantLightBuffer.Get(), 0, nullptr, &lights, 0, 0);
 
-			for (int i = 0; i < levelData->levelInstances.size(); ++i)
-			{
-				const auto& instance = levelData->levelInstances[i];
-				const auto& object = levelData->levelModels[instance.modelIndex];
-				modelID.mod_id = instance.transformStart;
-				for (unsigned int j = 0; j < object.meshCount; ++j)
+				modelID.mod_id = e.get_mut<Instance>()->transformStart;
+				for (unsigned int j = 0; j < e.get_mut<Object>()->meshCount; ++j)
 				{
-					//auto model = levelData.levelModels[instance.modelIndex];
-					modelID.mat_id = levelData->levelMeshes[object.meshStart + j].materialIndex
-						+ object.materialStart;
+					auto meshCount = e.get_mut<Object>()->meshStart + j;
+					modelID.mat_id = levelData->levelMeshes[meshCount].materialIndex + e.get_mut<Object>()->materialStart;
+
+					auto colorModel = e.get_mut<Material>()->diffuse.value;
+					modelID.color = GW::MATH::GVECTORF{ colorModel.x, colorModel.y, colorModel.z, 1 };
 
 					curHandles.context->UpdateSubresource(constantModelBuffer.Get(), 0, nullptr, &modelID, 0, 0);
 
-					curHandles.context->DrawIndexedInstanced(levelData->levelMeshes[object.meshStart + j].drawInfo.indexCount,
-						instance.transformCount,
-						levelData->levelMeshes[object.meshStart + j].drawInfo.indexOffset + object.indexStart,
-						object.vertexStart,
+					curHandles.context->DrawIndexedInstanced(levelData->levelMeshes[meshCount].drawInfo.indexCount,
+						e.get_mut<Instance>()->transformCount,
+						levelData->levelMeshes[meshCount].drawInfo.indexOffset + e.get_mut<Object>()->indexStart,
+						e.get_mut<Object>()->vertexStart,
 						0);
 
 				}
-			}
 		ReleasePipelineHandles(curHandles);
 	});
 	// NOTE: I went with multi-system approach for the ease of passing lambdas with "this"
