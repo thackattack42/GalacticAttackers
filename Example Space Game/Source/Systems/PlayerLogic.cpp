@@ -145,7 +145,7 @@ bool ESG::PlayerLogic::ProcessInputEvents(flecs::world& stage)
 		}
 		if (fire) {
 			// grab player one and set them to a firing state
-			stage.entity("Player One").add<Firing>();
+			stage.entity("Player").add<Firing>();
 		}
 	}
 	return true;
