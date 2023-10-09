@@ -1,11 +1,14 @@
 #include "Application.h"
+#include "Components\Identification.h"
+#include "Components\Visuals.h"
+#include "Components\Components.h"
 // open some Gateware namespaces for conveinence 
 // NEVER do this in a header file!
 using namespace GW;
 using namespace CORE;
 using namespace SYSTEM;
 using namespace GRAPHICS;
-
+using namespace ESG;
 
 bool Application::Init()
 {
@@ -17,11 +20,63 @@ bool Application::Init()
 	game = std::make_shared<flecs::world>(); 
 	levelData = std::make_shared<Level_Data>();
 	//for changing level data				level positioning		level obj/mtl
-	level = gameConfig->at("LevelFile").at("levelone").as<std::string>();
+	switch (currentLevel)
+	{
+	case 1:
+		level = gameConfig->at("LevelFile").at("levelone").as<std::string>();
+		break;
+	case 2:
+		level = gameConfig->at("LevelFile").at("leveltwo").as<std::string>();
+		break;
+	case 3:
+		level = gameConfig->at("LevelFile").at("levelthree").as<std::string>();
+		break;
+	default:
+		level = gameConfig->at("LevelFile").at("levelone").as<std::string>();
+		break;
+	}
+	
 	models = gameConfig->at("ModelFolder").at("models").as<std::string>();
 
 	if (levelData->LoadLevel(level.c_str(), models.c_str(), log) == false)
 		return false;
+
+	for (auto& i : levelData->blenderObjects) {
+		// create entity with same name as blender object
+		auto ent = game->entity(i.blendername);
+		ent.set<BlenderName>({ i.blendername });
+		ent.set<ModelBoundary>({
+			levelData->levelColliders[levelData->levelModels[i.modelIndex].colliderIndex] });
+		ent.set<ModelTransform>({
+			levelData->levelTransforms[i.transformIndex], i.transformIndex });
+		ent.set<Material>({ 1, 1, 1 });
+		ent.add<RenderingSystem>();
+		ent.set<Instance>({ levelData->levelInstances[i.modelIndex].transformStart,
+							levelData->levelInstances[i.modelIndex].transformCount });
+
+		ent.set<Object>({ levelData->levelModels[i.modelIndex].vertexCount,
+						levelData->levelModels[i.modelIndex].indexCount,
+						levelData->levelModels[i.modelIndex].materialCount,
+						levelData->levelModels[i.modelIndex].meshCount,
+						levelData->levelModels[i.modelIndex].vertexStart,
+						levelData->levelModels[i.modelIndex].indexStart,
+						levelData->levelModels[i.modelIndex].materialStart,
+						levelData->levelModels[i.modelIndex].meshStart });
+
+		ent.set<Mesh>({ levelData->levelMeshes[i.modelIndex].drawInfo.indexCount,
+						levelData->levelMeshes[i.modelIndex].drawInfo.indexOffset,
+						levelData->levelMeshes[i.modelIndex].materialIndex });
+
+	}
+	// for now just print objects added to FLECS
+	/*auto f = game->filter<BlenderName, ModelTransform>();
+	f.each([&log](BlenderName& n, ModelTransform& t) {
+		std::string obj = "FLECS Entity ";
+		obj += n.name + " located at X " + std::to_string(t.matrix.row4.x) +
+			" Y " + std::to_string(t.matrix.row4.y) + " Z " + std::to_string(t.matrix.row4.z);
+		log.LogCategorized("GAMEPLAY", obj.c_str());
+		});*/
+
 	// init all other systems
 	if (InitWindow() == false) 
 		return false;

@@ -51,6 +51,7 @@ cbuffer MODEL_IDS : register(b2)
     uint mat_id;
     uint numLights;
     float padding;
+    float4 color;
 };
 
 cbuffer LightData : register(b3)
@@ -101,7 +102,7 @@ float4 main(OutputToRasterizer output) : SV_TARGET
     }
     float3 indirect = sunAmbient.xyz * material[mat_id].Ka;
 
-    float3 diffuse = material[mat_id].Kd;
+    float3 diffuse = material[mat_id].Kd * color.xyz;
 
     float3 emissive = material[mat_id].Ke;
 

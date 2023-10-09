@@ -2,6 +2,7 @@
 #include "../Components/Identification.h"
 #include "../Components/Visuals.h"
 #include "../Components/Physics.h"
+#include "../Components/Components.h"
 #include "Prefabs.h"
 
 bool ESG::PlayerData::Load(  std::shared_ptr<flecs::world> _game, 
@@ -18,16 +19,25 @@ bool ESG::PlayerData::Load(  std::shared_ptr<flecs::world> _game,
 	float ystart = (*readCfg).at("Player1").at("ystart").as<float>();
 	float scale = (*readCfg).at("Player1").at("scale").as<float>();
 
-	// Create Player One
-	_game->entity("Player One")
-	.set([&](Position& p, Orientation& o, Material& m, ControllerID& c) {
-		c = { 0 };
-		p = { xstart, ystart };
-		m = { red, green, blue };
-		o = { GW::MATH2D::GIdentityMatrix2F };
-		GW::MATH2D::GMatrix2D::Scale2F(o.value, GW::MATH2D::GVECTOR2F{ scale, scale }, o.value);
-	})
-	.add<Player>(); // Tag this entity as a Player
+	//// Create Player One
+	//_game->entity("Player One")
+	//.set([&](Position& p, Orientation& o, Material& m, ControllerID& c) {
+	//	c = { 0 };
+	//	p = { xstart, ystart };
+	//	m = { red, green, blue };
+	//	o = { GW::MATH2D::GIdentityMatrix2F };
+	//	GW::MATH2D::GMatrix2D::Scale2F(o.value, GW::MATH2D::GVECTOR2F{ scale, scale }, o.value);
+	//})
+	//.add<Player>(); // Tag this entity as a Player
+
+	auto e = _game->lookup("Player");
+	// if the entity is valid
+	if (e.is_valid()) {
+		e.add<Player>();
+		e.set<Material>({ red, green, blue });
+		e.set<Position>({ xstart, ystart });
+		e.set<ControllerID>({ 0 });
+	}
 
 	return true;
 }

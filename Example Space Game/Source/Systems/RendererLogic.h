@@ -34,6 +34,7 @@ namespace ESG
 		unsigned int mat_id;
 		unsigned int numLights;
 		float padding;
+		GW::MATH::GVECTORF color;
 	};
 
 	struct LightData

@@ -17,6 +17,8 @@
 #include "Systems/BulletLogic.h"
 #include "Systems/EnemyLogic.h"
 
+#include "Components/Components.h"
+
 // Allocates and runs all sub-systems essential to operating the game
 class Application 
 {
@@ -35,6 +37,7 @@ class Application
 	std::shared_ptr<flecs::world> game; // ECS database for gameplay
 	std::shared_ptr<GameConfig> gameConfig; // .ini file game settings
 	std::shared_ptr<Level_Data> levelData;
+	int currentLevel;
 	std::string level;
 	std::string models;
 	// ECS Entities and Prefabs that need to be loaded
