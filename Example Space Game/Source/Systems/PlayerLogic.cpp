@@ -29,8 +29,8 @@ bool ESG::PlayerLogic::Init(	std::shared_ptr<flecs::world> _game,
 	// Init any helper systems required for this task
 	std::shared_ptr<const GameConfig> readCfg = gameConfig.lock();
 	int width = (*readCfg).at("Window").at("width").as<int>();
-	float speed = (*readCfg).at("Player1").at("speed").as<float>();
-	chargeTime = (*readCfg).at("Player1").at("chargeTime").as<float>();
+	float speed = (*readCfg).at("Player").at("speed").as<float>();
+	chargeTime = (*readCfg).at("Player").at("chargeTime").as<float>();
 	// add logic for updating players
 	playerSystem = game->system<Player, Position, ControllerID>("Player System")
 		.iter([this, speed](flecs::iter it, Player*, Position* p, ControllerID* c) {
