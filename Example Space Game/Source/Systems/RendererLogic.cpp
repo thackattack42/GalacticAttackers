@@ -2,11 +2,8 @@
 #include "../Components/Identification.h"
 #include "../Components/Visuals.h"
 #include "../Components/Physics.h"
-<<<<<<< HEAD
 #include <DDSTextureLoader.h>
-=======
 #include "../Components/Components.h"
->>>>>>> main
 #include <d3dcompiler.h>
 #pragma comment(lib, "d3dcompiler.lib") 
 using namespace ESG; // Example Space Game

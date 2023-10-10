@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.16)
+	cmake_minimum_required(VERSION 3.16)
 
 project(ExampleSpaceGame)
 
@@ -19,6 +19,7 @@ file(
 	./Source/HUD/*.cpp
 	./Source/xml/tinyxml2/tinyxml2.h
 	./Source/xml/tinyxml2/tinyxml2.cpp
+	./Source/Components/*.h
     ./Shaders/*.hlsl
 	./gateware-main/Gateware.h
 	./flecs-3.1.4/flecs.h
