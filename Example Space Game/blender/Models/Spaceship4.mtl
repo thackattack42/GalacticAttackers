@@ -1,10 +1,10 @@
-# Blender MTL File: 'TemplateLvl.blend'
+# Blender MTL File: 'StartingScreen.blend'
 # Material Count: 2
 
-newmtl Black.002
+newmtl Orange.002
 Ns 96.078421
 Ka 1.000000 1.000000 1.000000
-Kd 0.018920 0.018920 0.018920
+Kd 0.626830 0.258515 0.115303
 Ks 0.500000 0.500000 0.500000
 Ke 0.000000 0.000000 0.000000
 Ni 1.000000
