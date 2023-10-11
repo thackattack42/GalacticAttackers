@@ -33,7 +33,7 @@ bool ESG::BulletData::Load(	std::shared_ptr<flecs::world> _game,
 	GW::AUDIO::GSound shoot;
 	shoot.Create(fireFX.c_str(), _audioEngine, 0.15f); // we need a global music & sfx volumes
 	// add prefab to ECS
-	auto lazerPrefab = _game->prefab()
+	auto lazerPrefab = _game->prefab("Crystal3")
 		// .set<> in a prefab means components are shared (instanced)
 		.set<Material>({ red, green, blue })
 		.set<Orientation>({ world })
