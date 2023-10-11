@@ -31,6 +31,9 @@ bool Application::Init()
 	case 3:
 		level = gameConfig->at("LevelFile").at("levelthree").as<std::string>();
 		break;
+	case 4:
+		level = gameConfig->at("LevelFile").at("levelstarting").as<std::string>();
+		break;
 	default:
 		level = gameConfig->at("LevelFile").at("levelone").as<std::string>();
 		break;
@@ -262,7 +265,7 @@ bool Application::InitSystems()
 {
 	// connect systems to global ECS
 	if (playerSystem.Init(	game, gameConfig, immediateInput, bufferedInput, 
-							gamePads, audioEngine, eventPusher) == false)
+							gamePads, audioEngine, eventPusher, levelData) == false)
 		return false;
 	if (levelSystem.Init(game, gameConfig, audioEngine) == false)
 		return false;
