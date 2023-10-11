@@ -30,6 +30,7 @@ namespace ESG
 		float chargeStart = 0, chargeEnd = 0, chargeTime;
 		// event responder
 		GW::CORE::GEventResponder onExplode;
+		std::shared_ptr<Level_Data> levelData;
 
 	public:
 		// attach the required logic to the ECS 
@@ -39,7 +40,8 @@ namespace ESG
 					GW::INPUT::GBufferedInput _bufferedInput,
 					GW::INPUT::GController _controllerInput,
 					GW::AUDIO::GAudio _audioEngine,
-					GW::CORE::GEventGenerator _eventPusher);
+					GW::CORE::GEventGenerator _eventPusher,
+					std::shared_ptr<Level_Data> _levelData);
 		// control if the system is actively running
 		bool Activate(bool runSystem);
 		// release any resources allocated by the system

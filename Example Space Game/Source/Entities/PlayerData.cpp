@@ -38,7 +38,6 @@ bool ESG::PlayerData::Load(  std::shared_ptr<flecs::world> _game,
 		e.set<Position>({ xstart, ystart });
 		e.set<ControllerID>({ 0 });
 	}
-
 	return true;
 }
 

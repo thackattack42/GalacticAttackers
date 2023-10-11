@@ -265,7 +265,7 @@ bool Application::InitSystems()
 {
 	// connect systems to global ECS
 	if (playerSystem.Init(	game, gameConfig, immediateInput, bufferedInput, 
-							gamePads, audioEngine, eventPusher) == false)
+							gamePads, audioEngine, eventPusher, levelData) == false)
 		return false;
 	if (levelSystem.Init(game, gameConfig, audioEngine) == false)
 		return false;
