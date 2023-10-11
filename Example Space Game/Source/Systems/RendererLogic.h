@@ -2,15 +2,14 @@
 #ifndef RENDERERLOGIC_H
 #define RENDERERLOGIC_H
 
-
-#define TEXTURES_PATH "../../DDS"
-#define LTEXTURES_PATH L"../../DDS"
-#define XML_PATH "../xml"
+#define TEXTURES_PATH "../../DDS/"
+#define LTEXTURES_PATH L"../../DDS/"
+#define XML_PATH "C:/Users/Lmntlklr1/source/repos/dev4-2310/Example Space Game/Source/xml/font_consolas_32.xml"
 
 // Contains our global game settings
 #include "../GameConfig.h"
-#include "../../HUD/Font.h"
-#include "../../HUD/Sprite.h"
+#include "../../Source/HUD/Font.h"
+#include "../../Source/HUD/Sprite.h"
 // example space game (avoid name collisions)
 namespace ESG
 {
@@ -74,7 +73,7 @@ namespace ESG
 		Microsoft::WRL::ComPtr<ID3D11VertexShader>	vertexShader;
 		Microsoft::WRL::ComPtr<ID3D11PixelShader>	pixelShader;
 		Microsoft::WRL::ComPtr<ID3D11InputLayout>	vertexFormat;
-		Microsoft::WRL::ComPtr<ID3D11Buffer>		vertexBufferDynamicText;
+		Microsoft::WRL::ComPtr<ID3D11Buffer>		vertexBufferStaticText;
 
 
 		GW::MATH::GMATRIXF worldMatrix[500];
@@ -93,16 +92,21 @@ namespace ESG
 		Microsoft::WRL::ComPtr<ID3D11Buffer> constantMeshBuffer;
 		Microsoft::WRL::ComPtr<ID3D11Buffer> constantModelBuffer;
 		Microsoft::WRL::ComPtr<ID3D11Buffer> constantLightBuffer;
-		Microsoft::WRL::ComPtr<ID3D11Buffer> constantHUD;
+		Microsoft::WRL::ComPtr<ID3D11Buffer> constantBufferHUD;
 
 		std::string vertexShaderSource;
 		std::string pixelShaderSource;
 
 		HUD	hud;
 		Font consolas32;
-		Text dynamicText;
+		Text staticText;
 		SPRITE_DATA	constantBufferData = { 0 };
 		Microsoft::WRL::ComPtr<ID3D11ShaderResourceView> shaderResourceView[TEXTURE_ID::COUNT];
+		Microsoft::WRL::ComPtr<ID3D11SamplerState>			samplerState;
+
+		Microsoft::WRL::ComPtr<ID3D11BlendState>			blendState;
+		Microsoft::WRL::ComPtr<ID3D11DepthStencilState>		depthStencilState;
+		Microsoft::WRL::ComPtr<ID3D11RasterizerState>		rasterizerState;
 		
 
 		// used to trigger clean up of vulkan resources

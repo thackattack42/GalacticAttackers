@@ -2,7 +2,7 @@
 #include "../Components/Identification.h"
 #include "../Components/Visuals.h"
 #include "../Components/Physics.h"
-#include <DDSTextureLoader.h>
+#include <DDSTextureloader.h>
 #include "../Components/Components.h"
 #include <d3dcompiler.h>
 #pragma comment(lib, "d3dcompiler.lib") 
@@ -422,7 +422,25 @@ bool ESG::D3DRendererLogic::LoadGeometry()
 	InitializeVertexBuffer(creator);
 	InitializeIndexBuffer(creator);
 
-	
+	CD3D11_BLEND_DESC blendDesc = CD3D11_BLEND_DESC(CD3D11_DEFAULT());
+	blendDesc.RenderTarget[0].BlendEnable = true;
+	blendDesc.RenderTarget[0].SrcBlend = D3D11_BLEND_SRC_ALPHA;
+	blendDesc.RenderTarget[0].DestBlend = D3D11_BLEND_INV_SRC_ALPHA;
+	blendDesc.RenderTarget[0].SrcBlendAlpha = D3D11_BLEND_SRC_ALPHA;
+	blendDesc.RenderTarget[0].DestBlendAlpha = D3D11_BLEND_INV_SRC_ALPHA;
+	blendDesc.RenderTarget[0].RenderTargetWriteMask = D3D11_COLOR_WRITE_ENABLE_ALL;
+	creator->CreateBlendState(&blendDesc, blendState.GetAddressOf());
+
+	// creation of the depth stencil state
+	// this is used to blend with objects when they are on the same z-plane
+	// the depth function needs to be set to less_equal instead of less
+	CD3D11_DEPTH_STENCIL_DESC depthStencilDesc = CD3D11_DEPTH_STENCIL_DESC(CD3D11_DEFAULT());
+	depthStencilDesc.DepthFunc = D3D11_COMPARISON_LESS_EQUAL;
+	creator->CreateDepthStencilState(&depthStencilDesc, depthStencilState.GetAddressOf());
+
+	CD3D11_RASTERIZER_DESC rasterizerDesc = CD3D11_RASTERIZER_DESC(CD3D11_DEFAULT());
+	rasterizerDesc.ScissorEnable = true;
+	creator->CreateRasterizerState(&rasterizerDesc, rasterizerState.GetAddressOf());
 
 	std::wstring texture_names[] =
 	{
@@ -444,24 +462,40 @@ bool ESG::D3DRendererLogic::LoadGeometry()
 		std::wstring texturePath = LTEXTURES_PATH;
 		texturePath += texture_names[i];
 		// load texture from disk 
-		DirectX::CreateDDSTextureFromFile(creator, texturePath.c_str(), nullptr, shaderResourceView[i].GetAddressOf());
+		bool success = DirectX::CreateDDSTextureFromFile(creator, texturePath.c_str(), nullptr, shaderResourceView[i].GetAddressOf());
 	}
 
 	std::string filepath = XML_PATH;
-	filepath += "font_consolas_32.xml";
+	//filepath += "font_consolas_32.xml";
 	bool success = consolas32.LoadFromXML(filepath);
 
-	dynamicText = Text();
-	dynamicText.SetText("HighScore:");
-	dynamicText.SetFont(&consolas32);
-	dynamicText.SetPosition(10.0f, 100.0f);
-	dynamicText.SetScale(0.75f, 0.75f);
-	dynamicText.SetRotation(0.0f);
-	dynamicText.SetDepth(0.01f);
+	staticText = Text();
+	staticText.SetText("HighScore:");
+	staticText.SetFont(&consolas32);
+	staticText.SetPosition(10.0f, 100.0f);
+	staticText.SetScale(0.75f, 0.75f);
+	staticText.SetRotation(0.0f);
+	staticText.SetDepth(0.01f);
 
+	unsigned int width;
+	unsigned int Height;
+	window.GetClientWidth(width);
+	window.GetClientHeight(Height);
+	staticText.Update(width, Height);
 
-	CD3D11_BUFFER_DESC dvbDesc(sizeof(TextVertex) * 6 * 5000, D3D11_BIND_VERTEX_BUFFER, D3D11_USAGE_DYNAMIC, D3D11_CPU_ACCESS_WRITE);
-	creator->CreateBuffer(&dvbDesc, nullptr, vertexBufferDynamicText.GetAddressOf());
+	CD3D11_SAMPLER_DESC samp_desc = CD3D11_SAMPLER_DESC(CD3D11_DEFAULT());
+	creator->CreateSamplerState(&samp_desc, samplerState.GetAddressOf());
+
+	const auto& staticVerts = staticText.GetVertices();
+	D3D11_SUBRESOURCE_DATA svbData = { staticVerts.data(), 0, 0 };
+	CD3D11_BUFFER_DESC svbDesc(sizeof(TextVertex) * staticVerts.size(), D3D11_BIND_VERTEX_BUFFER);
+	creator->CreateBuffer(&svbDesc, &svbData, vertexBufferStaticText.GetAddressOf());
+
+	D3D11_SUBRESOURCE_DATA cbData = { &constantBufferData, 0, 0 };
+	// DEFAULT usage lets us use UpdateSubResource
+	// DYNAMIC usage lets us use Map / Unmap
+	CD3D11_BUFFER_DESC cbDesc(sizeof(constantBufferData), D3D11_BIND_CONSTANT_BUFFER);
+	creator->CreateBuffer(&cbDesc, &cbData, constantBufferHUD.GetAddressOf());
 
 	return true;
 }
@@ -481,6 +515,12 @@ void ESG::D3DRendererLogic::SetUpPipeline(PipelineHandles handles)
 	ID3D11RenderTargetView* const views[] = { handles.targetView };
 	handles.context->OMSetRenderTargets(ARRAYSIZE(views), views, handles.depthStencil);
 	
+	handles.context->OMSetBlendState(blendState.Get(), NULL, 0xFFFFFFFF);
+	// set the depth stencil state for depth comparison [useful for transparency with the hud objects]
+	handles.context->OMSetDepthStencilState(depthStencilState.Get(), 0xFFFFFFFF);
+	// set the rasterization state for use with the scissor rectangle
+	handles.context->RSSetState(rasterizerState.Get());
+
 	//Set Vertex Buffers
 	const UINT strides[] = { sizeof(H2B::VERTEX) };
 	const UINT offsets[] = { 0 };
@@ -501,27 +541,18 @@ void ESG::D3DRendererLogic::SetUpPipeline(PipelineHandles handles)
 	handles.context->VSSetConstantBuffers(0, 1, constantSceneBuffer.GetAddressOf());
 	handles.context->VSSetConstantBuffers(2, 1, constantModelBuffer.GetAddressOf());
 	handles.context->VSSetConstantBuffers(3, 1, constantLightBuffer.GetAddressOf());
+	handles.context->VSSetConstantBuffers(4, 1, constantBufferHUD.GetAddressOf());
 
 
 	handles.context->PSSetConstantBuffers(1, 1, constantMeshBuffer.GetAddressOf());
 	handles.context->PSSetConstantBuffers(0, 1, constantSceneBuffer.GetAddressOf());
 	handles.context->PSSetConstantBuffers(2, 1, constantModelBuffer.GetAddressOf());
 	handles.context->PSSetConstantBuffers(3, 1, constantLightBuffer.GetAddressOf());
+	handles.context->PSSetConstantBuffers(4, 1, constantBufferHUD.GetAddressOf());
 	// Assembly State
 	handles.context->IASetInputLayout(vertexFormat.Get());
 	handles.context->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 
-	handles.context->IASetVertexBuffers(0, 1, vertexBufferDynamicText.GetAddressOf(), strides, offsets);
-	// change the topology to a triangle list
-	handles.context->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
-	// update the constant buffer data for the text
-	constantBufferData = UpdateTextConstantBufferData(dynamicText);
-	// bind the texture used for rendering the font
-	handles.context->PSSetShaderResources(0, 1, shaderResourceView[TEXTURE_ID::FONT_CONSOLAS].GetAddressOf());
-	// update the constant buffer with the text's data
-	handles.context->UpdateSubresource(constantHUD.Get(), 0, nullptr, &constantBufferData, 0, 0);
-	// draw the static text using the number of vertices
-	handles.context->Draw(dynamicText.GetVertices().size(), 0);
 	// Vertex Input State
 
 	//// viewport state (we still need to set this up even though we will overwrite the values)
@@ -764,6 +795,19 @@ bool ESG::D3DRendererLogic::SetupDrawcalls() // I SCREWED THIS UP MAKES SO MUCH 
 						0);
 
 				}
+				//const UINT strides[] = { sizeof(H2B::VERTEX) };
+				//const UINT offsets[] = { 0 };
+				//curHandles.context->IASetVertexBuffers(1, 1, vertexBufferStaticText.GetAddressOf(), strides, offsets);
+				//// change the topology to a triangle list
+				//curHandles.context->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+				//// update the constant buffer data for the text
+				//constantBufferData = UpdateTextConstantBufferData(staticText);
+				//// bind the texture used for rendering the font
+				//curHandles.context->PSSetShaderResources(0, 1, shaderResourceView[TEXTURE_ID::FONT_CONSOLAS].GetAddressOf());
+				//// update the constant buffer with the text's data
+				//curHandles.context->UpdateSubresource(constantBufferHUD.Get(), 0, nullptr, &constantBufferData, 0, 0);
+				//// draw the static text using the number of vertices
+				//curHandles.context->Draw(staticText.GetVertices().size(), 0);
 		ReleasePipelineHandles(curHandles);
 	});
 	// NOTE: I went with multi-system approach for the ease of passing lambdas with "this"
