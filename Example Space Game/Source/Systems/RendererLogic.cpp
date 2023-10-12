@@ -711,12 +711,6 @@ bool ESG::D3DRendererLogic::SetupDrawcalls() // I SCREWED THIS UP MAKES SO MUCH 
 		.each([this](flecs::entity e, RenderingSystem& s) {
 		// reset the draw counter only once per frame
 	/*	draw_counter = 0; */
-		//loop over levelData->levelTransforms
-		//copy over to mesh.WorldMatrix[i] = levelTransforms
-		for (int i = 0; i < levelData->levelTransforms.size(); ++i)
-		{
-			mesh.worldMatrix[i] = levelData->levelTransforms[i];
-		}
 	});
 	// may run multiple times per frame, will run after startDraw
 	updateDraw = game->system<Position, Orientation, Material>().kind(flecs::OnUpdate)
@@ -782,10 +776,10 @@ bool ESG::D3DRendererLogic::SetupDrawcalls() // I SCREWED THIS UP MAKES SO MUCH 
 			curHandles.context->UpdateSubresource(constantSceneBuffer.Get(), 0, nullptr, &scene, 0, 0);
 			curHandles.context->UpdateSubresource(constantMeshBuffer.Get(), 0, nullptr, &mesh, 0, 0);
 			curHandles.context->UpdateSubresource(constantLightBuffer.Get(), 0, nullptr, &lights, 0, 0);
-
-				modelID.mod_id = e.get_mut<Instance>()->transformStart;
+			modelID.mod_id = e.get_mut<Instance>()->transformStart;
 				for (unsigned int j = 0; j < e.get_mut<Object>()->meshCount; ++j)
 				{
+					unsigned var = e.get_mut<Object>()->meshCount;
 					auto meshCount = e.get_mut<Object>()->meshStart + j;
 					modelID.mat_id = levelData->levelMeshes[meshCount].materialIndex + e.get_mut<Object>()->materialStart;
 
@@ -799,21 +793,8 @@ bool ESG::D3DRendererLogic::SetupDrawcalls() // I SCREWED THIS UP MAKES SO MUCH 
 						levelData->levelMeshes[meshCount].drawInfo.indexOffset + e.get_mut<Object>()->indexStart,
 						e.get_mut<Object>()->vertexStart,
 						0);
-
 				}
-				//const UINT strides[] = { sizeof(H2B::VERTEX) };
-				//const UINT offsets[] = { 0 };
-				//curHandles.context->IASetVertexBuffers(1, 1, vertexBufferStaticText.GetAddressOf(), strides, offsets);
-				//// change the topology to a triangle list
-				//curHandles.context->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
-				//// update the constant buffer data for the text
-				//constantBufferData = UpdateTextConstantBufferData(staticText);
-				//// bind the texture used for rendering the font
-				//curHandles.context->PSSetShaderResources(0, 1, shaderResourceView[TEXTURE_ID::FONT_CONSOLAS].GetAddressOf());
-				//// update the constant buffer with the text's data
-				//curHandles.context->UpdateSubresource(constantBufferHUD.Get(), 0, nullptr, &constantBufferData, 0, 0);
-				//// draw the static text using the number of vertices
-				//curHandles.context->Draw(staticText.GetVertices().size(), 0);
+				instance++;
 		ReleasePipelineHandles(curHandles);
 	});
 	// NOTE: I went with multi-system approach for the ease of passing lambdas with "this"
@@ -825,6 +806,7 @@ bool ESG::D3DRendererLogic::SetupDrawcalls() // I SCREWED THIS UP MAKES SO MUCH 
 	// all drawing operations have been setup
 	return true;
 }
+
 
 bool ESG::D3DRendererLogic::FreeResources()
 {

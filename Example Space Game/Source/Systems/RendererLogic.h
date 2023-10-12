@@ -108,6 +108,7 @@ namespace ESG
 		Microsoft::WRL::ComPtr<ID3D11DepthStencilState>		depthStencilState;
 		Microsoft::WRL::ComPtr<ID3D11RasterizerState>		rasterizerState;
 		
+		int instance = 0;
 
 		// used to trigger clean up of vulkan resources
 		GW::CORE::GEventReceiver shutdown;
