@@ -33,7 +33,7 @@ bool ESG::BulletData::Load(	std::shared_ptr<flecs::world> _game,
 	GW::AUDIO::GSound shoot;
 	shoot.Create(fireFX.c_str(), _audioEngine, 0.15f); // we need a global music & sfx volumes
 	// add prefab to ECS
-	auto lazerPrefab = _game->prefab()
+	auto lazerPrefab = _game->prefab("Crystal3")
 		// .set<> in a prefab means components are shared (instanced)
 		.set<Material>({ red, green, blue })
 		.set<Orientation>({ world })
@@ -43,7 +43,7 @@ bool ESG::BulletData::Load(	std::shared_ptr<flecs::world> _game,
 		// .override<> ensures a component is unique to each entity created from a prefab 
 		.set_override<Damage>({ dmg })
 		//.set_override<ChargedShot>({ 2 })
-		.override<Position>()
+		.set<Position>({0,0})
 		.override<Bullet>() // Tag this prefab as a bullet (for queries/systems)
 		.override<Collidable>(); // can be collided with
 

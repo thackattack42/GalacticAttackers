@@ -554,6 +554,12 @@ bool ESG::D3DRendererLogic::SetupDrawcalls() // I SCREWED THIS UP MAKES SO MUCH 
 		.each([this](flecs::entity e, RenderingSystem& s) {
 		// reset the draw counter only once per frame
 	/*	draw_counter = 0; */
+		//loop over levelData->levelTransforms
+		//copy over to mesh.WorldMatrix[i] = levelTransforms
+		for (int i = 0; i < levelData->levelTransforms.size(); ++i)
+		{
+			mesh.worldMatrix[i] = levelData->levelTransforms[i];
+		}
 	});
 	// may run multiple times per frame, will run after startDraw
 	updateDraw = game->system<Position, Orientation, Material>().kind(flecs::OnUpdate)

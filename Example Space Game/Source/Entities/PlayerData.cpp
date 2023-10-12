@@ -11,13 +11,13 @@ bool ESG::PlayerData::Load(  std::shared_ptr<flecs::world> _game,
 	// Grab init settings for players
 	std::shared_ptr<const GameConfig> readCfg = _gameConfig.lock();
 	// color
-	float red = (*readCfg).at("Player1").at("red").as<float>();
-	float green = (*readCfg).at("Player1").at("green").as<float>();
-	float blue = (*readCfg).at("Player1").at("blue").as<float>();
+	float red = (*readCfg).at("Player").at("red").as<float>();
+	float green = (*readCfg).at("Player").at("green").as<float>();
+	float blue = (*readCfg).at("Player").at("blue").as<float>();
 	// start position
-	float xstart = (*readCfg).at("Player1").at("xstart").as<float>();
-	float ystart = (*readCfg).at("Player1").at("ystart").as<float>();
-	float scale = (*readCfg).at("Player1").at("scale").as<float>();
+	float xstart = (*readCfg).at("Player").at("xstart").as<float>();
+	float ystart = (*readCfg).at("Player").at("ystart").as<float>();
+	float scale = (*readCfg).at("Player").at("scale").as<float>();
 
 	//// Create Player One
 	//_game->entity("Player One")
@@ -34,11 +34,11 @@ bool ESG::PlayerData::Load(  std::shared_ptr<flecs::world> _game,
 	// if the entity is valid
 	if (e.is_valid()) {
 		e.add<Player>();
+		e.add<Collidable>();
 		e.set<Material>({ red, green, blue });
 		e.set<Position>({ xstart, ystart });
 		e.set<ControllerID>({ 0 });
 	}
-
 	return true;
 }
 

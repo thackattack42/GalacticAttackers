@@ -3,6 +3,7 @@
 #include "../Components/Physics.h"
 #include "../Components/Visuals.h"
 #include "../Components/Gameplay.h"
+#include "../Components/Components.h"
 #include "../Entities/Prefabs.h"
 #include "../Events/Playevents.h"
 
@@ -11,13 +12,14 @@ using namespace GW::INPUT; // input libs
 using namespace GW::AUDIO; // audio libs
 
 // Connects logic to traverse any players and allow a controller to manipulate them
-bool ESG::PlayerLogic::Init(	std::shared_ptr<flecs::world> _game, 
+bool ESG::PlayerLogic::Init(std::shared_ptr<flecs::world> _game, 
 							std::weak_ptr<const GameConfig> _gameConfig, 
 							GW::INPUT::GInput _immediateInput, 
 							GW::INPUT::GBufferedInput _bufferedInput, 
 							GW::INPUT::GController _controllerInput,
 							GW::AUDIO::GAudio _audioEngine,
-							GW::CORE::GEventGenerator _eventPusher)
+							GW::CORE::GEventGenerator _eventPusher,
+							std::shared_ptr<Level_Data> _levelData)
 {
 	// save a handle to the ECS & game settings
 	game = _game;
@@ -26,11 +28,12 @@ bool ESG::PlayerLogic::Init(	std::shared_ptr<flecs::world> _game,
 	bufferedInput = _bufferedInput;
 	controllerInput =	_controllerInput;
 	audioEngine = _audioEngine;
+	levelData = _levelData;
 	// Init any helper systems required for this task
 	std::shared_ptr<const GameConfig> readCfg = gameConfig.lock();
 	int width = (*readCfg).at("Window").at("width").as<int>();
-	float speed = (*readCfg).at("Player1").at("speed").as<float>();
-	chargeTime = (*readCfg).at("Player1").at("chargeTime").as<float>();
+	float speed = (*readCfg).at("Player").at("speed").as<float>();
+	chargeTime = (*readCfg).at("Player").at("chargeTime").as<float>();
 	// add logic for updating players
 	playerSystem = game->system<Player, Position, ControllerID>("Player System")
 		.iter([this, speed](flecs::iter it, Player*, Position* p, ControllerID* c) {
@@ -53,16 +56,29 @@ bool ESG::PlayerLogic::Init(	std::shared_ptr<flecs::world> _game,
 			// apply movement
 			p[i].value.x += xaxis * it.delta_time() * speed;
 			// limit the player to stay within -1 to +1 NDC
-			p[i].value.x = G_LARGER(p[i].value.x, -0.8f);
-			p[i].value.x = G_SMALLER(p[i].value.x, +0.8f);
+			p[i].value.x = G_LARGER(p[i].value.x, -0.4f);
+			p[i].value.x = G_SMALLER(p[i].value.x, +0.4f);
 
 			// fire weapon if they are in a firing state
 			if (it.entity(i).has<Firing>()) {
 				Position offset = p[i];
-				offset.value.y += 0.05f;
+				offset.value.y += 0.05;
 				FireLasers(it.world(), offset);
 				it.entity(i).remove<Firing>();
 			}
+			ModelTransform* edit = it.entity(i).get_mut<ModelTransform>();
+			if (edit->matrix.row4.z > -42 && edit->matrix.row4.z < +42)
+			{
+				GW::MATH::GMatrix::TranslateLocalF(edit->matrix, GW::MATH::GVECTORF{ -p[i].value.x, p[i].value.y, 0, 1 }, edit->matrix);
+				if (edit->matrix.row4.z < -40)
+					edit->matrix.row4.z = -40;
+				else if (edit->matrix.row4.z > 40)
+					edit->matrix.row4.z = 40;
+
+				levelData->levelTransforms[edit->rendererIndex] = edit->matrix;
+			}
+			p[i].value.x = 0; 
+			p[i].value.y = 0;		
 		}
 		// process any cached button events after the loop (happens multiple times per frame)
 		ProcessInputEvents(it.world());
@@ -125,17 +141,17 @@ bool ESG::PlayerLogic::ProcessInputEvents(flecs::world& stage)
 			if (keyboard == GBufferedInput::Events::KEYPRESSED) {
 				if (k_data.data == G_KEY_SPACE) {
 					fire = true;
-					chargeStart = stage.time();
+					//chargeStart = stage.time();
 				}
 			}
-			if (keyboard == GBufferedInput::Events::KEYRELEASED) {
-				if (k_data.data == G_KEY_SPACE) {
-					chargeEnd = stage.time();
-					if (chargeEnd - chargeStart >= chargeTime) {
-						fire = true;
-					}
-				}
-			}
+			//if (keyboard == GBufferedInput::Events::KEYRELEASED) {
+			//	if (k_data.data == G_KEY_SPACE) {
+			//		//chargeEnd = stage.time();
+			//		if (chargeEnd - chargeStart >= chargeTime) {
+			//			fire = true;
+			//		}
+			//	}
+			//}
 		}
 		else if (+event.Read(controller, c_data)) {
 			if (controller == GController::Events::CONTROLLERBUTTONVALUECHANGED) {
@@ -158,20 +174,26 @@ bool ESG::PlayerLogic::FireLasers(flecs::world& stage, Position origin)
 	flecs::entity bullet;
 	RetreivePrefab("Lazer Bullet", bullet);
 
-	origin.value.x -= 0.05f;
-	auto laserLeft = stage.entity().is_a(bullet)
-		.set<Position>(origin);
-	origin.value.x += 0.1f;
+	//origin.value.x -= 0.05f;
+	//auto laserLeft = stage.entity().is_a(bullet)
+	//	.set<Position>(origin);
+	/*origin.value.x += 0.1f;*/
 	auto laserRight = stage.entity().is_a(bullet)
 		.set<Position>(origin);
+	
 	// if this shot is charged
-	if (chargeEnd - chargeStart >= chargeTime) {
-		chargeEnd = chargeStart;
-		laserLeft.set<ChargedShot>({ 2 })
-			.set<Material>({1,0,0});
-		laserRight.set<ChargedShot>({ 2 })
-			.set<Material>({ 1,0,0 });
-	}
+	//if (chargeEnd - chargeStart >= chargeTime) {
+	//	chargeEnd = chargeStart;
+	//	/*laserLeft.set<ChargedShot>({ 2 })
+	//		.set<Material>({1,0,0});*/
+	//	laserRight.set<ChargedShot>({ 2 })
+	//		.set<Material>({ 1,0,0 });
+	//}
+	
+	//origin.value.y += 20.5f * stage.delta_time() * bullet.get_mut<Velocity>()->value.y;
+	ModelTransform* edit = bullet.get_mut<ModelTransform>();
+	GW::MATH::GMatrix::TranslateLocalF(edit->matrix, GW::MATH::GVECTORF{ origin.value.x, origin.value.y, 0, 1 }, edit->matrix);
+	levelData->levelTransforms[edit->rendererIndex] = edit->matrix;
 
 	// play the sound of the Lazer prefab
 	GW::AUDIO::GSound shoot = *bullet.get<GW::AUDIO::GSound>();
