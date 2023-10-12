@@ -62,7 +62,7 @@ bool ESG::PlayerLogic::Init(std::shared_ptr<flecs::world> _game,
 			// fire weapon if they are in a firing state
 			if (it.entity(i).has<Firing>()) {
 				Position offset = p[i];
-				offset.value.y += 0.05f;
+				offset.value.y += 0.05;
 				FireLasers(it.world(), offset);
 				it.entity(i).remove<Firing>();
 			}
@@ -141,17 +141,17 @@ bool ESG::PlayerLogic::ProcessInputEvents(flecs::world& stage)
 			if (keyboard == GBufferedInput::Events::KEYPRESSED) {
 				if (k_data.data == G_KEY_SPACE) {
 					fire = true;
-					chargeStart = stage.time();
+					//chargeStart = stage.time();
 				}
 			}
-			if (keyboard == GBufferedInput::Events::KEYRELEASED) {
-				if (k_data.data == G_KEY_SPACE) {
-					chargeEnd = stage.time();
-					if (chargeEnd - chargeStart >= chargeTime) {
-						fire = true;
-					}
-				}
-			}
+			//if (keyboard == GBufferedInput::Events::KEYRELEASED) {
+			//	if (k_data.data == G_KEY_SPACE) {
+			//		//chargeEnd = stage.time();
+			//		if (chargeEnd - chargeStart >= chargeTime) {
+			//			fire = true;
+			//		}
+			//	}
+			//}
 		}
 		else if (+event.Read(controller, c_data)) {
 			if (controller == GController::Events::CONTROLLERBUTTONVALUECHANGED) {
@@ -174,20 +174,26 @@ bool ESG::PlayerLogic::FireLasers(flecs::world& stage, Position origin)
 	flecs::entity bullet;
 	RetreivePrefab("Lazer Bullet", bullet);
 
-	origin.value.x -= 0.05f;
-	auto laserLeft = stage.entity().is_a(bullet)
-		.set<Position>(origin);
-	origin.value.x += 0.1f;
+	//origin.value.x -= 0.05f;
+	//auto laserLeft = stage.entity().is_a(bullet)
+	//	.set<Position>(origin);
+	/*origin.value.x += 0.1f;*/
 	auto laserRight = stage.entity().is_a(bullet)
 		.set<Position>(origin);
+	
 	// if this shot is charged
-	if (chargeEnd - chargeStart >= chargeTime) {
-		chargeEnd = chargeStart;
-		laserLeft.set<ChargedShot>({ 2 })
-			.set<Material>({1,0,0});
-		laserRight.set<ChargedShot>({ 2 })
-			.set<Material>({ 1,0,0 });
-	}
+	//if (chargeEnd - chargeStart >= chargeTime) {
+	//	chargeEnd = chargeStart;
+	//	/*laserLeft.set<ChargedShot>({ 2 })
+	//		.set<Material>({1,0,0});*/
+	//	laserRight.set<ChargedShot>({ 2 })
+	//		.set<Material>({ 1,0,0 });
+	//}
+	
+	//origin.value.y += 20.5f * stage.delta_time() * bullet.get_mut<Velocity>()->value.y;
+	ModelTransform* edit = bullet.get_mut<ModelTransform>();
+	GW::MATH::GMatrix::TranslateLocalF(edit->matrix, GW::MATH::GVECTORF{ origin.value.x, origin.value.y, 0, 1 }, edit->matrix);
+	levelData->levelTransforms[edit->rendererIndex] = edit->matrix;
 
 	// play the sound of the Lazer prefab
 	GW::AUDIO::GSound shoot = *bullet.get<GW::AUDIO::GSound>();

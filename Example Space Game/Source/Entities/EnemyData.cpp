@@ -31,20 +31,45 @@ bool ESG::EnemyData::Load(	std::shared_ptr<flecs::world> _game,
 		GW::MATH2D::GVECTOR2F{ xscale, yscale }, world);
 	
 	// add prefab to ECS
-	auto enemyPrefab = _game->prefab("Enemy Type1")
+	//auto enemyPrefab = _game->lookup("Spaceship5");
+	//auto enemyPrefab = _game->entity("Spaceship5")
+		//auto spaceship = _game->entity("Spaceship5");
+		auto enemyPrefab = _game->prefab("Spaceship5")
 		// .set<> in a prefab means components are shared (instanced)
-		.set<Material>({ red, green, blue })
-		.set<Orientation>({ world })
+		//.set(spaceship)
+			.set<Material>({ red, green, blue })
+			.set<Orientation>({ world })
 		// .override<> ensures a component is unique to each entity created from a prefab
-		.set_override<Health>({ health })
-		.override<Acceleration>()
-		.override<Velocity>()
-		.override<Position>()
-		.override<Enemy>() // Tag this prefab as an enemy (for queries/systems)
-		.override<Collidable>(); // can be collided with
+			.set_override<Health>({ health })
+			.override<Acceleration>()
+			.override<Velocity>()
+			.override<Position>()
+			.override<Enemy>() // Tag this prefab as an enemy (for queries/systems)
+			.override<Collidable>(); // can be collided with
+
+		 auto enemyPrefab2 = _game->prefab("Spaceship2") 
+			.set<Material>({ red, green, blue }) 
+			.set<Orientation>({ world }) 
+			.set_override<Health>({ health })
+			.override<Acceleration>() 
+			.override<Velocity>() 
+			.override<Position>()
+			.override<Enemy>() 
+			.override<Collidable>();
+	
+		 auto enemyPrefab3 = _game->prefab("Spaceship4")
+			 .set<Material>({ red, green, blue })
+			 .set<Orientation>({ world })
+			 .set_override<Health>({ health })
+			 .override<Acceleration>()
+			 .override<Velocity>()
+			 .override<Position>()
+			 .override<Enemy>()
+			 .override<Collidable>();
 
 	// register this prefab by name so other systems can use it
 	RegisterPrefab("Enemy Type1", enemyPrefab);
+	//RegisterPrefab("Enemy Type2", enemyPrefab2);
 
 	return true;
 }
