@@ -3,6 +3,7 @@
 #include "../Components/Identification.h"
 #include "../Components/Physics.h"
 #include "../Components/Gameplay.h"
+#include "../Components/Components.h"
 
 using namespace ESG; // Example Space Game
 
@@ -43,6 +44,7 @@ bool ESG::BulletLogic::Init(	std::shared_ptr<flecs::world> _game,
 				e.destruct();
 			}
 		}
+
 	});
 	
 	return true;
