@@ -301,7 +301,7 @@ bool ESG::D3DRendererLogic::LoadGeometry()
 	//ViewMatrix
 	GW::MATH::GVECTORF viewCenter = { 0.0, 1.0f, 0.0f, 1.0f };
 	GW::MATH::GVECTORF viewUp = { 0.0f, 1.0f, 0.0f, 1.0f };
-	GW::MATH::GVECTORF vTranslate = { 0.0, -200.0f, 0.0f, 1.0f };
+	GW::MATH::GVECTORF vTranslate = { 0.0, -90.0f, 0.0f, 1.0f };
 	proxy.IdentityF(viewMatrix);
 	proxy.LookAtLHF(viewTranslation, viewCenter, viewUp, viewMatrix);
 	proxy.TranslateLocalF(viewMatrix, vTranslate, viewMatrix);
