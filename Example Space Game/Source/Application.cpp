@@ -35,7 +35,7 @@ bool Application::Init()
 		level = gameConfig->at("LevelFile").at("levelstarting").as<std::string>();
 		break;
 	default:
-		level = gameConfig->at("LevelFile").at("levelone").as<std::string>();
+		level = gameConfig->at("LevelFile").at("leveltwo").as<std::string>();
 		break;
 	}
 	
@@ -275,7 +275,7 @@ bool Application::InitSystems()
 		return false;
 	if (bulletSystem.Init(game, gameConfig) == false)
 		return false;
-	if (enemySystem.Init(game, gameConfig, eventPusher) == false)
+	if (enemySystem.Init(game, gameConfig, eventPusher, levelData) == false)
 		return false;
 
 	return true;
