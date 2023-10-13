@@ -42,6 +42,7 @@ bool ESG::BulletLogic::Init(	std::shared_ptr<flecs::world> _game,
 			else {
 				// play hit sound
 				e.destruct();
+				std::cout << "Bullet Destroyed";
 			}
 		}
 
