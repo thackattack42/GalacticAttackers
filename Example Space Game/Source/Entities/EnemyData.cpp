@@ -17,11 +17,29 @@ bool ESG::EnemyData::Load(	std::shared_ptr<flecs::world> _game,
 	float red = (*readCfg).at("Enemy1").at("red").as<float>();
 	float green = (*readCfg).at("Enemy1").at("green").as<float>();
 	float blue = (*readCfg).at("Enemy1").at("blue").as<float>();
+	
+	float red2 = (*readCfg).at("Enemy2").at("red").as<float>();
+	float green2 = (*readCfg).at("Enemy2").at("green").as<float>();
+	float blue2 = (*readCfg).at("Enemy2").at("blue").as<float>();
+
+	float red3 = (*readCfg).at("Enemy3").at("red").as<float>();
+	float green3 = (*readCfg).at("Enemy3").at("green").as<float>();
+	float blue3 = (*readCfg).at("Enemy3").at("blue").as<float>();
 	// other attributes
 	float xscale = (*readCfg).at("Enemy1").at("xscale").as<float>();
 	float yscale = (*readCfg).at("Enemy1").at("yscale").as<float>();
 	float angle = (*readCfg).at("Enemy1").at("angle").as<float>();
 	int health = (*readCfg).at("Enemy1").at("health").as<int>();
+
+	float xscale2 = (*readCfg).at("Enemy2").at("xscale").as<float>();
+	float yscale2 = (*readCfg).at("Enemy2").at("yscale").as<float>();
+	float angle2 = (*readCfg).at("Enemy2").at("angle").as<float>();
+	int health2 = (*readCfg).at("Enemy2").at("health").as<int>();
+
+	float xscale3 = (*readCfg).at("Enemy3").at("xscale").as<float>();
+	float yscale3 = (*readCfg).at("Enemy3").at("yscale").as<float>();
+	float angle3 = (*readCfg).at("Enemy3").at("angle").as<float>();
+	int health3 = (*readCfg).at("Enemy3").at("health").as<int>();
 	
 	// default projectile orientation & scale
 	GW::MATH2D::GMATRIX2F world;
@@ -48,7 +66,7 @@ bool ESG::EnemyData::Load(	std::shared_ptr<flecs::world> _game,
 			.override<Collidable>(); // can be collided with
 
 		 auto enemyPrefab2 = _game->prefab("Spaceship2") 
-			.set<Material>({ red, green, blue }) 
+			.set<Material>({ red2, green2, blue2 }) 
 			.set<Orientation>({ world }) 
 			.set_override<Health>({ health })
 			.override<Acceleration>() 
@@ -58,7 +76,7 @@ bool ESG::EnemyData::Load(	std::shared_ptr<flecs::world> _game,
 			.override<Collidable>();
 	
 		 auto enemyPrefab3 = _game->prefab("Spaceship4")
-			 .set<Material>({ red, green, blue })
+			 .set<Material>({ red3, green3, blue3 })
 			 .set<Orientation>({ world })
 			 .set_override<Health>({ health })
 			 .override<Acceleration>()
@@ -69,6 +87,8 @@ bool ESG::EnemyData::Load(	std::shared_ptr<flecs::world> _game,
 
 	// register this prefab by name so other systems can use it
 	RegisterPrefab("Enemy Type1", enemyPrefab);
+	RegisterPrefab("Enemy Type2", enemyPrefab2);
+	RegisterPrefab("Enemy Type3", enemyPrefab3);
 	//RegisterPrefab("Enemy Type2", enemyPrefab2);
 
 	return true;

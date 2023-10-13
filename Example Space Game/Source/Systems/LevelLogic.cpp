@@ -37,8 +37,28 @@ bool ESG::LevelLogic::Init(	std::shared_ptr<flecs::world> _game,
 		float Xstart = x_range(gen); // normal rand() doesn't work great multi-threaded
 		float accel = a_range(gen);
 		// grab enemy type 1 prefab
-		flecs::entity et1; 
+		flecs::entity et1;
 		if (RetreivePrefab("Enemy Type1", et1)) {
+			// you must ensure the async_stage is thread safe as it has no built-in synchronization
+			gameLock.LockSyncWrite();
+			// this method of using prefabs is pretty conveinent
+			gameAsync.entity().is_a(et1)
+				.set<Velocity>({ 0,0 })
+				.set<Acceleration>({ 0, -accel })
+				.set<Position>({ Xstart, enemy1startY });
+			// be sure to unlock when done so the main thread can safely merge the changes
+			gameLock.UnlockSyncWrite();
+		}if (RetreivePrefab("Enemy Type2", et1)) {
+			// you must ensure the async_stage is thread safe as it has no built-in synchronization
+			gameLock.LockSyncWrite();
+			// this method of using prefabs is pretty conveinent
+			gameAsync.entity().is_a(et1)
+				.set<Velocity>({ 0,0 })
+				.set<Acceleration>({ 0, -accel })
+				.set<Position>({ Xstart, enemy1startY });
+			// be sure to unlock when done so the main thread can safely merge the changes
+			gameLock.UnlockSyncWrite();
+		}if (RetreivePrefab("Enemy Type3", et1)) {
 			// you must ensure the async_stage is thread safe as it has no built-in synchronization
 			gameLock.LockSyncWrite();
 			// this method of using prefabs is pretty conveinent

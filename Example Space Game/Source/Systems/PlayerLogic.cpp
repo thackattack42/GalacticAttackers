@@ -38,7 +38,8 @@ bool ESG::PlayerLogic::Init(std::shared_ptr<flecs::world> _game,
 	playerSystem = game->system<Player, Position, ControllerID>("Player System")
 		.iter([this, speed](flecs::iter it, Player*, Position* p, ControllerID* c) {
 
-		for (auto i : it) {
+		for (auto i : it) 
+		{
 			// left-right movement
 			float xaxis = 0, input = 0;
 			// Use the controller/keyboard to move the player around the screen			
@@ -143,6 +144,11 @@ bool ESG::PlayerLogic::ProcessInputEvents(flecs::world& stage)
 					fire = true;
 					//chargeStart = stage.time();
 				}
+				if (k_data.data == G_KEY_0)
+				{
+					//allow shield to turn off and on
+					///stage.entity("Player").add<
+				}
 			}
 			//if (keyboard == GBufferedInput::Events::KEYRELEASED) {
 			//	if (k_data.data == G_KEY_SPACE) {
@@ -173,6 +179,7 @@ bool ESG::PlayerLogic::FireLasers(flecs::world& stage, Position origin)
 	// Grab the prefab for a laser round
 	flecs::entity bullet;
 	RetreivePrefab("Lazer Bullet", bullet);
+	
 
 	//origin.value.x -= 0.05f;
 	//auto laserLeft = stage.entity().is_a(bullet)
