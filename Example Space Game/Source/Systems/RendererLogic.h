@@ -4,7 +4,7 @@
 
 #define TEXTURES_PATH "../../DDS/"
 #define LTEXTURES_PATH L"../../DDS/"
-#define XML_PATH "C:/Users/Lmntlklr1/source/repos/dev4-2310/Example Space Game/Source/xml/font_consolas_32.xml"
+#define XML_PATH "../Source/xml/"
 
 // Contains our global game settings
 #include "../GameConfig.h"
@@ -103,7 +103,7 @@ namespace ESG
 		SPRITE_DATA	constantBufferData = { 0 };
 		Microsoft::WRL::ComPtr<ID3D11ShaderResourceView> shaderResourceView[TEXTURE_ID::COUNT];
 		Microsoft::WRL::ComPtr<ID3D11SamplerState>			samplerState;
-
+		Sprite												greenDragon;
 		Microsoft::WRL::ComPtr<ID3D11BlendState>			blendState;
 		Microsoft::WRL::ComPtr<ID3D11DepthStencilState>		depthStencilState;
 		Microsoft::WRL::ComPtr<ID3D11RasterizerState>		rasterizerState;
@@ -116,6 +116,7 @@ namespace ESG
 		std::vector<Sprite>	LoadHudFromXML(std::string filepath);
 		SPRITE_DATA UpdateSpriteConstantBufferData(const Sprite& s);
 		SPRITE_DATA UpdateTextConstantBufferData(const Text& s);
+		void ESG::D3DRendererLogic::UIDraw();
 
 		// attach the required logic to the ECS 
 		bool Init(	std::shared_ptr<flecs::world> _game,

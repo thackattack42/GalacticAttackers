@@ -57,7 +57,10 @@ cbuffer MODEL_IDS : register(b2)
 cbuffer LightData : register(b3)
 {
     LIGHT_SETTINGS myLights[400];
-};
+};/*
+
+Texture3D color : register(t0);
+SamplerState filter : register(s0);*/
 
 
 float4 main(OutputToRasterizer output) : SV_TARGET
@@ -113,7 +116,7 @@ float4 main(OutputToRasterizer output) : SV_TARGET
 
     float3 result = saturate(direct + indirect) * diffuse + reflected + emissive;
     //float3 result = saturate(direct) * diffuse;
-    return float4(result, material[mat_id].d);
+    return float4(/*color.Sample(filter, */result/*)*/, material[mat_id].d) ;
 
 }
 

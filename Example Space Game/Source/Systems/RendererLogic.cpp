@@ -42,6 +42,7 @@ bool ESG::D3DRendererLogic::Init(	std::shared_ptr<flecs::world> _game,
 		return false;
 	// GVulkanSurface will inform us when to release any allocated resources
 	InitializeGraphics();
+	UIDraw();
 
 	return true;
 }
@@ -422,6 +423,10 @@ bool ESG::D3DRendererLogic::LoadGeometry()
 	InitializeVertexBuffer(creator);
 	InitializeIndexBuffer(creator);
 
+
+	unsigned int width;
+	unsigned int height;
+
 	CD3D11_BLEND_DESC blendDesc = CD3D11_BLEND_DESC(CD3D11_DEFAULT());
 	blendDesc.RenderTarget[0].BlendEnable = true;
 	blendDesc.RenderTarget[0].SrcBlend = D3D11_BLEND_SRC_ALPHA;
@@ -435,13 +440,19 @@ bool ESG::D3DRendererLogic::LoadGeometry()
 	// this is used to blend with objects when they are on the same z-plane
 	// the depth function needs to be set to less_equal instead of less
 	CD3D11_DEPTH_STENCIL_DESC depthStencilDesc = CD3D11_DEPTH_STENCIL_DESC(CD3D11_DEFAULT());
-	depthStencilDesc.DepthFunc = D3D11_COMPARISON_LESS_EQUAL;
 	creator->CreateDepthStencilState(&depthStencilDesc, depthStencilState.GetAddressOf());
 
 	CD3D11_RASTERIZER_DESC rasterizerDesc = CD3D11_RASTERIZER_DESC(CD3D11_DEFAULT());
 	rasterizerDesc.ScissorEnable = true;
 	creator->CreateRasterizerState(&rasterizerDesc, rasterizerState.GetAddressOf());
 
+	// when loading a texture from disk to an interface object for directx 11
+	// we use this function call "CreateDDSTextureFromFile"
+	// this requires a wide string as a parameter for the file path
+	// the shaderResourceView is a directx 11 interface object that points to the texture information on the gpu
+
+	// an array to store all of the texture names
+	// this makes looping over and creating shader resource views easier
 	std::wstring texture_names[] =
 	{
 		L"greendragon.dds",
@@ -456,46 +467,90 @@ bool ESG::D3DRendererLogic::LoadGeometry()
 		L"font_consolas_32.dds"
 	};
 
+	// loop used for creating shader resource views
 	for (size_t i = 0; i < ARRAYSIZE(texture_names); i++)
 	{
 		// create a wide string to store the file path and file name
 		std::wstring texturePath = LTEXTURES_PATH;
 		texturePath += texture_names[i];
 		// load texture from disk 
-		bool success = DirectX::CreateDDSTextureFromFile(creator, texturePath.c_str(), nullptr, shaderResourceView[i].GetAddressOf());
+		DirectX::CreateDDSTextureFromFile(creator, texturePath.c_str(), nullptr, shaderResourceView[i].GetAddressOf());
 	}
 
-	std::string filepath = XML_PATH;
-	//filepath += "font_consolas_32.xml";
-	bool success = consolas32.LoadFromXML(filepath);
-
-	staticText = Text();
-	staticText.SetText("HighScore:");
-	staticText.SetFont(&consolas32);
-	staticText.SetPosition(10.0f, 100.0f);
-	staticText.SetScale(0.75f, 0.75f);
-	staticText.SetRotation(0.0f);
-	staticText.SetDepth(0.01f);
-
-	unsigned int width;
-	unsigned int Height;
-	window.GetClientWidth(width);
-	window.GetClientHeight(Height);
-	staticText.Update(width, Height);
-
+	// samplerStates are needed when using textures
+	// this is for filtering the texture
+	// some options are bilinear, trilinear, anisotropic, etc..
 	CD3D11_SAMPLER_DESC samp_desc = CD3D11_SAMPLER_DESC(CD3D11_DEFAULT());
 	creator->CreateSamplerState(&samp_desc, samplerState.GetAddressOf());
 
-	const auto& staticVerts = staticText.GetVertices();
-	D3D11_SUBRESOURCE_DATA svbData = { staticVerts.data(), 0, 0 };
-	CD3D11_BUFFER_DESC svbDesc(sizeof(TextVertex) * staticVerts.size(), D3D11_BIND_VERTEX_BUFFER);
-	creator->CreateBuffer(&svbDesc, &svbData, vertexBufferStaticText.GetAddressOf());
-
+	// this is where we create the constant buffer
+	// it is used to store constant data for each draw call
+	// we will use this to send sprite data to the vertex shader
 	D3D11_SUBRESOURCE_DATA cbData = { &constantBufferData, 0, 0 };
 	// DEFAULT usage lets us use UpdateSubResource
 	// DYNAMIC usage lets us use Map / Unmap
 	CD3D11_BUFFER_DESC cbDesc(sizeof(constantBufferData), D3D11_BIND_CONSTANT_BUFFER);
 	creator->CreateBuffer(&cbDesc, &cbData, constantBufferHUD.GetAddressOf());
+
+	// store the current width and height of the client's window
+	window.GetClientWidth(width);
+	window.GetClientHeight(height);
+
+	// intialize our sprite's information
+	greenDragon = Sprite();
+	greenDragon.SetName("greenDragon");
+	greenDragon.SetPosition(0.0f, 0.0f);
+	greenDragon.SetScale(0.5f, 0.5f);
+	greenDragon.SetDepth(0.03f);
+	greenDragon.SetTextureIndex(TEXTURE_ID::DRAGON);
+	greenDragon.SetScissorRect({ 0, 0, (float)width, (float)height });
+
+	// insert the greendragon sprite into the hud vector
+	hud.push_back(greenDragon);
+
+	// load a hud.xml file that contains all of the hud information
+	// [sprite data]
+	std::string filepath = XML_PATH;
+	filepath += "hud.xml";
+	HUD xml_items = LoadHudFromXML(filepath);
+	// insert the xml items into the hud vector
+	hud.insert(hud.end(), xml_items.begin(), xml_items.end());
+
+	// sorting lambda based on depth of sprites
+	auto sortfunc = [=](const Sprite& a, const Sprite& b)
+	{
+		return a.GetDepth() > b.GetDepth();
+	};
+	// sort the hud from furthest to closest
+	std::sort(hud.begin(), hud.end(), sortfunc);
+
+	// font loading
+	// credit for generating font texture
+	// https://evanw.github.io/font-texture-generator/
+	filepath = XML_PATH;
+	filepath += "font_consolas_32.xml";
+	bool success = consolas32.LoadFromXML(filepath);
+
+	// setting up the static text object with information
+	// keep in mind the position will always be the center of the text
+	staticText = Text();
+	staticText.SetText("HP:");
+	staticText.SetFont(&consolas32);
+	staticText.SetPosition(-0.75f, -0.85f);
+	staticText.SetScale(0.75f, 0.75f);
+	staticText.SetRotation(0.0f);
+	staticText.SetDepth(0.01f);
+	// update will create the vertices so they will be ready to use
+	// for static text this only needs to be done one time
+	staticText.Update(width, height);
+
+	// vertex buffer creation for the staticText
+	const auto& staticVerts = staticText.GetVertices();
+	D3D11_SUBRESOURCE_DATA svbData = { staticVerts.data(), 0, 0 };
+	CD3D11_BUFFER_DESC svbDesc(sizeof(TextVertex) * staticVerts.size(), D3D11_BIND_VERTEX_BUFFER);
+	creator->CreateBuffer(&svbDesc, &svbData, vertexBufferStaticText.GetAddressOf());
+
+	
 
 	return true;
 }
@@ -548,7 +603,7 @@ void ESG::D3DRendererLogic::SetUpPipeline(PipelineHandles handles)
 	handles.context->PSSetConstantBuffers(0, 1, constantSceneBuffer.GetAddressOf());
 	handles.context->PSSetConstantBuffers(2, 1, constantModelBuffer.GetAddressOf());
 	handles.context->PSSetConstantBuffers(3, 1, constantLightBuffer.GetAddressOf());
-	handles.context->PSSetConstantBuffers(4, 1, constantBufferHUD.GetAddressOf());
+	//handles.context->PSSetConstantBuffers(4, 1, constantBufferHUD.GetAddressOf());
 	// Assembly State
 	handles.context->IASetInputLayout(vertexFormat.Get());
 	handles.context->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
@@ -737,8 +792,8 @@ bool ESG::D3DRendererLogic::SetupDrawcalls() // I SCREWED THIS UP MAKES SO MUCH 
 		//draw_counter += sign;
 	});
 	// runs once per frame after updateDraw
-	completeDraw = game->system<RenderingSystem>().kind(flecs::PostUpdate)
-		.each([this](flecs::entity e, RenderingSystem& s) {
+	completeDraw = game->system<Instance>().kind(flecs::PostUpdate)
+		.each([this](flecs::entity e, Instance& s) {
 		// run the rendering code just once!
 		// Copy data to this frame's buffer
 		//VkDevice device = nullptr;
@@ -776,25 +831,24 @@ bool ESG::D3DRendererLogic::SetupDrawcalls() // I SCREWED THIS UP MAKES SO MUCH 
 			curHandles.context->UpdateSubresource(constantSceneBuffer.Get(), 0, nullptr, &scene, 0, 0);
 			curHandles.context->UpdateSubresource(constantMeshBuffer.Get(), 0, nullptr, &mesh, 0, 0);
 			curHandles.context->UpdateSubresource(constantLightBuffer.Get(), 0, nullptr, &lights, 0, 0);
-			modelID.mod_id = e.get_mut<Instance>()->transformStart;
+			modelID.mod_id = e.get<Instance>()->transformStart;
 				for (unsigned int j = 0; j < e.get_mut<Object>()->meshCount; ++j)
 				{
-					unsigned var = e.get_mut<Object>()->meshCount;
-					auto meshCount = e.get_mut<Object>()->meshStart + j;
+					unsigned var = e.get<Object>()->meshCount;
+					auto meshCount = e.get<Object>()->meshStart + j;
 					modelID.mat_id = levelData->levelMeshes[meshCount].materialIndex + e.get_mut<Object>()->materialStart;
 
-					auto colorModel = e.get_mut<Material>()->diffuse.value;
+					auto colorModel = e.get<Material>()->diffuse.value;
 					modelID.color = GW::MATH::GVECTORF{ colorModel.x, colorModel.y, colorModel.z, 1 };
 
 					curHandles.context->UpdateSubresource(constantModelBuffer.Get(), 0, nullptr, &modelID, 0, 0);
 
 					curHandles.context->DrawIndexedInstanced(levelData->levelMeshes[meshCount].drawInfo.indexCount,
-						e.get_mut<Instance>()->transformCount,
-						levelData->levelMeshes[meshCount].drawInfo.indexOffset + e.get_mut<Object>()->indexStart,
-						e.get_mut<Object>()->vertexStart,
+						e.get<Instance>()->transformCount,
+						levelData->levelMeshes[meshCount].drawInfo.indexOffset + e.get<Object>()->indexStart,
+						e.get<Object>()->vertexStart,
 						0);
 				}
-				instance++;
 		ReleasePipelineHandles(curHandles);
 	});
 	// NOTE: I went with multi-system approach for the ease of passing lambdas with "this"
@@ -807,6 +861,37 @@ bool ESG::D3DRendererLogic::SetupDrawcalls() // I SCREWED THIS UP MAKES SO MUCH 
 	return true;
 }
 
+void ESG::D3DRendererLogic::UIDraw()
+{
+	PipelineHandles curHandles = GetCurrentPipelineHandles();
+	SetUpPipeline(curHandles);
+	for (size_t i = 0; i < hud.size(); i++)
+	{
+		// store a constant reference to the current hud item
+		const Sprite& current = hud[i];
+		// update the constant buffer data with the sprite's information
+		constantBufferData = UpdateSpriteConstantBufferData(current);
+		// update the constant buffer with the current sprite's data
+		curHandles.context->UpdateSubresource(constantBufferHUD.Get(), 0, nullptr, &constantBufferData, 0, 0);
+		// set a texture (srv) and sampler to the pixel shader
+		curHandles.context->PSSetShaderResources(0, 1, shaderResourceView[i].GetAddressOf());
+		curHandles.context->PSSetSamplers(0, 1, samplerState.GetAddressOf());
+		// now we can draw
+		curHandles.context->DrawIndexed(6, 0, 0);
+	}
+	const UINT strides[] = { sizeof(TextVertex) };
+	const UINT offsets[] = { 0 };
+	ID3D11Buffer* const buffs[] = { vertexBufferStaticText.Get() };
+	curHandles.context->IASetVertexBuffers(0, ARRAYSIZE(buffs), buffs, strides, offsets);
+	// update the constant buffer data for the text
+	constantBufferData = UpdateTextConstantBufferData(staticText);
+	// bind the texture used for rendering the font
+	curHandles.context->PSSetShaderResources(0, 1, shaderResourceView[TEXTURE_ID::FONT_CONSOLAS].GetAddressOf());
+	// update the constant buffer with the text's data
+	curHandles.context->UpdateSubresource(constantBufferHUD.Get(), 0, nullptr, &constantBufferData, 0, 0);
+	// draw the static text using the number of vertices
+	curHandles.context->Draw(staticText.GetVertices().size(), *offsets);
+}
 
 bool ESG::D3DRendererLogic::FreeResources()
 {
