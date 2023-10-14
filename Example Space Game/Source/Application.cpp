@@ -35,7 +35,7 @@ bool Application::Init()
 		level = gameConfig->at("LevelFile").at("levelstarting").as<std::string>();
 		break;
 	default:
-		level = gameConfig->at("LevelFile").at("levelone").as<std::string>();
+		level = gameConfig->at("LevelFile").at("leveltwo").as<std::string>();
 		break;
 	}
 	
@@ -50,6 +50,7 @@ bool Application::Init()
 		ent.set<BlenderName>({ i.blendername });
 		ent.set<ModelBoundary>({
 			levelData->levelColliders[levelData->levelModels[i.modelIndex].colliderIndex] });
+
 		ent.set<ModelTransform>({
 			levelData->levelTransforms[i.transformIndex], i.transformIndex });
 		ent.set<Material>({ 1, 1, 1 });
@@ -271,11 +272,11 @@ bool Application::InitSystems()
 		return false;
 	if (d3dRenderingSystem.Init(game, gameConfig, d3d11, window, levelData) == false)
 		return false;
-	if (physicsSystem.Init(game, gameConfig) == false)
+	if (physicsSystem.Init(game, gameConfig, levelData) == false)
 		return false;
 	if (bulletSystem.Init(game, gameConfig) == false)
 		return false;
-	if (enemySystem.Init(game, gameConfig, eventPusher) == false)
+	if (enemySystem.Init(game, gameConfig, eventPusher, levelData) == false)
 		return false;
 
 	return true;
