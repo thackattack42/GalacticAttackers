@@ -35,7 +35,7 @@ bool Application::Init()
 		level = gameConfig->at("LevelFile").at("levelstarting").as<std::string>();
 		break;
 	default:
-		level = gameConfig->at("LevelFile").at("leveltwo").as<std::string>();
+		level = gameConfig->at("LevelFile").at("levelone").as<std::string>();
 		break;
 	}
 	
