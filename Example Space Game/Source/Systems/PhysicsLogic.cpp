@@ -1,12 +1,15 @@
 #include "PhysicsLogic.h"
 #include "../Components/Physics.h"
+#include "../Components/Components.h"
 
 bool ESG::PhysicsLogic::Init(	std::shared_ptr<flecs::world> _game, 
-								std::weak_ptr<const GameConfig> _gameConfig)
+								std::weak_ptr<const GameConfig> _gameConfig,
+								std::shared_ptr<Level_Data> _levelData)
 {
 	// save a handle to the ECS & game settings
 	game = _game;
 	gameConfig = _gameConfig;
+	levelData = _levelData;
 	// **** MOVEMENT ****
 	// update velocity by acceleration
 	game->system<Velocity, const Acceleration>("Acceleration System")
@@ -23,7 +26,15 @@ bool ESG::PhysicsLogic::Init(	std::shared_ptr<flecs::world> _game,
 		GW::MATH2D::GVector2D::Scale2F(v.value, e.delta_time(), speed);
 		// adding is simple but doesn't account for orientation
 		GW::MATH2D::GVector2D::Add2F(speed, p.value, p.value);
+		//GW::MATH::GMatrix::TranslateGlobalF(e.get_mut<ModelTransform>()->matrix, GW::MATH::GVECTORF { -p.value.x, p.value.y, 0, 1 }, e.get_mut<ModelTransform>()->matrix);
+		
+		if (e.has<BulletTest>())
+		{
+			std::cout << "Moving " << p.value.x << " " << p.value.y << std::endl;
+		}
+		//std::cout << "Moving\n";
 	});
+
 	// **** CLEANUP ****
 	// clean up any objects that end up offscreen
 	game->system<const Position>("Cleanup System")
@@ -31,6 +42,7 @@ bool ESG::PhysicsLogic::Init(	std::shared_ptr<flecs::world> _game,
 		if (p.value.x > 1.5f || p.value.x < -1.5f ||
 			p.value.y > 1.5f || p.value.y < -1.5f) {
 				e.destruct();
+				//std::cout << "Cleanup";
 		}
 	});
 	// **** COLLISIONS ****

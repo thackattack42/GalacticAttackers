@@ -9,15 +9,16 @@ using namespace ESG; // Example Space Game
 
 // Connects logic to traverse any players and allow a controller to manipulate them
 bool ESG::BulletLogic::Init(	std::shared_ptr<flecs::world> _game,
-							std::weak_ptr<const GameConfig> _gameConfig)
+							std::weak_ptr<const GameConfig> _gameConfig,
+							std::shared_ptr<Level_Data> _levelData)
 {
 	// save a handle to the ECS & game settings
 	game = _game;
 	gameConfig = _gameConfig;
-
+	levelData = _levelData;
 	// destroy any bullets that have the CollidedWith relationship
-	game->system<Bullet, Damage>("Bullet System")
-		.each([](flecs::entity e, Bullet, Damage &d) {
+	game->system<Bullet, Damage, Position>("Bullet System")
+		.each([this](flecs::entity e, Bullet, Damage &d, Position& p) {
 		// damage anything we come into contact with
 		e.each<CollidedWith>([&e, d](flecs::entity hit) {
 			if (hit.has<Health>()) {
@@ -42,6 +43,7 @@ bool ESG::BulletLogic::Init(	std::shared_ptr<flecs::world> _game,
 			else {
 				// play hit sound
 				e.destruct();
+				std::cout << "Bullet Destroyed";
 			}
 		}
 

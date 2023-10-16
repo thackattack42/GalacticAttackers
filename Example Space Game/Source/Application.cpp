@@ -43,34 +43,8 @@ bool Application::Init()
 
 	if (levelData->LoadLevel(level.c_str(), models.c_str(), log) == false)
 		return false;
-
-	for (auto& i : levelData->blenderObjects) {
-		// create entity with same name as blender object
-		auto ent = game->entity(i.blendername);
-		ent.set<BlenderName>({ i.blendername });
-		ent.set<ModelBoundary>({
-			levelData->levelColliders[levelData->levelModels[i.modelIndex].colliderIndex] });
-		ent.set<ModelTransform>({
-			levelData->levelTransforms[i.transformIndex], i.transformIndex });
-		ent.set<Material>({ 1, 1, 1 });
-		ent.add<RenderingSystem>();
-		ent.set<Instance>({ levelData->levelInstances[i.modelIndex].transformStart,
-							levelData->levelInstances[i.modelIndex].transformCount });
-
-		ent.set<Object>({ levelData->levelModels[i.modelIndex].vertexCount,
-						levelData->levelModels[i.modelIndex].indexCount,
-						levelData->levelModels[i.modelIndex].materialCount,
-						levelData->levelModels[i.modelIndex].meshCount,
-						levelData->levelModels[i.modelIndex].vertexStart,
-						levelData->levelModels[i.modelIndex].indexStart,
-						levelData->levelModels[i.modelIndex].materialStart,
-						levelData->levelModels[i.modelIndex].meshStart });
-
-		ent.set<Mesh>({ levelData->levelMeshes[i.modelIndex].drawInfo.indexCount,
-						levelData->levelMeshes[i.modelIndex].drawInfo.indexOffset,
-						levelData->levelMeshes[i.modelIndex].materialIndex });
-
-	}
+	UpdateLevelData();
+	
 	// for now just print objects added to FLECS
 	/*auto f = game->filter<BlenderName, ModelTransform>();
 	f.each([&log](BlenderName& n, ModelTransform& t) {
@@ -271,9 +245,9 @@ bool Application::InitSystems()
 		return false;
 	if (d3dRenderingSystem.Init(game, gameConfig, d3d11, window, levelData) == false)
 		return false;
-	if (physicsSystem.Init(game, gameConfig) == false)
+	if (physicsSystem.Init(game, gameConfig, levelData) == false)
 		return false;
-	if (bulletSystem.Init(game, gameConfig) == false)
+	if (bulletSystem.Init(game, gameConfig, levelData) == false)
 		return false;
 	if (enemySystem.Init(game, gameConfig, eventPusher, levelData) == false)
 		return false;
@@ -290,4 +264,36 @@ bool Application::GameLoop()
 	start = std::chrono::steady_clock::now();
 	// let the ECS system run
 	return game->progress(static_cast<float>(elapsed)); 
+}
+
+void Application::UpdateLevelData()
+{
+	for (auto& i : levelData->blenderObjects) {
+		// create entity with same name as blender object
+		auto ent = game->entity(i.blendername);
+		ent.set<BlenderName>({ i.blendername });
+		ent.set<ModelBoundary>({
+			levelData->levelColliders[levelData->levelModels[i.modelIndex].colliderIndex] });
+
+		ent.set<ModelTransform>({
+			levelData->levelTransforms[i.transformIndex], i.transformIndex });
+		ent.set<Material>({ 1, 1, 1 });
+		ent.add<RenderingSystem>();
+		ent.set<Instance>({ levelData->levelInstances[i.modelIndex].transformStart,
+							levelData->levelInstances[i.modelIndex].transformCount });
+
+		ent.set<Object>({ levelData->levelModels[i.modelIndex].vertexCount,
+						levelData->levelModels[i.modelIndex].indexCount,
+						levelData->levelModels[i.modelIndex].materialCount,
+						levelData->levelModels[i.modelIndex].meshCount,
+						levelData->levelModels[i.modelIndex].vertexStart,
+						levelData->levelModels[i.modelIndex].indexStart,
+						levelData->levelModels[i.modelIndex].materialStart,
+						levelData->levelModels[i.modelIndex].meshStart });
+
+		ent.set<Mesh>({ levelData->levelMeshes[i.modelIndex].drawInfo.indexCount,
+						levelData->levelMeshes[i.modelIndex].drawInfo.indexOffset,
+						levelData->levelMeshes[i.modelIndex].materialIndex });
+
+	}
 }

@@ -1,4 +1,4 @@
-# Blender v3.6.4 OBJ File: 'Level3.blend'
+# Blender v3.6.4 OBJ File: 'Level2.blend'
 # www.blender.org
 mtllib Rock2.mtl
 o Rock2
@@ -55,7 +55,7 @@ vn 0.8445 -0.4928 -0.2096
 vn 0.1213 -0.9923 -0.0242
 vn -0.2690 -0.9631 0.0078
 vn 0.0687 -0.9870 0.1452
-usemtl Material.028
+usemtl Material.022
 s 1
 f 7//1 2//1 4//1
 f 1//2 7//2 6//2

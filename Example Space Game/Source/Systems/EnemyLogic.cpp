@@ -1,5 +1,6 @@
 #include <random>
 #include "EnemyLogic.h"
+#include "../Components/Physics.h"
 #include "../Components/Identification.h"
 #include "../Components/Gameplay.h"
 #include "../Components/Visuals.h"
@@ -12,14 +13,14 @@ using namespace ESG; // Example Space Game
 // Connects logic to traverse any players and allow a controller to manipulate them
 bool ESG::EnemyLogic::Init(std::shared_ptr<flecs::world> _game,
 	std::weak_ptr<const GameConfig> _gameConfig,
-	GW::CORE::GEventGenerator _eventPusher, std::shared_ptr<Level_Data> _levelData)
+	GW::CORE::GEventGenerator _eventPusher,
+	std::shared_ptr<Level_Data> _levelData)
 {
 	// save a handle to the ECS & game settings
 	game = _game;
 	gameConfig = _gameConfig;
 	eventPusher = _eventPusher;
 	levelData = _levelData;
-
 
 	// destroy any bullets that have the CollidedWith relationship
 	game->system<Enemy, Health, Position>("Enemy System")
@@ -33,22 +34,18 @@ bool ESG::EnemyLogic::Init(std::shared_ptr<flecs::world> _game,
 			explode.Write(ESG::PLAY_EVENT::ENEMY_DESTROYED, x);
 			eventPusher.Push(explode);
 		}
-		//p.value.y += e.delta_time() * 2;
 
-		ModelTransform* edit = e.get_mut<ModelTransform>();  
-		GW::MATH::GMatrix::TranslateGlobalF(edit->matrix, GW::MATH::GVECTORF{ p.value.x, -p.value.y, 0, 1 }, edit->matrix);
-		levelData->levelTransforms[edit->rendererIndex] = edit->matrix;  
 
-		p.value.x = 0;  
-		p.value.y = 0;  
+		ModelTransform* edit = e.get_mut<ModelTransform>();
+		GW::MATH::GMatrix::TranslateGlobalF(edit->matrix, GW::MATH::GVECTORF{ p.value.x, -p.value.y, 0, 1}, edit->matrix);
+		levelData->levelTransforms[edit->rendererIndex] = edit->matrix;
 
-		 
-		/*Position offset = p;
-		offset.value.y += 0.05;
-		FireLasersEnemy(e.world(), offset);*/
+		p.value.x = 0;
+		p.value.y = 0;
 
+			
+			//FireLasersEnemy(e.world(), p);
 	});
-
 
 	return true;
 }
@@ -79,7 +76,7 @@ bool ESG::EnemyLogic::FireLasersEnemy(flecs::world& stage, Position origin)
 {
 	// Grab laser prefab
 	flecs::entity bullet;
-	RetreivePrefab("Lazer Bullet2", bullet);
+	RetreivePrefab("Lazer Bullet", bullet);
 
 	// Laser start shoot position
 	origin.value.x -= 0.05f;
