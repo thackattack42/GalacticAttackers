@@ -29,6 +29,7 @@ bool ESG::PlayerLogic::Init(std::shared_ptr<flecs::world> _game,
 	controllerInput =	_controllerInput;
 	audioEngine = _audioEngine;
 	levelData = _levelData;
+
 	// Init any helper systems required for this task
 	std::shared_ptr<const GameConfig> readCfg = gameConfig.lock();
 	int width = (*readCfg).at("Window").at("width").as<int>();
@@ -188,6 +189,8 @@ bool ESG::PlayerLogic::FireLasers(flecs::world& stage, Position origin)
 	/*origin.value.x += 0.1f;*/
 	auto laserRight = stage.entity().is_a(bullet)
 		.set<Position>(origin);
+	laserRight.add<BulletTest>();
+	
 	ModelTransform* edit = laserRight.get_mut<ModelTransform>();
 	edit = original;
 	// if this shot is charged
@@ -199,15 +202,15 @@ bool ESG::PlayerLogic::FireLasers(flecs::world& stage, Position origin)
 	//		.set<Material>({ 1,0,0 });
 	//}
 	
-	//origin.value.y += 20.5f * stage.delta_time() * bullet.get_mut<Velocity>()->value.y;
 	origin.value.y += 1.0f;
-	GW::MATH::GMatrix::TranslateGlobalF(edit->matrix, GW::MATH::GVECTORF{ -origin.value.x, origin.value.y, 0, 1 }, edit->matrix);
+
+	GW::MATH::GMatrix::TranslateGlobalF(edit->matrix, GW::MATH::GVECTORF{ origin.value.x, origin.value.y, 0, 1 }, edit->matrix);
 	levelData->levelTransforms[edit->rendererIndex] = edit->matrix;
-	printf("%f %f \n", edit->matrix.row4.x, edit->matrix.row4.y);
+	//printf("%f %f \n", edit->matrix.row4.x, edit->matrix.row4.y);
 
 	// play the sound of the Lazer prefab
 	GW::AUDIO::GSound shoot = *bullet.get<GW::AUDIO::GSound>();
 	shoot.Play();
-	origin.value = { 0,0 };
+
 	return true;
 }
