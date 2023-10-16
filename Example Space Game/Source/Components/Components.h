@@ -22,6 +22,7 @@ namespace ESG
 		unsigned indexCount, indexOffset, materialIndex;
 	};
 	struct RenderingSystem {};
+	struct BulletTest {};
 	//struct Material { float red, greem, blue; };
 }
 #endif

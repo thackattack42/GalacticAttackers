@@ -179,21 +179,21 @@ private:
 					std::to_string(transform.row4.y) + " Z " + std::to_string(transform.row4.z);
 				log.LogCategorized("INFO", loc.c_str());
 
-				//// *NEW* finally read in the boundry data for this model
-				//for (int i = 0; i < 8; ++i) {
-				//	file.ReadLine(linebuffer, 1024, '\n');
-				//	// read floats
-				//	std::sscanf(linebuffer + 9, "%f, %f, %f",
-				//		&add.boundry[i].x, &add.boundry[i].y, &add.boundry[i].z);
-				//}
-				//std::string bounds = "Boundry: Left ";
-				//bounds += std::to_string(add.boundry[0].x) +
-				//" Right " +	std::to_string(add.boundry[4].x) +
-				//" Bottom " + std::to_string(add.boundry[0].y) +
-				//" Top " + std::to_string(add.boundry[1].y) +
-				//" Near " + std::to_string(add.boundry[0].z) +
-				//" Far " + std::to_string(add.boundry[2].z);
-				//log.LogCategorized("INFO", bounds.c_str());
+				// *NEW* finally read in the boundry data for this model
+				for (int i = 0; i < 8; ++i) {
+					file.ReadLine(linebuffer, 1024, '\n');
+					// read floats
+					std::sscanf(linebuffer + 9, "%f, %f, %f",
+						&add.boundry[i].x, &add.boundry[i].y, &add.boundry[i].z);
+				}
+				std::string bounds = "Boundry: Left ";
+				bounds += std::to_string(add.boundry[0].x) +
+				" Right " +	std::to_string(add.boundry[4].x) +
+				" Bottom " + std::to_string(add.boundry[0].y) +
+				" Top " + std::to_string(add.boundry[1].y) +
+				" Near " + std::to_string(add.boundry[0].z) +
+				" Far " + std::to_string(add.boundry[2].z);
+				log.LogCategorized("INFO", bounds.c_str());
 
 				// does this model already exist?
 				auto found = outModels.find(add);
