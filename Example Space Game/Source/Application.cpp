@@ -275,7 +275,7 @@ bool Application::InitSystems()
 		return false;
 	if (bulletSystem.Init(game, gameConfig) == false)
 		return false;
-	if (enemySystem.Init(game, gameConfig, eventPusher) == false)
+	if (enemySystem.Init(game, gameConfig, eventPusher, levelData) == false)
 		return false;
 
 	return true;

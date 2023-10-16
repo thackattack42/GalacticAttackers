@@ -15,10 +15,11 @@ bool ESG::PhysicsLogic::Init(	std::shared_ptr<flecs::world> _game,
 		GW::MATH2D::GVector2D::Scale2F(a.value, e.delta_time(), accel);
 		GW::MATH2D::GVector2D::Add2F(accel, v.value, v.value);
 	});
+	
 	// update position by velocity
 	game->system<Position, const Velocity>("Translation System")
 		.each([](flecs::entity e, Position& p, const Velocity &v) {
-		GW::MATH2D::GVECTOR2F speed;
+		GW::MATH2D::GVECTOR2F speed; 
 		GW::MATH2D::GVector2D::Scale2F(v.value, e.delta_time(), speed);
 		// adding is simple but doesn't account for orientation
 		GW::MATH2D::GVector2D::Add2F(speed, p.value, p.value);
