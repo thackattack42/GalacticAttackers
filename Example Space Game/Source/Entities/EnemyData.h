@@ -10,12 +10,11 @@ namespace ESG
 {
 	class EnemyData
 	{
-		std::shared_ptr<Level_Data> levelData;
 	public:
 		// Load required entities and/or prefabs into the ECS 
 		bool Load(	std::shared_ptr<flecs::world> _game,
 					std::weak_ptr<const GameConfig> _gameConfig,
-					GW::AUDIO::GAudio _audioEngine, std::shared_ptr<Level_Data> _levelData);
+					GW::AUDIO::GAudio _audioEngine);
 		// Unload the entities/prefabs from the ECS
 		bool Unload(std::shared_ptr<flecs::world> _game);
 

@@ -21,7 +21,6 @@ bool ESG::LevelLogic::Init(	std::shared_ptr<flecs::world> _game,
 	gameLock.Create();
 	// Pull enemy Y start location from config file
 	std::shared_ptr<const GameConfig> readCfg = _gameConfig.lock();
-	
 	float enemy1startY = (*readCfg).at("Enemy1").at("ystart").as<float>();
 	float enemy1accmax = (*readCfg).at("Enemy1").at("accmax").as<float>();
 	float enemy1accmin = (*readCfg).at("Enemy1").at("accmin").as<float>();
@@ -41,40 +40,33 @@ bool ESG::LevelLogic::Init(	std::shared_ptr<flecs::world> _game,
 		flecs::entity et1;
 		flecs::entity et2;
 		flecs::entity et3;
-		//	float et1starty = et1.get<Position>(et1)->value.y;
-		
-		et1 = game->lookup("Spaceship5");
 		if (RetreivePrefab("Enemy Type1", et1)) {
 			// you must ensure the async_stage is thread safe as it has no built-in synchronization
 			gameLock.LockSyncWrite();
 			// this method of using prefabs is pretty conveinent
 			gameAsync.entity().is_a(et1)
 				.set<Velocity>({ 0,0 })
-				.set<Acceleration>({ 0, -accel })
+				.set<Acceleration>({ 0, 100 })
 				.set<Position>({ Xstart, enemy1startY });
 			// be sure to unlock when done so the main thread can safely merge the changes
 			//gameLock.UnlockSyncWrite();
-		}
-		et2 = game->lookup("Spaceship2");
-		if (RetreivePrefab("Enemy Type2", et2)) {
+		}if (RetreivePrefab("Enemy Type2", et2)) {
 			// you must ensure the async_stage is thread safe as it has no built-in synchronization
 			//gameLock.LockSyncWrite();
 			// this method of using prefabs is pretty conveinent
 			gameAsync.entity().is_a(et2)
 				.set<Velocity>({ 0, 0})
-				.set<Acceleration>({ 0, -accel })
+				.set<Acceleration>({ 0, 100 })
 				.set<Position>({ Xstart, enemy1startY });
 			// be sure to unlock when done so the main thread can safely merge the changes
 			//gameLock.UnlockSyncWrite();
-		}
-		et3 = game->lookup("Spaceship4");
-		if (RetreivePrefab("Enemy Type3", et3)) {
+		}if (RetreivePrefab("Enemy Type3", et3)) {
 			// you must ensure the async_stage is thread safe as it has no built-in synchronization
 			//gameLock.LockSyncWrite();
 			// this method of using prefabs is pretty conveinent
 			gameAsync.entity().is_a(et3)
 				.set<Velocity>({ 0,0 })
-				.set<Acceleration>({ 0, -accel })
+				.set<Acceleration>({ 0, 100 })
 				.set<Position>({ Xstart, enemy1startY });
 			// be sure to unlock when done so the main thread can safely merge the changes
 			gameLock.UnlockSyncWrite();
