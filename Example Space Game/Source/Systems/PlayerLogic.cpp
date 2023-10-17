@@ -99,7 +99,7 @@ bool ESG::PlayerLogic::Init(std::shared_ptr<flecs::world> _game,
 		ESG::PLAY_EVENT event; ESG::PLAY_EVENT_DATA eventData;
 		if (+e.Read(event, eventData)) {
 			// only in here if event matches
-			std::cout << "Enemy Was Destroyed!\n";
+			std::cout << "Enemy Was Destroyed! You Win!\n";
 		}
 	});
 	_eventPusher.Register(onExplode);

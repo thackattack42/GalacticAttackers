@@ -53,7 +53,7 @@ namespace ESG
 		GW::MATH::GMatrix proxy;
 
 		// Directx11 resources used for rendering
-		std::shared_ptr<const Level_Data> levelData;
+		std::shared_ptr<Level_Data> levelData;
 		GW::GRAPHICS::GDirectX11Surface direct11;
 		Microsoft::WRL::ComPtr<ID3D11Buffer>		vertexBuffer;
 		Microsoft::WRL::ComPtr<ID3D11Buffer>	    indexBuffer;
@@ -88,7 +88,7 @@ namespace ESG
 		bool Init(	std::shared_ptr<flecs::world> _game,
 					std::weak_ptr<const GameConfig> _gameConfig,
 					GW::GRAPHICS::GDirectX11Surface _direct11,
-					GW::SYSTEM::GWindow _window, std::shared_ptr<const Level_Data> _levelData);
+					GW::SYSTEM::GWindow _window, std::shared_ptr<Level_Data> _levelData);
 		// control if the system is actively running
 		bool Activate(bool runSystem);
 		// release any resources allocated by the system
@@ -129,12 +129,13 @@ namespace ESG
 		std::string ShaderAsString(const char* shaderFilePath);
 	private:
 		// Uniform Data Definitions
-		static constexpr unsigned int Instance_Max = 240;
+		/*static constexpr unsigned int Instance_Max = 240;
 		struct INSTANCE_UNIFORMS
 		{
 			GW::MATH::GMATRIXF instance_transforms[Instance_Max];
 			GW::MATH::GVECTORF instance_colors[Instance_Max];
-		}instanceData;
+		}instanceData;*/
+		std::vector<GW::MATH::GMATRIXF> bulletMoves;
 		// how many instances will be drawn this frame
 		int draw_counter = 0;
 

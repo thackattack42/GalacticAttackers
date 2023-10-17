@@ -19,7 +19,7 @@ void PrintLabeledDebugString(const char* label, const char* toPrint)
 bool ESG::D3DRendererLogic::Init(	std::shared_ptr<flecs::world> _game, 
 								std::weak_ptr<const GameConfig> _gameConfig,
 								GW::GRAPHICS::GDirectX11Surface d3d11,
-								GW::SYSTEM::GWindow _window, std::shared_ptr<const Level_Data> _levelData)
+								GW::SYSTEM::GWindow _window, std::shared_ptr<Level_Data> _levelData)
 {
 	// save a handle to the ECS & game settings
 	game = _game;
@@ -553,7 +553,7 @@ bool ESG::D3DRendererLogic::SetupDrawcalls() // I SCREWED THIS UP MAKES SO MUCH 
 	startDraw = game->system<RenderingSystem>().kind(flecs::PreUpdate)
 		.each([this](flecs::entity e, RenderingSystem& s) {
 		// reset the draw counter only once per frame
-	/*	draw_counter = 0; */
+		draw_counter = 0; 
 		//loop over levelData->levelTransforms
 		//copy over to mesh.WorldMatrix[i] = levelTransforms
 		for (int i = 0; i < levelData->levelTransforms.size(); ++i)
@@ -565,25 +565,37 @@ bool ESG::D3DRendererLogic::SetupDrawcalls() // I SCREWED THIS UP MAKES SO MUCH 
 	updateDraw = game->system<Position, Orientation, Material>().kind(flecs::OnUpdate)
 		.each([this](flecs::entity e, Position& p, Orientation& o, Material& m) {
 		// copy all data to our instancing array
-		//int i = draw_counter; 
-		//instanceData.instance_transforms[i] = GW::MATH::GIdentityMatrixF;
-		//instanceData.instance_transforms[i].row4.x = p.value.x;
-		//instanceData.instance_transforms[i].row4.y = p.value.y;
-		//// transfer 2D orientation to 4x4
-		//instanceData.instance_transforms[i].row1.x = o.value.row1.x;
-		//instanceData.instance_transforms[i].row1.y = o.value.row1.y;
-		//instanceData.instance_transforms[i].row2.x = o.value.row2.x;
-		//instanceData.instance_transforms[i].row2.y = o.value.row2.y;
-		//// set color
-		//instanceData.instance_colors[i].x = m.diffuse.value.x;
-		//instanceData.instance_colors[i].y = m.diffuse.value.y;
-		//instanceData.instance_colors[i].z = m.diffuse.value.z;
-		//instanceData.instance_colors[i].w = 1; // opaque
-		//// increment the shared draw counter but don't go over (branchless) 
-		//int v = static_cast<int>(Instance_Max) - static_cast<int>(draw_counter + 2);
-		//// if v < 0 then 0, else 1, https://graphics.stanford.edu/~seander/bithacks.html
-		//int sign = 1 ^ ((unsigned int)v >> (sizeof(int) * CHAR_BIT - 1)); 
-		//draw_counter += sign;
+		if(e.has<BulletTest>())
+		{
+			GW::MATH::GMATRIXF bullet = GW::MATH::GIdentityMatrixF;
+			bullet.row4.x = p.value.x;
+			bullet.row4.y = p.value.y;
+
+			bullet.row1.x = o.value.row1.x;
+			bullet.row1.y = o.value.row1.y;
+			bullet.row2.x = o.value.row2.x;
+			bullet.row2.y = o.value.row2.y;
+			bulletMoves.push_back(bullet);
+			//int i = draw_counter;
+			//instanceData.instance_transforms[i] = GW::MATH::GIdentityMatrixF;
+			//instanceData.instance_transforms[i].row4.x = p.value.x;
+			//instanceData.instance_transforms[i].row4.y = p.value.y;
+			//// transfer 2D orientation to 4x4
+			//instanceData.instance_transforms[i].row1.x = o.value.row1.x;
+			//instanceData.instance_transforms[i].row1.y = o.value.row1.y;
+			//instanceData.instance_transforms[i].row2.x = o.value.row2.x;
+			//instanceData.instance_transforms[i].row2.y = o.value.row2.y;
+			//// set color
+			//instanceData.instance_colors[i].x = m.diffuse.value.x;
+			//instanceData.instance_colors[i].y = m.diffuse.value.y;
+			//instanceData.instance_colors[i].z = m.diffuse.value.z;
+			//instanceData.instance_colors[i].w = 1; // opaque
+			//// increment the shared draw counter but don't go over (branchless) 
+			//int v = static_cast<int>(Instance_Max) - static_cast<int>(draw_counter + 2);
+			//// if v < 0 then 0, else 1, https://graphics.stanford.edu/~seander/bithacks.html
+			//int sign = 1 ^ ((unsigned int)v >> (sizeof(int) * CHAR_BIT - 1));
+			//draw_counter += sign;
+		}
 	});
 	// runs once per frame after updateDraw
 	completeDraw = game->system<RenderingSystem>().kind(flecs::PostUpdate)
@@ -627,23 +639,46 @@ bool ESG::D3DRendererLogic::SetupDrawcalls() // I SCREWED THIS UP MAKES SO MUCH 
 			curHandles.context->UpdateSubresource(constantLightBuffer.Get(), 0, nullptr, &lights, 0, 0);
 
 				modelID.mod_id = e.get_mut<Instance>()->transformStart;
-				for (unsigned int j = 0; j < e.get_mut<Object>()->meshCount; ++j)
+				/*if (e.has<BulletTest>())
 				{
-					auto meshCount = e.get_mut<Object>()->meshStart + j;
-					modelID.mat_id = levelData->levelMeshes[meshCount].materialIndex + e.get_mut<Object>()->materialStart;
+					for (int i = 0; i < (int)bulletMoves.size(); i++)
+					{
+						curHandles.context->UpdateSubresource(constantMeshBuffer.Get(), 0, nullptr, &mesh, 0, 0);
+						auto meshCount = e.get_mut<Object>()->meshStart;
+						modelID.mat_id = levelData->levelMeshes[meshCount].materialIndex + e.get_mut<Object>()->materialStart;
 
-					auto colorModel = e.get_mut<Material>()->diffuse.value;
-					modelID.color = GW::MATH::GVECTORF{ colorModel.x, colorModel.y, colorModel.z, 1 };
-
-					curHandles.context->UpdateSubresource(constantModelBuffer.Get(), 0, nullptr, &modelID, 0, 0);
-
-					curHandles.context->DrawIndexedInstanced(levelData->levelMeshes[meshCount].drawInfo.indexCount,
-						e.get_mut<Instance>()->transformCount,
-						levelData->levelMeshes[meshCount].drawInfo.indexOffset + e.get_mut<Object>()->indexStart,
-						e.get_mut<Object>()->vertexStart,
-						0);
-
+						auto colorModel = e.get_mut<Material>()->diffuse.value;
+						modelID.color = GW::MATH::GVECTORF{ colorModel.x, colorModel.y, colorModel.z, 1 };
+						curHandles.context->UpdateSubresource(constantModelBuffer.Get(), 0, nullptr, &modelID, 0, 0);
+						curHandles.context->DrawIndexedInstanced(levelData->levelMeshes[2].drawInfo.indexCount,
+							draw_counter,
+							levelData->levelMeshes[2].drawInfo.indexOffset + e.get_mut<Object>()->indexStart
+							,e.get_mut<Object>()->vertexStart, 0);
+					}
 				}
+				else {*/
+					for (unsigned int j = 0; j < e.get_mut<Object>()->meshCount; ++j)
+					{
+						auto meshCount = e.get_mut<Object>()->meshStart + j;
+						modelID.mat_id = levelData->levelMeshes[meshCount].materialIndex + e.get_mut<Object>()->materialStart;
+
+						auto colorModel = e.get_mut<Material>()->diffuse.value;
+						modelID.color = GW::MATH::GVECTORF{ colorModel.x, colorModel.y, colorModel.z, 1 };
+
+						curHandles.context->UpdateSubresource(constantModelBuffer.Get(), 0, nullptr, &modelID, 0, 0);
+
+						curHandles.context->DrawIndexedInstanced(levelData->levelMeshes[meshCount].drawInfo.indexCount,
+							e.get_mut<Instance>()->transformCount,
+							levelData->levelMeshes[meshCount].drawInfo.indexOffset + e.get_mut<Object>()->indexStart,
+							e.get_mut<Object>()->vertexStart,
+							0);
+
+					}
+				/*}*/
+				
+
+				
+
 		ReleasePipelineHandles(curHandles);
 	});
 	// NOTE: I went with multi-system approach for the ease of passing lambdas with "this"
