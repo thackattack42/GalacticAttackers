@@ -66,6 +66,7 @@ private:
 	bool InitEntities();
 	bool InitSystems();
 	bool GameLoop();
+	void UpdateLevelData();
 };
 
 #endif 

@@ -46,7 +46,7 @@ bool ESG::LevelLogic::Init(	std::shared_ptr<flecs::world> _game,
 			// this method of using prefabs is pretty conveinent
 			gameAsync.entity().is_a(et1)
 				.set<Velocity>({ 0,0 })
-				.set<Acceleration>({ 0, -accel })
+				.set<Acceleration>({ 0, 100 })
 				.set<Position>({ Xstart, enemy1startY });
 			// be sure to unlock when done so the main thread can safely merge the changes
 			//gameLock.UnlockSyncWrite();
@@ -66,7 +66,7 @@ bool ESG::LevelLogic::Init(	std::shared_ptr<flecs::world> _game,
 			// this method of using prefabs is pretty conveinent
 			gameAsync.entity().is_a(et3)
 				.set<Velocity>({ 0,0 })
-				.set<Acceleration>({ 0, -accel })
+				.set<Acceleration>({ 0, 100 })
 				.set<Position>({ Xstart, enemy1startY });
 			// be sure to unlock when done so the main thread can safely merge the changes
 			gameLock.UnlockSyncWrite();

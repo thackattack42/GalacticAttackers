@@ -25,8 +25,12 @@ bool ESG::PhysicsLogic::Init(	std::shared_ptr<flecs::world> _game,
 		GW::MATH2D::GVector2D::Scale2F(v.value, e.delta_time(), speed);
 		// adding is simple but doesn't account for orientation
 		GW::MATH2D::GVector2D::Add2F(speed, p.value, p.value);
-		GW::MATH::GMatrix::TranslateGlobalF(e.get<ModelTransform>()->matrix, GW::MATH::GVECTORF { p.value.x, p.value.y, 0, 1 }, e.get_mut<ModelTransform>()->matrix);
+		//GW::MATH::GMatrix::TranslateGlobalF(e.get_mut<ModelTransform>()->matrix, GW::MATH::GVECTORF { -p.value.x, p.value.y, 0, 1 }, e.get_mut<ModelTransform>()->matrix);
 		
+		if (e.has<BulletTest>())
+		{
+			std::cout << "Moving " << p.value.x << " " << p.value.y << std::endl;
+		}
 		//std::cout << "Moving\n";
 	});
 
