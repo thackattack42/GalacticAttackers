@@ -40,6 +40,7 @@ bool ESG::BulletData::Load(	std::shared_ptr<flecs::world> _game,
 		.set<Orientation>({ world })
 		.set<Acceleration>({ 0, 0 })
 		.set<Velocity>({ 0, speed })
+		.set<ModelTransform>({GW::MATH::GIdentityMatrixF})
 		.set<GW::AUDIO::GSound>(shoot.Relinquish())
 		// .override<> ensures a component is unique to each entity created from a prefab 
 		.set_override<Damage>({ dmg })

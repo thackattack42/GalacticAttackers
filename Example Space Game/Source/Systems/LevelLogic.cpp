@@ -24,11 +24,19 @@ bool ESG::LevelLogic::Init(	std::shared_ptr<flecs::world> _game,
 	float enemy1startY = (*readCfg).at("Enemy1").at("ystart").as<float>();
 	float enemy1accmax = (*readCfg).at("Enemy1").at("accmax").as<float>();
 	float enemy1accmin = (*readCfg).at("Enemy1").at("accmin").as<float>();
+
+	float enemy2startY = (*readCfg).at("Enemy2").at("ystart").as<float>();
+	float enemy2accmax = (*readCfg).at("Enemy2").at("accmax").as<float>();
+	float enemy2accmin = (*readCfg).at("Enemy2").at("accmin").as<float>();
+
+	float enemy3startY = (*readCfg).at("Enemy3").at("ystart").as<float>();
+	float enemy3accmax = (*readCfg).at("Enemy3").at("accmax").as<float>();
+	float enemy3accmin = (*readCfg).at("Enemy3").at("accmin").as<float>();
 	// level one info
 	float spawnDelay = (*readCfg).at("Level1").at("spawndelay").as<float>();
 	
 	// spins up a job in a thread pool to invoke a function at a regular interval
-	timedEvents.Create(spawnDelay * 1000, [this, enemy1startY, enemy1accmax, enemy1accmin]() {
+	timedEvents.Create(spawnDelay * 100000, [this, enemy1startY, enemy1accmax, enemy1accmin]() {
 		// compute random spawn location
 		std::random_device rd;  // Will be used to obtain a seed for the random number engine
 		std::mt19937 gen(rd()); // Standard mersenne_twister_engine seeded with rd()
@@ -46,7 +54,7 @@ bool ESG::LevelLogic::Init(	std::shared_ptr<flecs::world> _game,
 			// this method of using prefabs is pretty conveinent
 			gameAsync.entity().is_a(et1)
 				.set<Velocity>({ 0,0 })
-				.set<Acceleration>({ 0, 100 })
+				.set<Acceleration>({ 0, accel })
 				.set<Position>({ Xstart, enemy1startY });
 			// be sure to unlock when done so the main thread can safely merge the changes
 			//gameLock.UnlockSyncWrite();
@@ -56,7 +64,7 @@ bool ESG::LevelLogic::Init(	std::shared_ptr<flecs::world> _game,
 			// this method of using prefabs is pretty conveinent
 			gameAsync.entity().is_a(et2)
 				.set<Velocity>({ 0, 0})
-				.set<Acceleration>({ 0, 100 })
+				.set<Acceleration>({ 0, accel })
 				.set<Position>({ Xstart, enemy1startY });
 			// be sure to unlock when done so the main thread can safely merge the changes
 			//gameLock.UnlockSyncWrite();
@@ -66,7 +74,7 @@ bool ESG::LevelLogic::Init(	std::shared_ptr<flecs::world> _game,
 			// this method of using prefabs is pretty conveinent
 			gameAsync.entity().is_a(et3)
 				.set<Velocity>({ 0,0 })
-				.set<Acceleration>({ 0, 100 })
+				.set<Acceleration>({ 0, accel })
 				.set<Position>({ Xstart, enemy1startY });
 			// be sure to unlock when done so the main thread can safely merge the changes
 			gameLock.UnlockSyncWrite();
