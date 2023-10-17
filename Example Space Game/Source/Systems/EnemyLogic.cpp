@@ -35,11 +35,14 @@ bool ESG::EnemyLogic::Init(std::shared_ptr<flecs::world> _game,
 			eventPusher.Push(explode);
 		}
 
-
 		ModelTransform* edit = e.get_mut<ModelTransform>();
 		GW::MATH::GMatrix::TranslateGlobalF(edit->matrix, GW::MATH::GVECTORF{ p.value.x, -p.value.y, 0, 1}, edit->matrix);
 		levelData->levelTransforms[edit->rendererIndex] = edit->matrix;
-
+		if (edit->matrix.row4.y <= 0)
+		{
+			e.destruct();
+			std::cout << "Player Dies...You Lose";
+		}
 		p.value.x = 0;
 		p.value.y = 0;
 
