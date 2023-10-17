@@ -26,11 +26,15 @@ bool ESG::PhysicsLogic::Init(	std::shared_ptr<flecs::world> _game,
 		GW::MATH2D::GVector2D::Scale2F(v.value, e.delta_time(), speed);
 		// adding is simple but doesn't account for orientation
 		GW::MATH2D::GVector2D::Add2F(speed, p.value, p.value);
-		//GW::MATH::GMatrix::TranslateGlobalF(e.get_mut<ModelTransform>()->matrix, GW::MATH::GVECTORF { -p.value.x, p.value.y, 0, 1 }, e.get_mut<ModelTransform>()->matrix);
 		
-		if (e.has<BulletTest>())
+ 		if (e.has<BulletTest>())
 		{
-			std::cout << "Moving " << p.value.x << " " << p.value.y << std::endl;
+			GW::MATH::GMatrix::TranslateGlobalF(e.get_mut<ModelTransform>()->matrix, GW::MATH::GVECTORF { -p.value.x, p.value.y, 0, 0 }, e.get_mut<ModelTransform>()->matrix);
+			//GW::MATH::GMatrix::TranslateGlobalF(e.get_mut<ModelTransform>()->matrix, GW::MATH::GVECTORF { 0, 0, 0, 1 }, e.get_mut<ModelTransform>()->matrix);
+			
+			//std::cout << "Moving " << p.value.x << " " << p.value.y << std::endl;6
+			GW::MATH::GMATRIXF temp = e.get<ModelTransform>()->matrix;
+			std::cout << "Moving " << temp.row4.x << " " << temp.row4.y << " " << temp.row4.z << std::endl;
 		}
 		//std::cout << "Moving\n";
 	});
@@ -39,12 +43,34 @@ bool ESG::PhysicsLogic::Init(	std::shared_ptr<flecs::world> _game,
 	// clean up any objects that end up offscreen
 	game->system<const Position>("Cleanup System")
 		.each([](flecs::entity e, const Position& p) {
-		if (p.value.x > 1.5f || p.value.x < -1.5f ||
-			p.value.y > 1.5f || p.value.y < -1.5f) {
+		if (p.value.x > 10.5f || p.value.x < -10.5f ||
+			p.value.y > 10.0f || p.value.y < -10.5f) {
 				e.destruct();
+
 				//std::cout << "Cleanup";
 		}
+		/*if (e.has<"">)
+		{
+			GW::MATH::GMATRIXF temp = e.get<ModelTransform>()->matrix;
+			if (temp.row4.x > 10.5f || temp.row4.x < -10.5f ||
+				temp.row4.y > 10.0f || temp.row4.y < -10.5f) {
+				e.destruct();
+
+				std::cout << "Cleanup clean";
+			}
+		}*/
+		if(e.has<BulletTest>())
+		{
+			GW::MATH::GMATRIXF temp = e.get<ModelTransform>()->matrix;
+			if (temp.row4.x > 10.5f || temp.row4.x < -10.5f ||
+				temp.row4.y > 10.0f || temp.row4.y < -10.5f) {
+				e.destruct();
+
+				//std::cout << "Cleanup";
+			}
+		}
 	});
+
 	// **** COLLISIONS ****
 	// due to wanting to loop through all collidables at once, we do this in two steps:
 	// 1. A System will gather all collidables into a shared std::vector
