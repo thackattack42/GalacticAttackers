@@ -4,14 +4,16 @@
 #include "../Components/Physics.h"
 #include "../Entities/Prefabs.h"
 #include "../Components/Gameplay.h"
+#include "../Components/Components.h"
+
 
 bool ESG::EnemyData::Load(	std::shared_ptr<flecs::world> _game,
 							std::weak_ptr<const GameConfig> _gameConfig,
-							GW::AUDIO::GAudio _audioEngine)
+							GW::AUDIO::GAudio _audioEngine, std::shared_ptr<Level_Data> _levelData)
 {
 	// Grab init settings for players
 	std::shared_ptr<const GameConfig> readCfg = _gameConfig.lock();
-
+	levelData = _levelData;
 	// Create prefab for lazer weapon
 	// color
 	float red = (*readCfg).at("Enemy1").at("red").as<float>();
@@ -49,12 +51,14 @@ bool ESG::EnemyData::Load(	std::shared_ptr<flecs::world> _game,
 		GW::MATH2D::GVECTOR2F{ xscale, yscale }, world);
 	
 	// add prefab to ECS
-	//auto enemyPrefab = _game->lookup("Spaceship5");
-	//auto enemyPrefab = _game->entity("Spaceship5")
-		//auto spaceship = _game->entity("Spaceship5");
-		auto enemyPrefab = _game->prefab("Spaceship5")
+	
+	std::shared_ptr<flecs::world> newWorld = std::make_shared<flecs::world>();
+	
+
+		auto enemyPrefab = newWorld->entity("Spaceship5")
 		// .set<> in a prefab means components are shared (instanced)
 		//.set(spaceship)
+			
 			.set<Material>({ red, green, blue })
 			.set<Orientation>({ world })
 		// .override<> ensures a component is unique to each entity created from a prefab
@@ -64,6 +68,20 @@ bool ESG::EnemyData::Load(	std::shared_ptr<flecs::world> _game,
 			.override<Position>()
 			.override<Enemy>() // Tag this prefab as an enemy (for queries/systems)
 			.override<Collidable>(); // can be collided with
+		std::shared_ptr<flecs::world> newWorld = std::make_shared<flecs::world>();
+
+
+		if (enemyPrefab.is_valid())
+		{
+			ModelTransform* edit = newWorld->entity(enemyPrefab).get_mut<ModelTransform>();
+			if (edit)
+			{
+				//GW::MATH::GMatrix::TranslateGlobalF(edit->matrix, GW::MATH::GVECTORF{ , -p.value.y, 0, 1 }, edit->matrix);
+				levelData->levelTransforms[edit->rendererIndex] = edit->matrix;
+				std::cout << "X value: " << p.value.x << "___Y value: " << p.value.y << "\n";
+				std::cout << "X valueEdit: " << edit->matrix.row4.x << "___Y valueEdit: " << edit->matrix.row4.y << "\n";
+			}
+		}
 
 		 auto enemyPrefab2 = _game->prefab("Spaceship2") 
 			.set<Material>({ red2, green2, blue2 }) 
