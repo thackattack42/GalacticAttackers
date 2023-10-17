@@ -48,6 +48,16 @@ bool ESG::PhysicsLogic::Init(	std::shared_ptr<flecs::world> _game,
 
 				//std::cout << "Cleanup";
 		}
+		/*if (e.has<"">)
+		{
+			GW::MATH::GMATRIXF temp = e.get<ModelTransform>()->matrix;
+			if (temp.row4.x > 10.5f || temp.row4.x < -10.5f ||
+				temp.row4.y > 10.0f || temp.row4.y < -10.5f) {
+				e.destruct();
+
+				std::cout << "Cleanup clean";
+			}
+		}*/
 		if(e.has<BulletTest>())
 		{
 			GW::MATH::GMATRIXF temp = e.get<ModelTransform>()->matrix;

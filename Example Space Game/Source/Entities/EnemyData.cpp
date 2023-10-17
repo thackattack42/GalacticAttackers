@@ -63,9 +63,10 @@ bool ESG::EnemyData::Load(	std::shared_ptr<flecs::world> _game,
 			.override<Velocity>()
 			.override<Position>()
 			.override<Enemy>() // Tag this prefab as an enemy (for queries/systems)
+			//.override<PrefabEnemy>() // Tag this prefab as an enemy (for queries/systems)
 			.override<Collidable>(); // can be collided with
 
-		 auto enemyPrefab2 = _game->prefab("Spaceship2") 
+		 /*auto enemyPrefab2 = _game->prefab("Spaceship2") 
 			.set<Material>({ red2, green2, blue2 }) 
 			.set<Orientation>({ world }) 
 			.set_override<Health>({ health })
@@ -83,12 +84,12 @@ bool ESG::EnemyData::Load(	std::shared_ptr<flecs::world> _game,
 			 .override<Velocity>()
 			 .override<Position>()
 			 .override<Enemy>()
-			 .override<Collidable>();
+			 .override<Collidable>();*/
 
 	// register this prefab by name so other systems can use it
 	RegisterPrefab("Enemy Type1", enemyPrefab);
-	RegisterPrefab("Enemy Type2", enemyPrefab2);
-	RegisterPrefab("Enemy Type3", enemyPrefab3);
+	//RegisterPrefab("Enemy Type2", enemyPrefab2);
+	//RegisterPrefab("Enemy Type3", enemyPrefab3);
 	//RegisterPrefab("Enemy Type2", enemyPrefab2);
 
 	return true;
