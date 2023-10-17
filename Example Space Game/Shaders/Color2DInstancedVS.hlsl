@@ -65,21 +65,21 @@ struct VERTEX_IN
     float3 nrm : NORMAL;
 };
 
-cbuffer SPRITE_DATA : register(b4)
-{
-    float2 pos_offset;
-    float2 scale;
-    float rotation;
-    float depth;
-};
+//cbuffer SPRITE_DATA : register(b4)
+//{
+//    float2 pos_offset;
+//    float2 scale;
+//    float rotation;
+//    float depth;
+//};
 
 
 OutputToRasterizer main(VERTEX_IN vert, uint id : SV_InstanceID)
-{/*
-    float2 r = float2(cos(rotation), sin(rotation));
+{
+   /* float2 r = float2(cos(rotation), sin(rotation));
     float2x2 rotate = float2x2(r.x, -r.y, r.y, r.x);
     float2 pos = pos_offset + mul(rotate, vert.pos * scale);*/
-    float4 inputVertex = float4(vert.pos,/* depth,*/ 1.0f);
+    float4 inputVertex = float4(vert.pos,/*, depth,*/ 1.0f);
     inputVertex = mul(inputVertex, worldMatrix[mod_id + id]);
 
     OutputToRasterizer output;

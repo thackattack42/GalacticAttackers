@@ -2,8 +2,8 @@
 #ifndef RENDERERLOGIC_H
 #define RENDERERLOGIC_H
 
-#define TEXTURES_PATH "../../DDS/"
-#define LTEXTURES_PATH L"../../DDS/"
+#define TEXTURES_PATH "../DDS/"
+#define LTEXTURES_PATH L"../DDS/"
 #define XML_PATH "../Source/xml/"
 
 // Contains our global game settings
@@ -70,8 +70,10 @@ namespace ESG
 		GW::GRAPHICS::GDirectX11Surface direct11;
 		Microsoft::WRL::ComPtr<ID3D11Buffer>		vertexBuffer;
 		Microsoft::WRL::ComPtr<ID3D11Buffer>	    indexBuffer;
-		Microsoft::WRL::ComPtr<ID3D11VertexShader>	vertexShader;
-		Microsoft::WRL::ComPtr<ID3D11PixelShader>	pixelShader;
+		Microsoft::WRL::ComPtr<ID3D11VertexShader>	vertexShader3D;
+		Microsoft::WRL::ComPtr<ID3D11PixelShader>	pixelShader3D;
+		Microsoft::WRL::ComPtr<ID3D11VertexShader>	vertexShader2D;
+		Microsoft::WRL::ComPtr<ID3D11PixelShader>	pixelShader2D;
 		Microsoft::WRL::ComPtr<ID3D11InputLayout>	vertexFormat;
 		Microsoft::WRL::ComPtr<ID3D11Buffer>		vertexBufferStaticText;
 
@@ -94,8 +96,10 @@ namespace ESG
 		Microsoft::WRL::ComPtr<ID3D11Buffer> constantLightBuffer;
 		Microsoft::WRL::ComPtr<ID3D11Buffer> constantBufferHUD;
 
-		std::string vertexShaderSource;
-		std::string pixelShaderSource;
+		std::string vertexShader3DSource;
+		std::string pixelShader3DSource;
+		std::string vertexShader2DSource;
+		std::string pixelShader2DSource;
 
 		HUD	hud;
 		Font consolas32;
@@ -144,13 +148,14 @@ namespace ESG
 		void InitializeVertexBuffer(ID3D11Device* creator);
 		void InitializeIndexBuffer(ID3D11Device* creator);
 		void InitializeConstantBuffer(ID3D11Device* creator);
-		void InitializePipeline(ID3D11Device* creator);
+		void InitializePipeline3D(ID3D11Device* creator);
+		void InitializePipeline2D(ID3D11Device* creator);
 
 		void CreateVertexBuffer(ID3D11Device* creator, const void* data, unsigned int sizeInBytes);
 		void CreateIndexBuffer(ID3D11Device* creator, const void* data, unsigned int sizeInBytes);
 
-		Microsoft::WRL::ComPtr<ID3DBlob> CompileVertexShader(ID3D11Device* creator, UINT compilerFlags);
-		Microsoft::WRL::ComPtr<ID3DBlob> CompilePixelShader(ID3D11Device* creator, UINT compilerFlags);
+		Microsoft::WRL::ComPtr<ID3DBlob> CompileVertexShader3D(ID3D11Device* creator, UINT compilerFlags);
+		Microsoft::WRL::ComPtr<ID3DBlob> CompilePixelShader3D(ID3D11Device* creator, UINT compilerFlags);
 		void CreateVertexInputLayout(ID3D11Device* creator, Microsoft::WRL::ComPtr<ID3DBlob>& vsBlob);
 		
 		void SetUpPipeline(PipelineHandles handles);

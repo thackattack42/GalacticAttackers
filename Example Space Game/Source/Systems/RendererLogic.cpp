@@ -42,7 +42,6 @@ bool ESG::D3DRendererLogic::Init(	std::shared_ptr<flecs::world> _game,
 		return false;
 	// GVulkanSurface will inform us when to release any allocated resources
 	InitializeGraphics();
-	UIDraw();
 
 	return true;
 }
@@ -166,16 +165,16 @@ std::string ESG::D3DRendererLogic::ShaderAsString(const char* shaderFilePath)
 bool ESG::D3DRendererLogic::LoadShaders()
 {
 	std::shared_ptr<const GameConfig> readCfg = gameConfig.lock();
-	vertexShaderSource = (*readCfg).at("Shaders").at("vertex").as<std::string>();
-	pixelShaderSource = (*readCfg).at("Shaders").at("pixel").as<std::string>();
+	vertexShader3DSource = (*readCfg).at("Shaders").at("vertex").as<std::string>();
+	pixelShader3DSource = (*readCfg).at("Shaders").at("pixel").as<std::string>();
 	
-	if (vertexShaderSource.empty() || pixelShaderSource.empty())
+	if (vertexShader3DSource.empty() || pixelShader3DSource.empty())
 		return false;
 
-	vertexShaderSource = ShaderAsString(vertexShaderSource.c_str());
-	pixelShaderSource = ShaderAsString(pixelShaderSource.c_str());
+	vertexShader3DSource = ShaderAsString(vertexShader3DSource.c_str());
+	pixelShader3DSource = ShaderAsString(pixelShader3DSource.c_str());
 
-	if (vertexShaderSource.empty() || pixelShaderSource.empty())
+	if (vertexShader3DSource.empty() || pixelShader3DSource.empty())
 		return false;
 	
 	return true;
@@ -187,7 +186,7 @@ void ESG::D3DRendererLogic::InitializeGraphics()
 	direct11.GetDevice((void**)&creator);
 	//InitializeVertexBuffer(creator);
 	//InitializeIndexBuffer(creator);
-	InitializePipeline(creator);
+	InitializePipeline3D(creator);
 
 	// free temporary handle
 	creator->Release();
@@ -269,7 +268,7 @@ void  ESG::D3DRendererLogic::CreateIndexBuffer(ID3D11Device* creator, const void
 }
 
 
-void ESG::D3DRendererLogic::InitializePipeline(ID3D11Device* creator)
+void ESG::D3DRendererLogic::InitializePipeline3D(ID3D11Device* creator)
 {
 	//Initialixe pipeline
 	direct11.GetDevice((void**)&creator);
@@ -277,25 +276,25 @@ void ESG::D3DRendererLogic::InitializePipeline(ID3D11Device* creator)
 #if _DEBUG
 	compilerFlags |= D3DCOMPILE_DEBUG;
 #endif
-	Microsoft::WRL::ComPtr<ID3DBlob> vsBlob = CompileVertexShader(creator, compilerFlags);
-	Microsoft::WRL::ComPtr<ID3DBlob> psBlob = CompilePixelShader(creator, compilerFlags);
+	Microsoft::WRL::ComPtr<ID3DBlob> vsBlob = CompileVertexShader3D(creator, compilerFlags);
+	Microsoft::WRL::ComPtr<ID3DBlob> psBlob = CompilePixelShader3D(creator, compilerFlags);
 	CreateVertexInputLayout(creator, vsBlob);
 }
 
-Microsoft::WRL::ComPtr<ID3DBlob> ESG::D3DRendererLogic::CompilePixelShader(ID3D11Device* creator, UINT compilerFlags)
+Microsoft::WRL::ComPtr<ID3DBlob> ESG::D3DRendererLogic::CompilePixelShader3D(ID3D11Device* creator, UINT compilerFlags)
 {
 
 	Microsoft::WRL::ComPtr<ID3DBlob> psBlob, errors;
 
 	HRESULT compilationResult =
-		D3DCompile(pixelShaderSource.c_str(), pixelShaderSource.length(),
+		D3DCompile(pixelShader3DSource.c_str(), pixelShader3DSource.length(),
 			nullptr, nullptr, nullptr, "main", "ps_4_0", compilerFlags, 0,
 			psBlob.GetAddressOf(), errors.GetAddressOf());
 
 	if (SUCCEEDED(compilationResult))
 	{
 		creator->CreatePixelShader(psBlob->GetBufferPointer(),
-			psBlob->GetBufferSize(), nullptr, pixelShader.GetAddressOf());
+			psBlob->GetBufferSize(), nullptr, pixelShader3D.GetAddressOf());
 	}
 	else
 	{
@@ -306,19 +305,19 @@ Microsoft::WRL::ComPtr<ID3DBlob> ESG::D3DRendererLogic::CompilePixelShader(ID3D1
 
 	return psBlob;
 }
-Microsoft::WRL::ComPtr<ID3DBlob>  ESG::D3DRendererLogic::CompileVertexShader(ID3D11Device* creator, UINT compilerFlags)
+Microsoft::WRL::ComPtr<ID3DBlob>  ESG::D3DRendererLogic::CompileVertexShader3D(ID3D11Device* creator, UINT compilerFlags)
 {
 	Microsoft::WRL::ComPtr<ID3DBlob> vsBlob, errors;
 
 	HRESULT compilationResult =
-		D3DCompile(vertexShaderSource.c_str(), vertexShaderSource.length(),
+		D3DCompile(vertexShader3DSource.c_str(), vertexShader3DSource.length(),
 			nullptr, nullptr, nullptr, "main", "vs_4_0", compilerFlags, 0,
 			vsBlob.GetAddressOf(), errors.GetAddressOf());
 
 	if (SUCCEEDED(compilationResult))
 	{
 		creator->CreateVertexShader(vsBlob->GetBufferPointer(),
-			vsBlob->GetBufferSize(), nullptr, vertexShader.GetAddressOf());
+			vsBlob->GetBufferSize(), nullptr, vertexShader3D.GetAddressOf());
 	}
 	else
 	{
@@ -584,8 +583,8 @@ void ESG::D3DRendererLogic::SetUpPipeline(PipelineHandles handles)
 	handles.context->IASetIndexBuffer(indexBuffer.Get(), DXGI_FORMAT_R32_UINT, 0);
 
 	//Set Shaders
-	handles.context->VSSetShader(vertexShader.Get(), nullptr, 0);
-	handles.context->PSSetShader(pixelShader.Get(), nullptr, 0);
+	handles.context->VSSetShader(vertexShader3D.Get(), nullptr, 0);
+	handles.context->PSSetShader(pixelShader3D.Get(), nullptr, 0);
 
 	//// Create Stage Info for Vertex Shader
 	//
@@ -596,14 +595,12 @@ void ESG::D3DRendererLogic::SetUpPipeline(PipelineHandles handles)
 	handles.context->VSSetConstantBuffers(0, 1, constantSceneBuffer.GetAddressOf());
 	handles.context->VSSetConstantBuffers(2, 1, constantModelBuffer.GetAddressOf());
 	handles.context->VSSetConstantBuffers(3, 1, constantLightBuffer.GetAddressOf());
-	handles.context->VSSetConstantBuffers(4, 1, constantBufferHUD.GetAddressOf());
 
 
 	handles.context->PSSetConstantBuffers(1, 1, constantMeshBuffer.GetAddressOf());
 	handles.context->PSSetConstantBuffers(0, 1, constantSceneBuffer.GetAddressOf());
 	handles.context->PSSetConstantBuffers(2, 1, constantModelBuffer.GetAddressOf());
 	handles.context->PSSetConstantBuffers(3, 1, constantLightBuffer.GetAddressOf());
-	//handles.context->PSSetConstantBuffers(4, 1, constantBufferHUD.GetAddressOf());
 	// Assembly State
 	handles.context->IASetInputLayout(vertexFormat.Get());
 	handles.context->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
@@ -825,18 +822,18 @@ bool ESG::D3DRendererLogic::SetupDrawcalls() // I SCREWED THIS UP MAKES SO MUCH 
 		//// now we can draw
 		//VkDeviceSize offsets[] = { 0 };
 		//vkCmdBindVertexBuffers(commandBuffer, 0, 1, &vertexHandle, offsets);
-		//vkCmdDraw(commandBuffer, 4, draw_counter, 0, 0); // draw'em all!
+		//vkCmdDraw(commandBuffer, 4, draw_counter, 0, 0); // draw'em all!w
 		PipelineHandles curHandles = GetCurrentPipelineHandles();
 		SetUpPipeline(curHandles);
 			curHandles.context->UpdateSubresource(constantSceneBuffer.Get(), 0, nullptr, &scene, 0, 0);
 			curHandles.context->UpdateSubresource(constantMeshBuffer.Get(), 0, nullptr, &mesh, 0, 0);
 			curHandles.context->UpdateSubresource(constantLightBuffer.Get(), 0, nullptr, &lights, 0, 0);
 			modelID.mod_id = e.get<Instance>()->transformStart;
-				for (unsigned int j = 0; j < e.get_mut<Object>()->meshCount; ++j)
+				for (unsigned int j = 0; j < e.get<Object>()->meshCount; ++j)
 				{
 					unsigned var = e.get<Object>()->meshCount;
 					auto meshCount = e.get<Object>()->meshStart + j;
-					modelID.mat_id = levelData->levelMeshes[meshCount].materialIndex + e.get_mut<Object>()->materialStart;
+					modelID.mat_id = levelData->levelMeshes[meshCount].materialIndex + e.get<Object>()->materialStart;
 
 					auto colorModel = e.get<Material>()->diffuse.value;
 					modelID.color = GW::MATH::GVECTORF{ colorModel.x, colorModel.y, colorModel.z, 1 };
@@ -850,6 +847,7 @@ bool ESG::D3DRendererLogic::SetupDrawcalls() // I SCREWED THIS UP MAKES SO MUCH 
 						0);
 				}
 		ReleasePipelineHandles(curHandles);
+		//UIDraw();
 	});
 	// NOTE: I went with multi-system approach for the ease of passing lambdas with "this"
 	// There is a built-in solution for this problem referred to as a "custom runner":
@@ -876,7 +874,7 @@ void ESG::D3DRendererLogic::UIDraw()
 		// set a texture (srv) and sampler to the pixel shader
 		curHandles.context->PSSetShaderResources(0, 1, shaderResourceView[i].GetAddressOf());
 		curHandles.context->PSSetSamplers(0, 1, samplerState.GetAddressOf());
-		// now we can draw
+		// now we can drawz
 		curHandles.context->DrawIndexed(6, 0, 0);
 	}
 	const UINT strides[] = { sizeof(TextVertex) };
