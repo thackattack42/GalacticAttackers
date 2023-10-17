@@ -41,9 +41,10 @@ bool ESG::EnemyLogic::Init(std::shared_ptr<flecs::world> _game,
 		
 		std::cout << "Moving " << edit->matrix.row4.x << " " << edit->matrix.row4.y << " " << edit->matrix.row4.z << std::endl;
 
-		if (edit->matrix.row4.y <= 0)
+		if (edit->matrix.row4.y <= 30)
 		{
 			e.destruct();
+			
 			std::cout << "Player Dies...You Lose";
 		}
 		p.value.x = 0;

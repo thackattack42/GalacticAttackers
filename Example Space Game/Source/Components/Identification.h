@@ -9,7 +9,6 @@ namespace ESG
 	struct Bullet {};
 	struct Shield {};
 	struct Enemy {};
-	struct PrefabEnemy {};
 	struct Lives {};
 	struct ControllerID {
 		unsigned index = 0;
