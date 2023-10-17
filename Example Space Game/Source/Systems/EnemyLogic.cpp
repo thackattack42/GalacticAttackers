@@ -38,6 +38,9 @@ bool ESG::EnemyLogic::Init(std::shared_ptr<flecs::world> _game,
 		ModelTransform* edit = e.get_mut<ModelTransform>();
 		GW::MATH::GMatrix::TranslateGlobalF(edit->matrix, GW::MATH::GVECTORF{ p.value.x, -p.value.y, 0, 1}, edit->matrix);
 		levelData->levelTransforms[edit->rendererIndex] = edit->matrix;
+		
+		std::cout << "Moving " << edit->matrix.row4.x << " " << edit->matrix.row4.y << " " << edit->matrix.row4.z << std::endl;
+
 		if (edit->matrix.row4.y <= 0)
 		{
 			e.destruct();

@@ -36,7 +36,7 @@ bool ESG::LevelLogic::Init(	std::shared_ptr<flecs::world> _game,
 	float spawnDelay = (*readCfg).at("Level1").at("spawndelay").as<float>();
 	
 	// spins up a job in a thread pool to invoke a function at a regular interval
-	timedEvents.Create(spawnDelay * 100000, [this, enemy1startY, enemy1accmax, enemy1accmin]() {
+	timedEvents.Create(spawnDelay * 1000, [this, enemy1startY, enemy2startY, enemy3startY, enemy1accmax, enemy2accmax, enemy3accmax, enemy1accmin, enemy2accmin, enemy3accmin]() {
 		// compute random spawn location
 		std::random_device rd;  // Will be used to obtain a seed for the random number engine
 		std::mt19937 gen(rd()); // Standard mersenne_twister_engine seeded with rd()
@@ -56,28 +56,29 @@ bool ESG::LevelLogic::Init(	std::shared_ptr<flecs::world> _game,
 				.set<Velocity>({ 0,0 })
 				.set<Acceleration>({ 0, accel })
 				.set<Position>({ Xstart, enemy1startY });
-			// be sure to unlock when done so the main thread can safely merge the changes
-			//gameLock.UnlockSyncWrite();
-		}if (RetreivePrefab("Enemy Type2", et2)) {
-			// you must ensure the async_stage is thread safe as it has no built-in synchronization
-			//gameLock.LockSyncWrite();
-			// this method of using prefabs is pretty conveinent
-			gameAsync.entity().is_a(et2)
-				.set<Velocity>({ 0, 0})
-				.set<Acceleration>({ 0, accel })
-				.set<Position>({ Xstart, enemy1startY });
-			// be sure to unlock when done so the main thread can safely merge the changes
-			//gameLock.UnlockSyncWrite();
-		}if (RetreivePrefab("Enemy Type3", et3)) {
-			// you must ensure the async_stage is thread safe as it has no built-in synchronization
-			//gameLock.LockSyncWrite();
-			// this method of using prefabs is pretty conveinent
-			gameAsync.entity().is_a(et3)
-				.set<Velocity>({ 0,0 })
-				.set<Acceleration>({ 0, accel })
-				.set<Position>({ Xstart, enemy1startY });
+			///provide a set matrix     
 			// be sure to unlock when done so the main thread can safely merge the changes
 			gameLock.UnlockSyncWrite();
+		//}if (RetreivePrefab("Enemy Type2", et2)) {
+		//	// you must ensure the async_stage is thread safe as it has no built-in synchronization
+		//	//gameLock.LockSyncWrite();
+		//	// this method of using prefabs is pretty conveinent
+		//	gameAsync.entity().is_a(et2)
+		//		.set<Velocity>({ 0, 0})
+		//		.set<Acceleration>({ 0, accel })
+		//		.set<Position>({ Xstart, enemy2startY });
+		//	// be sure to unlock when done so the main thread can safely merge the changes
+		//	//gameLock.UnlockSyncWrite();
+		//}if (RetreivePrefab("Enemy Type3", et3)) {
+		//	// you must ensure the async_stage is thread safe as it has no built-in synchronization
+		//	//gameLock.LockSyncWrite();
+		//	// this method of using prefabs is pretty conveinent
+		//	gameAsync.entity().is_a(et3)
+		//		.set<Velocity>({ 0,0 })
+		//		.set<Acceleration>({ 0, accel })
+		//		.set<Position>({ Xstart, enemy3startY });
+		//	// be sure to unlock when done so the main thread can safely merge the changes
+		//	gameLock.UnlockSyncWrite();
 		}
 	}, 1000); // wait 5 seconds to start enemy wave
 
