@@ -52,6 +52,18 @@ bool ESG::LevelLogic::Init(	std::shared_ptr<flecs::world> _game,
 			// be sure to unlock when done so the main thread can safely merge the changes
 			gameLock.UnlockSyncWrite();
 		}
+		if (RetreivePrefab("Enemy Type2", et2)) {
+			// you must ensure the async_stage is thread safe as it has no built-in synchronization
+			gameLock.LockSyncWrite();
+			// this method of using prefabs is pretty conveinent
+			gameAsync.entity().is_a(et2)
+				.set<Velocity>({ 0,0 })
+				.set<Acceleration>({ 0, accel })
+				.set<Position>({ Xstart, enemy1startY });
+			///provide a set matrix     
+			// be sure to unlock when done so the main thread can safely merge the changes
+			gameLock.UnlockSyncWrite();
+		}
 	}, 1000); // wait 5 seconds to start enemy wave
 
 	// create a system the runs at the end of the frame only once to merge async changes
