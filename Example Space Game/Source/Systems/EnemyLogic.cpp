@@ -103,7 +103,7 @@ bool ESG::EnemyLogic::Init(std::shared_ptr<flecs::world> _game,
 		p.value = { 0, 0 };
 
 		//FireLasersEnemy(e.world(), p);
-		});
+			});
 
 	return true;
 }
