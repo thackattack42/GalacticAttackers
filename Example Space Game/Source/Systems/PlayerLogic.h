@@ -35,7 +35,8 @@ namespace ESG
 		GW::CORE::GEventResponder resetLevel;
 		std::shared_ptr<Level_Data> levelData;
 		std::shared_ptr<int> currentLevel;
-		bool resetRender;
+		std::shared_ptr<bool> levelChange;
+		
 	public:
 		// attach the required logic to the ECS 
 		bool Init(	std::shared_ptr<flecs::world> _game,
@@ -46,7 +47,8 @@ namespace ESG
 					GW::AUDIO::GAudio _audioEngine,
 					GW::CORE::GEventGenerator _eventPusher,
 					std::shared_ptr<Level_Data> _levelData,
-					std::shared_ptr<int> _currentLevel);
+					std::shared_ptr<int> _currentLevel,
+			std::shared_ptr<bool> _levelChange);
 		// control if the system is actively running
 		bool Activate(bool runSystem);
 		// release any resources allocated by the system

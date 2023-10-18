@@ -38,20 +38,20 @@ class Application
 	std::shared_ptr<GameConfig> gameConfig; // .ini file game settings
 	std::shared_ptr<Level_Data> levelData;
 	std::shared_ptr<int> currentLevel;
+	std::shared_ptr<bool> levelChange;
 	std::string level;
 	std::string models;
-	bool ResetRender = false;
 	// ECS Entities and Prefabs that need to be loaded
-	GA::BulletData weapons;
-	GA::PlayerData players;
-	GA::EnemyData enemies;
+	ESG::BulletData weapons;
+	ESG::PlayerData players;
+	ESG::EnemyData enemies;
 	// specific ECS systems used to run the game
-	GA::PlayerLogic playerSystem;
-	GA::D3DRendererLogic d3dRenderingSystem;
-	GA::LevelLogic levelSystem;
-	GA::PhysicsLogic physicsSystem;
-	GA::BulletLogic bulletSystem;
-	GA::EnemyLogic enemySystem;
+	ESG::PlayerLogic playerSystem;
+	ESG::D3DRendererLogic d3dRenderingSystem;
+	ESG::LevelLogic levelSystem;
+	ESG::PhysicsLogic physicsSystem;
+	ESG::BulletLogic bulletSystem;
+	ESG::EnemyLogic enemySystem;
 	// EventGenerator for Game Events
 	GW::CORE::GEventGenerator eventPusher;
 

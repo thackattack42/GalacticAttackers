@@ -60,7 +60,7 @@ bool ESG::EnemyLogic::Init(std::shared_ptr<flecs::world> _game,
 			}
 		}
 
-		std::cout << "Moving " << edit->matrix.row4.x << " " << edit->matrix.row4.y << " " << edit->matrix.row4.z << std::endl;
+		//std::cout << "Moving " << edit->matrix.row4.x << " " << edit->matrix.row4.y << " " << edit->matrix.row4.z << std::endl;
 
 		if (edit->matrix.row4.y <= 30)
 		{
@@ -79,15 +79,7 @@ bool ESG::EnemyLogic::Init(std::shared_ptr<flecs::world> _game,
 				if (live2.is_valid())
 				{
 					live2.destruct();
-					auto player = game->lookup("Player");
-
-					player.add<Enable>();
-					player.destruct();
-					ESG::PLAY_EVENT_DATA y;
-					GW::GEvent reset;
-					reset.Write(ESG::PLAY_EVENT::NEXT_LEVEL, y);
-					eventPusher.Push(reset);
-					std::cout << "Player Dies...You Lose";
+					
 				}
 				else
 				{
@@ -95,6 +87,14 @@ bool ESG::EnemyLogic::Init(std::shared_ptr<flecs::world> _game,
 					if (live3.is_valid())
 					{
 						live3.destruct();
+						auto player = game->lookup("Player");
+						player.destruct();
+
+						ESG::PLAY_EVENT_DATA y;
+						GW::GEvent reset;
+						reset.Write(ESG::PLAY_EVENT::NEXT_LEVEL, y);
+						eventPusher.Push(reset);
+						std::cout << "Player Dies...You Lose";
 					}
 				}
 			}

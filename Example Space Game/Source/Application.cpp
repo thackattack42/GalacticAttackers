@@ -20,6 +20,7 @@ bool Application::Init()
 	game = std::make_shared<flecs::world>(); 
 	levelData = std::make_shared<Level_Data>();
 	currentLevel = std::make_shared<int>();
+	levelChange = std::make_shared<bool>();
 	*(currentLevel) = 1;
 	//for changing level data				level positioning		level obj/mtl
 	//switch (currentLevel)
@@ -238,11 +239,11 @@ bool Application::InitSystems()
 {
 	// connect systems to global ECS
 	if (playerSystem.Init(	game, gameConfig, immediateInput, bufferedInput, 
-							gamePads, audioEngine, eventPusher, levelData, currentLevel) == false)
+							gamePads, audioEngine, eventPusher, levelData, currentLevel, levelChange) == false)
 		return false;
 	if (levelSystem.Init(game, gameConfig, audioEngine) == false)
 		return false;
-	if (d3dRenderingSystem.Init(game, gameConfig, d3d11, window, levelData, currentLevel) == false)
+	if (d3dRenderingSystem.Init(game, gameConfig, d3d11, window, levelData, levelChange) == false)
 		return false;
 	if (physicsSystem.Init(game, gameConfig, levelData) == false)
 		return false;
