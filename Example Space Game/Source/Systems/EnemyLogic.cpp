@@ -34,12 +34,16 @@ bool ESG::EnemyLogic::Init(std::shared_ptr<flecs::world> _game,
 			explode.Write(ESG::PLAY_EVENT::ENEMY_DESTROYED, x);
 			eventPusher.Push(explode);
 		}
+<<<<<<< HEAD
 
 
 		ModelTransform* edit = e.get_mut<ModelTransform>();
 		GW::MATH::GMatrix::TranslateGlobalF(edit->matrix, GW::MATH::GVECTORF{ p.value.x, -p.value.y, 0, 1 }, edit->matrix);
 		levelData->levelTransforms[edit->rendererIndex] = edit->matrix;
 			ModelTransform * edit = e.get_mut<ModelTransform>();
+=======
+		ModelTransform* edit = e.get_mut<ModelTransform>();
+>>>>>>> main
 		//moveRight = true;
 
 		if (moveRight)
@@ -67,6 +71,7 @@ bool ESG::EnemyLogic::Init(std::shared_ptr<flecs::world> _game,
 
 		std::cout << "Moving " << edit->matrix.row4.x << " " << edit->matrix.row4.y << " " << edit->matrix.row4.z << std::endl;
 
+<<<<<<< HEAD
 			if (edit->matrix.row4.y <= 30)
 			{
 				e.destruct();
@@ -83,6 +88,22 @@ bool ESG::EnemyLogic::Init(std::shared_ptr<flecs::world> _game,
 
 			//FireLasersEnemy(e.world(), p);
 			});
+=======
+		if (edit->matrix.row4.y <= 30)
+		{
+			e.destruct();
+			flecs::entity playerDeath;
+			RetreivePrefab("Death", playerDeath);
+			GW::AUDIO::GSound death = *playerDeath.get<GW::AUDIO::GSound>();
+			death.Play();
+			//GW::AUDIO::GSound death = = 
+			std::cout << "Player Dies...You Lose";
+		}
+		p.value = { 0, 0 };
+
+		//FireLasersEnemy(e.world(), p);
+		});
+>>>>>>> main
 
 	return true;
 }
