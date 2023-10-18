@@ -59,6 +59,14 @@ cbuffer LightData : register(b3)
     LIGHT_SETTINGS myLights[400];
 };
 
+//Texture2D colorTexture : register(t0);
+//SamplerState filter : register(s0)
+//{
+//    Filter = MIN_MAG_MIP_LINEAR;
+//    AddressU = Wrap;
+//    AddressV = Wrap;
+//};
+
 
 float4 main(OutputToRasterizer output) : SV_TARGET
 {
@@ -112,8 +120,7 @@ float4 main(OutputToRasterizer output) : SV_TARGET
     float3 reflected = material[mat_id].Ks * intensity * 1.0f;
 
     float3 result = saturate(direct + indirect) * diffuse + reflected + emissive;
-    //float3 result = saturate(direct) * diffuse;
-    return float4(result, material[mat_id].d);
+    return float4(/*(colorTexture.Sample(filter, material[mat_id].Ks) **/ result/*)*/, material[mat_id].d);
 
 }
 

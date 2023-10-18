@@ -99,7 +99,7 @@ bool ESG::PlayerLogic::Init(std::shared_ptr<flecs::world> _game,
 		ESG::PLAY_EVENT event; ESG::PLAY_EVENT_DATA eventData;
 		if (+e.Read(event, eventData)) {
 			// only in here if event matches
-			std::cout << "Enemy Was Destroyed! You Win!\n";
+			std::cout << "Enemy Was Destroyed!\n";
 		}
 	});
 	_eventPusher.Register(onExplode);
@@ -181,7 +181,7 @@ bool ESG::PlayerLogic::FireLasers(flecs::world& stage, Position origin)
 	// Grab the prefab for a laser round
 	flecs::entity bullet;
 	RetreivePrefab("Lazer Bullet", bullet);
-	//ModelTransform* original = bullet.get_mut<ModelTransform>();
+	ModelTransform* original = bullet.get_mut<ModelTransform>();
 
 	//origin.value.x -= 0.05f;
 	//auto laserLeft = stage.entity().is_a(bullet)
@@ -191,8 +191,8 @@ bool ESG::PlayerLogic::FireLasers(flecs::world& stage, Position origin)
 		.set<Position>(origin);
 	laserRight.add<BulletTest>();
 	
-	//ModelTransform* edit = laserRight.get_mut<ModelTransform>();
-	//edit = original;
+	ModelTransform* edit = laserRight.get_mut<ModelTransform>();
+	edit = original;
 	// if this shot is charged
 	//if (chargeEnd - chargeStart >= chargeTime) {
 	//	chargeEnd = chargeStart;
@@ -202,10 +202,10 @@ bool ESG::PlayerLogic::FireLasers(flecs::world& stage, Position origin)
 	//		.set<Material>({ 1,0,0 });
 	//}
 	
-	//origin.value.y += 1.0f;
+	origin.value.y += 1.0f;
 
-	//GW::MATH::GMatrix::TranslateGlobalF(edit->matrix, GW::MATH::GVECTORF{ origin.value.x, origin.value.y, 0, 1 }, edit->matrix);
-	//levelData->levelTransforms[edit->rendererIndex] = edit->matrix;
+	GW::MATH::GMatrix::TranslateGlobalF(edit->matrix, GW::MATH::GVECTORF{ origin.value.x, origin.value.y, 0, 1 }, edit->matrix);
+	levelData->levelTransforms[edit->rendererIndex] = edit->matrix;
 	//printf("%f %f \n", edit->matrix.row4.x, edit->matrix.row4.y);
 
 	// play the sound of the Lazer prefab
