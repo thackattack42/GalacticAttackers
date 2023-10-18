@@ -6,7 +6,10 @@ namespace ESG
 {
 	enum PLAY_EVENT {
 		ENEMY_DESTROYED,
-		EVENT_COUNT
+		EVENT_COUNT,
+		LOST_LIFE,
+		NEXT_LEVEL,
+		RESET_LEVEL
 	};
 	struct PLAY_EVENT_DATA {
 		flecs::id entity_id; // which entity was affected?

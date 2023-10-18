@@ -55,7 +55,6 @@ bool ESG::BulletData::Load(	std::shared_ptr<flecs::world> _game,
 	death.Create(deathFX.c_str(), _audioEngine, 0.15f);
 	auto deathPrefab = _game->prefab("Crystal1")
 		.set<GW::AUDIO::GSound>(death.Relinquish());
-		
 	// register this prefab by name so other systems can use it
 	RegisterPrefab("Lazer Bullet", lazerPrefab);
 	RegisterPrefab("Death", deathPrefab);

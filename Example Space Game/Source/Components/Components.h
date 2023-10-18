@@ -23,6 +23,7 @@ namespace ESG
 	};
 	struct RenderingSystem {};
 	struct BulletTest {};
+	struct Enable{};
 	//struct Material { float red, greem, blue; };
 }
 #endif

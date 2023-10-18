@@ -54,6 +54,7 @@ namespace ESG
 
 		// Directx11 resources used for rendering
 		std::shared_ptr<Level_Data> levelData;
+		std::shared_ptr<int> currentLevel;
 		GW::GRAPHICS::GDirectX11Surface direct11;
 		Microsoft::WRL::ComPtr<ID3D11Buffer>		vertexBuffer;
 		Microsoft::WRL::ComPtr<ID3D11Buffer>	    indexBuffer;
@@ -88,11 +89,13 @@ namespace ESG
 		bool Init(	std::shared_ptr<flecs::world> _game,
 					std::weak_ptr<const GameConfig> _gameConfig,
 					GW::GRAPHICS::GDirectX11Surface _direct11,
-					GW::SYSTEM::GWindow _window, std::shared_ptr<Level_Data> _levelData);
+					GW::SYSTEM::GWindow _window, std::shared_ptr<Level_Data> _levelData,
+					std::shared_ptr<int> _currentLevel);
 		// control if the system is actively running
 		bool Activate(bool runSystem);
 		// release any resources allocated by the system
 		bool Shutdown();
+		void LevelSwitching(int currentLevel, GW::SYSTEM::GLog log);
 	private:
 		struct PipelineHandles
 		{
@@ -122,6 +125,7 @@ namespace ESG
 		void SetUpPipeline(PipelineHandles handles);
 		void ESG::D3DRendererLogic::ReleasePipelineHandles(PipelineHandles toRelease);
 		PipelineHandles GetCurrentPipelineHandles();
+		void UpdateBuffers();
 
 		// Unloading funcs
 		bool FreeResources();
@@ -135,7 +139,7 @@ namespace ESG
 			GW::MATH::GMATRIXF instance_transforms[Instance_Max];
 			GW::MATH::GVECTORF instance_colors[Instance_Max];
 		}instanceData;*/
-		std::vector<GW::MATH::GMATRIXF> bulletMoves;
+	
 		// how many instances will be drawn this frame
 		int draw_counter = 0;
 

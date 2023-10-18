@@ -6,8 +6,9 @@
 #include "../Components/Components.h"
 #include "../Entities/Prefabs.h"
 #include "../Events/Playevents.h"
+#include "RendererLogic.h"
 
-using namespace ESG; // Example Space Game
+using namespace ESG; 
 using namespace GW::INPUT; // input libs
 using namespace GW::AUDIO; // audio libs
 
@@ -19,7 +20,8 @@ bool ESG::PlayerLogic::Init(std::shared_ptr<flecs::world> _game,
 							GW::INPUT::GController _controllerInput,
 							GW::AUDIO::GAudio _audioEngine,
 							GW::CORE::GEventGenerator _eventPusher,
-							std::shared_ptr<Level_Data> _levelData)
+							std::shared_ptr<Level_Data> _levelData,
+							std::shared_ptr<int> _currentLevel)
 {
 	// save a handle to the ECS & game settings
 	game = _game;
@@ -29,7 +31,8 @@ bool ESG::PlayerLogic::Init(std::shared_ptr<flecs::world> _game,
 	controllerInput =	_controllerInput;
 	audioEngine = _audioEngine;
 	levelData = _levelData;
-
+	currentLevel = _currentLevel;
+	
 	// Init any helper systems required for this task
 	std::shared_ptr<const GameConfig> readCfg = gameConfig.lock();
 	int width = (*readCfg).at("Window").at("width").as<int>();
@@ -81,8 +84,10 @@ bool ESG::PlayerLogic::Init(std::shared_ptr<flecs::world> _game,
 				levelData->levelTransforms[edit->rendererIndex] = edit->matrix;
 			}
 			p[i].value.x = 0; 
-			p[i].value.y = 0;		
+			p[i].value.y = 0;	
+
 		}
+		
 		// process any cached button events after the loop (happens multiple times per frame)
 		ProcessInputEvents(it.world());
 	});
@@ -97,13 +102,54 @@ bool ESG::PlayerLogic::Init(std::shared_ptr<flecs::world> _game,
 	// create the on explode handler
 	onExplode.Create([this](const GW::GEvent& e) {
 		ESG::PLAY_EVENT event; ESG::PLAY_EVENT_DATA eventData;
-		if (+e.Read(event, eventData)) {
+		if (+e.Read(event, eventData) && event == PLAY_EVENT::ENEMY_DESTROYED) {
 			// only in here if event matches
-			std::cout << "Enemy Was Destroyed! You Win!\n";
+			std::cout << "Enemy Was Destroyed!\n";
 		}
 	});
-	_eventPusher.Register(onExplode);
 
+	lostLife.Create([this](const GW::GEvent& e) {
+		ESG::PLAY_EVENT event; ESG::PLAY_EVENT_DATA eventData;
+		if (+e.Read(event, eventData) && event == PLAY_EVENT::LOST_LIFE) {
+			// only in here if event matches
+			std::cout << "Lost one life...\n";
+		}
+	});
+
+	nextLevel.Create([this](const GW::GEvent& e) {
+		ESG::PLAY_EVENT event; ESG::PLAY_EVENT_DATA eventData;
+		if (+e.Read(event, eventData) && event == PLAY_EVENT::NEXT_LEVEL) {
+			// only in here if event matches
+			GW::SYSTEM::GLog log;
+			++(*currentLevel);
+			
+			if (*currentLevel == 2)
+			{
+				levelData->LoadLevel("../GameLevel_2.txt", "../Models", log);
+			}
+			else if(*currentLevel == 3)
+			{
+				levelData->LoadLevel("../GameLevel_3.txt", "../Models", log);
+			}	
+			std::cout << "Next Level\n";
+		}
+	});
+
+	resetLevel.Create([this](const GW::GEvent& e) {
+		ESG::PLAY_EVENT event; ESG::PLAY_EVENT_DATA eventData;
+		if (+e.Read(event, eventData) && event == PLAY_EVENT::RESET_LEVEL) {
+			// only in here if event matches
+			GW::SYSTEM::GLog log;
+			(*currentLevel) = 1;
+			levelData->LoadLevel("../GameLevel_2.txt", "../Models", log);
+			std::cout << "Start Over\n";
+		}
+		});
+	
+	_eventPusher.Register(onExplode);
+	_eventPusher.Register(lostLife);
+	_eventPusher.Register(nextLevel);
+	_eventPusher.Register(resetLevel);
 	return true;
 }
 
@@ -151,6 +197,10 @@ bool ESG::PlayerLogic::ProcessInputEvents(flecs::world& stage)
 					//allow shield to turn off and on
 					///stage.entity("Player").add<
 				}
+				if (k_data.data == G_KEY_2)
+				{
+					
+				}
 			}
 			//if (keyboard == GBufferedInput::Events::KEYRELEASED) {
 			//	if (k_data.data == G_KEY_SPACE) {
@@ -160,6 +210,7 @@ bool ESG::PlayerLogic::ProcessInputEvents(flecs::world& stage)
 			//		}
 			//	}
 			//}
+			
 		}
 		else if (+event.Read(controller, c_data)) {
 			if (controller == GController::Events::CONTROLLERBUTTONVALUECHANGED) {
@@ -179,18 +230,27 @@ bool ESG::PlayerLogic::ProcessInputEvents(flecs::world& stage)
 bool ESG::PlayerLogic::FireLasers(flecs::world& stage, Position origin)
 {
 	// Grab the prefab for a laser round
-	flecs::entity bullet;
-	RetreivePrefab("Lazer Bullet", bullet);
-	//ModelTransform* original = bullet.get_mut<ModelTransform>();
+	auto bullet = game->lookup("Crystal3");
 
+	//RetreivePrefab("Lazer Bullet", bullet);
+	bullet.add<BulletTest>();
+	bullet.set<Velocity>({ 0,100 });
+	bullet.set<Acceleration>({ 0,0 });
+	bullet.set<Position>({ origin });
+	std::cout << "Shoot\n";
+	//RetreivePrefab("Lazer Bullet", bullet);
+	////ModelTransform* original = bullet.get_mut<ModelTransform>();
+	//bullet.set<Position>(origin)
+	//		.add<BulletTest>();
+	
 	//origin.value.x -= 0.05f;
 	//auto laserLeft = stage.entity().is_a(bullet)
 	//	.set<Position>(origin);
 	/*origin.value.x += 0.1f;*/
-	auto laserRight = stage.entity().is_a(bullet)
-		.set<Position>(origin);
-	laserRight.add<BulletTest>();
-	
+	//auto laserRight = stage.entity().is_a(bullet)
+	//	.set<Position>(origin);
+	//laserRight.add<BulletTest>();
+	//
 	//ModelTransform* edit = laserRight.get_mut<ModelTransform>();
 	//edit = original;
 	// if this shot is charged
@@ -201,7 +261,7 @@ bool ESG::PlayerLogic::FireLasers(flecs::world& stage, Position origin)
 	//	laserRight.set<ChargedShot>({ 2 })
 	//		.set<Material>({ 1,0,0 });
 	//}
-	
+
 	//origin.value.y += 1.0f;
 
 	//GW::MATH::GMatrix::TranslateGlobalF(edit->matrix, GW::MATH::GVECTORF{ origin.value.x, origin.value.y, 0, 1 }, edit->matrix);

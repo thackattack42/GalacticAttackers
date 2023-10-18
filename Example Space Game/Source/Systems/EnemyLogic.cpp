@@ -48,8 +48,36 @@ bool ESG::EnemyLogic::Init(std::shared_ptr<flecs::world> _game,
 			RetreivePrefab("Death", playerDeath);
 			GW::AUDIO::GSound death = *playerDeath.get<GW::AUDIO::GSound>();
 			death.Play();
-			//GW::AUDIO::GSound death = = 
-			std::cout << "Player Dies...You Lose";
+			auto live = game->lookup("life 1");
+			if (live.is_valid())
+			{
+				live.destruct();
+			}
+			else {
+				auto live2 = game->lookup("life 2");
+				if (live2.is_valid())
+				{
+					live2.destruct();
+					auto player = game->lookup("Player");
+
+					player.add<Enable>();
+					player.destruct();
+					ESG::PLAY_EVENT_DATA y;
+					GW::GEvent reset;
+					reset.Write(ESG::PLAY_EVENT::NEXT_LEVEL, y);
+					eventPusher.Push(reset);
+					std::cout << "Player Dies...You Lose";
+				}
+				else
+				{
+					auto live3 = game->lookup("life 3");
+					if (live3.is_valid())
+					{
+						live3.destruct();
+					}
+				}
+			}
+	
 		}
 		p.value.x = 0;
 		p.value.y = 0;
