@@ -40,6 +40,19 @@ bool ESG::EnemyLogic::Init(std::shared_ptr<flecs::world> _game,
 		GW::MATH::GMatrix::TranslateGlobalF(edit->matrix, GW::MATH::GVECTORF{ p.value.x, -p.value.y, 0, 1}, edit->matrix);
 		levelData->levelTransforms[edit->rendererIndex] = edit->matrix;
 
+<<<<<<< HEAD
+=======
+		if (edit->matrix.row4.y <= 30)
+		{
+			e.destruct();
+			flecs::entity playerDeath;
+			RetreivePrefab("Death", playerDeath);
+			GW::AUDIO::GSound death = *playerDeath.get<GW::AUDIO::GSound>();
+			death.Play();
+			//GW::AUDIO::GSound death = = 
+			std::cout << "Player Dies...You Lose";
+		}
+>>>>>>> main
 		p.value.x = 0;
 		p.value.y = 0;
 
