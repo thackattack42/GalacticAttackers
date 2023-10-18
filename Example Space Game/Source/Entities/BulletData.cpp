@@ -26,6 +26,8 @@ bool ESG::BulletData::Load(	std::shared_ptr<flecs::world> _game,
 	int pcount = (*readCfg).at("Lazers").at("projectiles").as<int>();
 	float frate = (*readCfg).at("Lazers").at("firerate").as<float>();
 	std::string fireFX = (*readCfg).at("Lazers").at("fireFX").as<std::string>();
+
+	std::string deathFX = (*readCfg).at("Lazers2").at("death").as<std::string>();
 	// default projectile scale
 	GW::MATH2D::GMATRIX2F world;
 	GW::MATH2D::GMatrix2D::Scale2F(GW::MATH2D::GIdentityMatrix2F, 
@@ -48,8 +50,14 @@ bool ESG::BulletData::Load(	std::shared_ptr<flecs::world> _game,
 		.override<Bullet>() // Tag this prefab as a bullet (for queries/systems)
 		.override<Collidable>(); // can be collided with
 
+	GW::AUDIO::GSound death;
+	death.Create(deathFX.c_str(), _audioEngine, 0.15f);
+	auto deathPrefab = _game->prefab("Crystal1")
+		.set<GW::AUDIO::GSound>(death.Relinquish());
+		
 	// register this prefab by name so other systems can use it
 	RegisterPrefab("Lazer Bullet", lazerPrefab);
+	RegisterPrefab("Death", deathPrefab);
 
 	return true;
 }
