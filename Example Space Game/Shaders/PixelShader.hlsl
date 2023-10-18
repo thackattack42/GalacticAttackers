@@ -2,7 +2,11 @@
 
 Texture2D colorTexture : register(t0);
 SamplerState filter : register(s0)
-
+{
+	Filter = MIN_MAG_MIP_LINEAR;
+	AddressU = Wrap;
+	AddressV = Wrap;
+};
 struct PS_IN
 {
 	float4 pos : SV_POSITION;

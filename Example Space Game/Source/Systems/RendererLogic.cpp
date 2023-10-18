@@ -482,25 +482,13 @@ void ESG::D3DRendererLogic::Create3DVertexInputLayout(ID3D11Device* creator, Mic
 }
 void ESG::D3DRendererLogic::Create2DVertexInputLayout(ID3D11Device* creator, Microsoft::WRL::ComPtr<ID3DBlob>& vsBlob)
 {
-	D3D11_INPUT_ELEMENT_DESC attributes[2];
+	D3D11_INPUT_ELEMENT_DESC format[] =
+	{
+		{ "POSITION", 0, DXGI_FORMAT_R32G32_FLOAT, 0, D3D11_APPEND_ALIGNED_ELEMENT, D3D11_INPUT_PER_VERTEX_DATA, 0 },
+		{ "TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT, 0, D3D11_APPEND_ALIGNED_ELEMENT, D3D11_INPUT_PER_VERTEX_DATA, 0 },
+	};
 
-	attributes[0].SemanticName = "POSITION";
-	attributes[0].SemanticIndex = 0;
-	attributes[0].Format = DXGI_FORMAT_R32G32_FLOAT;
-	attributes[0].InputSlot = 0;
-	attributes[0].AlignedByteOffset = D3D11_APPEND_ALIGNED_ELEMENT;
-	attributes[0].InputSlotClass = D3D11_INPUT_PER_VERTEX_DATA;
-	attributes[0].InstanceDataStepRate = 0;
-
-	attributes[1].SemanticName = "UV";
-	attributes[1].SemanticIndex = 0;
-	attributes[1].Format = DXGI_FORMAT_R32G32_FLOAT;
-	attributes[1].InputSlot = 0;
-	attributes[1].AlignedByteOffset = D3D11_APPEND_ALIGNED_ELEMENT;
-	attributes[1].InputSlotClass = D3D11_INPUT_PER_VERTEX_DATA;
-	attributes[1].InstanceDataStepRate = 0;
-
-	creator->CreateInputLayout(attributes, ARRAYSIZE(attributes),
+	creator->CreateInputLayout(format, ARRAYSIZE(format),
 		vsBlob->GetBufferPointer(), vsBlob->GetBufferSize(),
 		vertexFormat2D.GetAddressOf());
 }
@@ -581,6 +569,7 @@ bool ESG::D3DRendererLogic::LoadGeometry()
 	// this is used to blend with objects when they are on the same z-plane
 	// the depth function needs to be set to less_equal instead of less
 	CD3D11_DEPTH_STENCIL_DESC depthStencilDesc = CD3D11_DEPTH_STENCIL_DESC(CD3D11_DEFAULT());
+	depthStencilDesc.DepthFunc = D3D11_COMPARISON_LESS_EQUAL;
 	creator->CreateDepthStencilState(&depthStencilDesc, depthStencilState.GetAddressOf());
 
 	CD3D11_RASTERIZER_DESC rasterizerDesc = CD3D11_RASTERIZER_DESC(CD3D11_DEFAULT());
@@ -636,62 +625,93 @@ bool ESG::D3DRendererLogic::LoadGeometry()
 	// store the current width and height of the client's window
 	window.GetClientWidth(width);
 	window.GetClientHeight(height);
-
-	// intialize our sprite's information
-	greenDragon = Sprite();
-	greenDragon.SetName("greenDragon");
-	greenDragon.SetPosition(0.0f, 0.0f);
-	greenDragon.SetScale(0.5f, 0.5f);
-	greenDragon.SetDepth(0.03f);
-	greenDragon.SetTextureIndex(TEXTURE_ID::DRAGON);
-	greenDragon.SetScissorRect({ 0, 0, (float)width, (float)height });
-
-	// insert the greendragon sprite into the hud vector
-	hud.push_back(greenDragon);
-
-	// load a hud.xml file that contains all of the hud information
-	// [sprite data]
-	std::string filepath = XML_PATH;
-	filepath += "hud.xml";
-	HUD xml_items = LoadHudFromXML(filepath);
-	// insert the xml items into the hud vector
-	hud.insert(hud.end(), xml_items.begin(), xml_items.end());
-
-	// sorting lambda based on depth of sprites
-	auto sortfunc = [=](const Sprite& a, const Sprite& b)
-	{
-		return a.GetDepth() > b.GetDepth();
-	};
-	// sort the hud from furthest to closest
-	std::sort(hud.begin(), hud.end(), sortfunc);
-
 	// font loading
 	// credit for generating font texture
 	// https://evanw.github.io/font-texture-generator/
-	filepath = XML_PATH;
+	std::string filepath = XML_PATH;
 	filepath += "font_consolas_32.xml";
 	bool success = consolas32.LoadFromXML(filepath);
 
 	// setting up the static text object with information
 	// keep in mind the position will always be the center of the text
-	staticText = Text();
-	staticText.SetText("HP:");
-	staticText.SetFont(&consolas32);
-	staticText.SetPosition(-0.75f, -0.85f);
-	staticText.SetScale(0.75f, 0.75f);
-	staticText.SetRotation(0.0f);
-	staticText.SetDepth(0.01f);
+	staticTextHS = Text();
+	staticTextHS.SetText("HIGHSCORE:");
+	staticTextHS.SetFont(&consolas32);
+	staticTextHS.SetPosition(0.67f, 0.7f);
+	staticTextHS.SetScale(0.75f, 0.5f);
+	staticTextHS.SetRotation(0.0f);
+	staticTextHS.SetDepth(0.0f);
 	// update will create the vertices so they will be ready to use
 	// for static text this only needs to be done one time
-	staticText.Update(width, height);
+	staticTextHS.Update(width, height);
 
 	// vertex buffer creation for the staticText
-	const auto& staticVerts = staticText.GetVertices();
+	const auto& staticVerts = staticTextHS.GetVertices();
 	D3D11_SUBRESOURCE_DATA svbData = { staticVerts.data(), 0, 0 };
 	CD3D11_BUFFER_DESC svbDesc(sizeof(TextVertex) * staticVerts.size(), D3D11_BIND_VERTEX_BUFFER);
-	creator->CreateBuffer(&svbDesc, &svbData, vertexBufferStaticText.GetAddressOf());
+	creator->CreateBuffer(&svbDesc, &svbData, vertexBufferStaticTextHS.GetAddressOf());
 
-	
+	dynamicTextHS = Text();
+	dynamicTextHS.SetFont(&consolas32);
+	dynamicTextHS.SetPosition(0.67f, 0.65f);
+	dynamicTextHS.SetScale(0.75f, 0.5f);
+	dynamicTextHS.SetRotation(0.0f);
+	dynamicTextHS.SetDepth(0.0f);
+	// update will create the vertices so they will be ready to use
+	// for static text this only needs to be done one time
+	dynamicTextHS.Update(width, height);
+
+	// vertex buffer creation for the staticText
+	CD3D11_BUFFER_DESC dvbDesc(sizeof(TextVertex) * 6 * 5000, D3D11_BIND_VERTEX_BUFFER, D3D11_USAGE_DYNAMIC, D3D11_CPU_ACCESS_WRITE);
+	creator->CreateBuffer(&dvbDesc, nullptr, vertexBufferDynamicTextHS.GetAddressOf());
+
+	staticTextTime = Text();
+	staticTextTime.SetText("TIME:");
+	staticTextTime.SetFont(&consolas32);
+	staticTextTime.SetPosition(0.67f, 0.85f);
+	staticTextTime.SetScale(0.75f, 0.5f);
+	staticTextTime.SetRotation(0.0f);
+	staticTextTime.SetDepth(0.0f);
+	// update will create the vertices so they will be ready to use
+	// for static text this only needs to be done one time
+	staticTextTime.Update(width, height);
+
+	// vertex buffer creation for the staticText
+	const auto& TstaticVerts = staticTextTime.GetVertices();
+	D3D11_SUBRESOURCE_DATA tsvbData = { TstaticVerts.data(), 0, 0 };
+	CD3D11_BUFFER_DESC tsvbDesc(sizeof(TextVertex) * TstaticVerts.size(), D3D11_BIND_VERTEX_BUFFER);
+	creator->CreateBuffer(&tsvbDesc, &tsvbData, vertexBufferStaticTextTime.GetAddressOf());
+
+	dynamicTextTime = Text();
+	dynamicTextTime.SetFont(&consolas32);
+	dynamicTextTime.SetPosition(0.67f, 0.8f);
+	dynamicTextTime.SetScale(0.75f, 0.5f);
+	dynamicTextTime.SetRotation(0.0f);
+	dynamicTextTime.SetDepth(0.0f);
+	// update will create the vertices so they will be ready to use
+	// for static text this only needs to be done one time
+	dynamicTextTime.Update(width, height);
+
+	// vertex buffer creation for the staticText
+	CD3D11_BUFFER_DESC tdvbDesc(sizeof(TextVertex) * 6 * 5000, D3D11_BIND_VERTEX_BUFFER, D3D11_USAGE_DYNAMIC, D3D11_CPU_ACCESS_WRITE);
+	creator->CreateBuffer(&tdvbDesc, nullptr, vertexBufferDynamicTextTime.GetAddressOf());
+
+	staticTextLives = Text();
+	staticTextLives.SetText("LIVES:");
+	staticTextLives.SetFont(&consolas32);
+	staticTextLives.SetPosition(-0.6f, -0.85f);
+	staticTextLives.SetScale(1.25f, 1.25f);
+	staticTextLives.SetRotation(0.0f);
+	staticTextLives.SetDepth(0.0f);
+	// update will create the vertices so they will be ready to use
+	// for static text this only needs to be done one time
+	staticTextLives.Update(width, height);
+
+	// vertex buffer creation for the staticText
+	const auto& LstaticVerts = staticTextLives.GetVertices();
+	D3D11_SUBRESOURCE_DATA lsvbData = { LstaticVerts.data(), 0, 0 };
+	CD3D11_BUFFER_DESC lsvbDesc(sizeof(TextVertex) * LstaticVerts.size(), D3D11_BIND_VERTEX_BUFFER);
+	creator->CreateBuffer(&lsvbDesc, &lsvbData, vertexBufferStaticTextLives.GetAddressOf());
 
 	return true;
 }
@@ -707,6 +727,7 @@ ESG::D3DRendererLogic::PipelineHandles ESG::D3DRendererLogic::GetCurrentPipeline
 
 void ESG::D3DRendererLogic::SetUpPipeline(PipelineHandles handles)
 {
+	//float blendFactor[] = {0.799f, 0.799f, 0.799f, 1.0f};
 	//Set Render Targets
 	ID3D11RenderTargetView* const views[] = { handles.targetView };
 	handles.context->OMSetRenderTargets(ARRAYSIZE(views), views, handles.depthStencil);
@@ -759,127 +780,7 @@ void ESG::D3DRendererLogic::SetUpPipeline(PipelineHandles handles)
 	//
 
 	//// Depth-Stencil State
-	//VkPipelineDepthStencilStateCreateInfo depth_stencil_create_info = {};
-	//depth_stencil_create_info.sType = VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO;
-	//depth_stencil_create_info.depthTestEnable = VK_TRUE;
-	//depth_stencil_create_info.depthWriteEnable = VK_TRUE;
-	//depth_stencil_create_info.depthCompareOp = VK_COMPARE_OP_LESS;
-	//depth_stencil_create_info.depthBoundsTestEnable = VK_FALSE;
-	//depth_stencil_create_info.minDepthBounds = 0.0f;
-	//depth_stencil_create_info.maxDepthBounds = 1.0f;
-	//depth_stencil_create_info.stencilTestEnable = VK_FALSE;
-	//// Color Blending Attachment & State
-	//VkPipelineColorBlendAttachmentState color_blend_attachment_state = {};
-	//color_blend_attachment_state.colorWriteMask = 0xF;
-	//color_blend_attachment_state.blendEnable = VK_FALSE;
-	//color_blend_attachment_state.srcColorBlendFactor = VK_BLEND_FACTOR_SRC_COLOR;
-	//color_blend_attachment_state.dstColorBlendFactor = VK_BLEND_FACTOR_DST_COLOR;
-	//color_blend_attachment_state.colorBlendOp = VK_BLEND_OP_ADD;
-	//color_blend_attachment_state.srcAlphaBlendFactor = VK_BLEND_FACTOR_SRC_ALPHA;
-	//color_blend_attachment_state.dstAlphaBlendFactor = VK_BLEND_FACTOR_DST_ALPHA;
-	//color_blend_attachment_state.alphaBlendOp = VK_BLEND_OP_ADD;
-	//VkPipelineColorBlendStateCreateInfo color_blend_create_info = {};
-	//color_blend_create_info.sType = VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO;
-	//color_blend_create_info.logicOpEnable = VK_FALSE;
-	//color_blend_create_info.logicOp = VK_LOGIC_OP_COPY;
-	//color_blend_create_info.attachmentCount = 1;
-	//color_blend_create_info.pAttachments = &color_blend_attachment_state;
-	//color_blend_create_info.blendConstants[0] = 0.0f;
-	//color_blend_create_info.blendConstants[1] = 0.0f;
-	//color_blend_create_info.blendConstants[2] = 0.0f;
-	//color_blend_create_info.blendConstants[3] = 0.0f;
-	//// Dynamic State 
-	//VkDynamicState dynamic_state[2] = { 
-	//	// By setting these we do not need to re-create the pipeline on Resize
-	//	VK_DYNAMIC_STATE_VIEWPORT, VK_DYNAMIC_STATE_SCISSOR
-	//};
-	//VkPipelineDynamicStateCreateInfo dynamic_create_info = {};
-	//dynamic_create_info.sType = VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO;
-	//dynamic_create_info.dynamicStateCount = 2;
-	//dynamic_create_info.pDynamicStates = dynamic_state;
-	//// Descriptor Setup
-	//VkDescriptorSetLayoutBinding descriptor_layout_binding = {};
-	//descriptor_layout_binding.binding = 0;
-	//descriptor_layout_binding.descriptorCount = 1;
-	//descriptor_layout_binding.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-	//// In this scenario we have the same descriptorSetLayout for both shaders...
-	//// However, many times you would want seperate layouts for each since they tend to have different needs 
-	//descriptor_layout_binding.stageFlags = VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT;
-	//descriptor_layout_binding.pImmutableSamplers = nullptr;
-	//VkDescriptorSetLayoutCreateInfo descriptor_create_info = {};
-	//descriptor_create_info.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
-	//descriptor_create_info.flags = 0; 
-	//descriptor_create_info.bindingCount = 1;
-	//descriptor_create_info.pBindings = &descriptor_layout_binding;
-	//descriptor_create_info.pNext = nullptr;
-	//// Descriptor layout
-	//vkCreateDescriptorSetLayout(device, &descriptor_create_info, nullptr, &descriptorLayout);
-	//// Create a descriptor pool!
-	//unsigned max_frames = 0;
-	//vulkan.GetSwapchainImageCount(max_frames);
-	//VkDescriptorPoolCreateInfo descriptorpool_create_info = {};
-	//descriptorpool_create_info.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
-	//VkDescriptorPoolSize descriptorpool_size = { VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, max_frames };
-	//descriptorpool_create_info.poolSizeCount = 1;
-	//descriptorpool_create_info.pPoolSizes = &descriptorpool_size;
-	//descriptorpool_create_info.maxSets = max_frames;
-	//descriptorpool_create_info.flags = 0;
-	//descriptorpool_create_info.pNext = nullptr;
-	//vkCreateDescriptorPool(device, &descriptorpool_create_info, nullptr, &descriptorPool);
-	//// Create a descriptorSet for each uniform buffer!
-	//VkDescriptorSetAllocateInfo descriptorset_allocate_info = {};
-	//descriptorset_allocate_info.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
-	//descriptorset_allocate_info.descriptorSetCount = 1;
-	//descriptorset_allocate_info.pSetLayouts = &descriptorLayout;
-	//descriptorset_allocate_info.descriptorPool = descriptorPool;
-	//descriptorset_allocate_info.pNext = nullptr;
-	//descriptorSet.resize(max_frames);
-	//for (int i = 0; i < max_frames; ++i) {
-	//	vkAllocateDescriptorSets(device, &descriptorset_allocate_info, &descriptorSet[i]);
-	//}
-	//// link descriptor sets to uniform buffers (one for each bufferimage)
-	//VkWriteDescriptorSet write_descriptorset = {};
-	//write_descriptorset.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-	//write_descriptorset.descriptorCount = 1;
-	//write_descriptorset.dstArrayElement = 0;
-	//write_descriptorset.dstBinding = 0;
-	//write_descriptorset.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-	//for (int i = 0; i < max_frames; ++i) {
-	//	write_descriptorset.dstSet = descriptorSet[i];
-	//	VkDescriptorBufferInfo dbinfo = { uniformHandle[i], 0, VK_WHOLE_SIZE };
-	//	write_descriptorset.pBufferInfo = &dbinfo;
-	//	vkUpdateDescriptorSets(device, 1, &write_descriptorset, 0, nullptr);
-	//}
-	//// Descriptor pipeline layout
-	//VkPipelineLayoutCreateInfo pipeline_layout_create_info = {};
-	//pipeline_layout_create_info.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
-	//pipeline_layout_create_info.setLayoutCount = 1;
-	//pipeline_layout_create_info.pSetLayouts = &descriptorLayout;
-	//pipeline_layout_create_info.pushConstantRangeCount = 0;
-	//pipeline_layout_create_info.pPushConstantRanges = nullptr;
-	//vkCreatePipelineLayout(device, &pipeline_layout_create_info, nullptr, &pipelineLayout);
-	//// Pipeline State... (FINALLY) 
-	//VkGraphicsPipelineCreateInfo pipeline_create_info = {};
-	//pipeline_create_info.sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO;
-	//pipeline_create_info.stageCount = 2;
-	//pipeline_create_info.pStages = stage_create_info;
-	//pipeline_create_info.pInputAssemblyState = &assembly_create_info;
-	//pipeline_create_info.pVertexInputState = &input_vertex_info;
-	//pipeline_create_info.pViewportState = &viewport_create_info;
-	//pipeline_create_info.pRasterizationState = &rasterization_create_info;
-	//pipeline_create_info.pMultisampleState = &multisample_create_info;
-	//pipeline_create_info.pDepthStencilState = &depth_stencil_create_info;
-	//pipeline_create_info.pColorBlendState = &color_blend_create_info;
-	//pipeline_create_info.pDynamicState = &dynamic_create_info;
-	//pipeline_create_info.layout = pipelineLayout;
-	//pipeline_create_info.renderPass = renderPass;
-	//pipeline_create_info.subpass = 0;
-	//pipeline_create_info.basePipelineHandle = VK_NULL_HANDLE;
-	//if (VK_SUCCESS != vkCreateGraphicsPipelines(device, VK_NULL_HANDLE, 1,
-	//	&pipeline_create_info, nullptr, &pipeline))
-	//	return false; // something went wrong
-
-//	return true;
+	
 }
 
 void ESG::D3DRendererLogic::ReleasePipelineHandles(PipelineHandles toRelease)
@@ -989,7 +890,7 @@ bool ESG::D3DRendererLogic::SetupDrawcalls() // I SCREWED THIS UP MAKES SO MUCH 
 						0);
 				}
 		ReleasePipelineHandles(curHandles);
-		//UIDraw();
+		UIDraw();
 	});
 	// NOTE: I went with multi-system approach for the ease of passing lambdas with "this"
 	// There is a built-in solution for this problem referred to as a "custom runner":
@@ -1007,40 +908,122 @@ void ESG::D3DRendererLogic::UIDraw()
 	SetUpPipeline(curHandles);
 	curHandles.context->VSSetShader(vertexShader2D.Get(), nullptr, 0);
 	curHandles.context->PSSetShader(pixelShader2D.Get(), nullptr, 0);
-	curHandles.context->VSSetConstantBuffers(0, 1, constantBufferHUD.GetAddressOf());
-	const UINT stridesSprite[] = { sizeof(float) * 4};
-	const UINT offsetsSprite[] = { 0 };
-	ID3D11Buffer* const buffsSprite[] = { vertexBuffer2D.Get() };
-	curHandles.context->IASetVertexBuffers(0, ARRAYSIZE(buffsSprite), buffsSprite, stridesSprite, offsetsSprite);
-	curHandles.context->IASetIndexBuffer(indexBuffer2D.Get(), DXGI_FORMAT_R32_UINT, 0);
-	curHandles.context->IASetInputLayout(vertexFormat2D.Get());
-	curHandles.context->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
-	for (size_t i = 0; i < hud.size(); i++)
-	{
-		// store a constant reference to the current hud item
-		const Sprite& current = hud[i];
-		// update the constant buffer data with the sprite's information
-		constantBufferData = UpdateSpriteConstantBufferData(current);
-		// update the constant buffer with the current sprite's data
-		curHandles.context->UpdateSubresource(constantBufferHUD.Get(), 0, nullptr, &constantBufferData, 0, 0);
-		// set a texture (srv) and sampler to the pixel shader
-		curHandles.context->PSSetShaderResources(0, 1, shaderResourceView[i].GetAddressOf());
-		curHandles.context->PSSetSamplers(0, 1, samplerState.GetAddressOf());
-		// now we can drawz
-		curHandles.context->DrawIndexed(6, 0, 0);
-	}
-	const UINT strides[] = { sizeof(TextVertex) };
+
+	const UINT strides[] = { sizeof(float) * 4 };
 	const UINT offsets[] = { 0 };
-	ID3D11Buffer* const buffs[] = { vertexBufferStaticText.Get() };
+	ID3D11Buffer* const buffs[] = { vertexBuffer2D.Get() };
+	// set the vertex buffer to the pipeline
 	curHandles.context->IASetVertexBuffers(0, ARRAYSIZE(buffs), buffs, strides, offsets);
+	curHandles.context->IASetIndexBuffer(indexBuffer2D.Get(), DXGI_FORMAT_R32_UINT, 0);
+	curHandles.context->VSSetShader(vertexShader2D.Get(), nullptr, 0);
+	curHandles.context->PSSetShader(pixelShader2D.Get(), nullptr, 0);
+	curHandles.context->IASetInputLayout(vertexFormat2D.Get());
+	// set the topology
+	curHandles.context->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP);
+	// set and update the constant buffer (cb)
+	curHandles.context->VSSetConstantBuffers(0, 1, constantBufferHUD.GetAddressOf());
+
+	curHandles.context->IASetVertexBuffers(0, 1, vertexBufferStaticTextTime.GetAddressOf(), strides, offsets);
+	// change the topology to a triangle list
+	curHandles.context->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 	// update the constant buffer data for the text
-	constantBufferData = UpdateTextConstantBufferData(staticText);
+	constantBufferData = UpdateTextConstantBufferData(staticTextTime);
 	// bind the texture used for rendering the font
 	curHandles.context->PSSetShaderResources(0, 1, shaderResourceView[TEXTURE_ID::FONT_CONSOLAS].GetAddressOf());
 	// update the constant buffer with the text's data
 	curHandles.context->UpdateSubresource(constantBufferHUD.Get(), 0, nullptr, &constantBufferData, 0, 0);
 	// draw the static text using the number of vertices
-	curHandles.context->Draw(staticText.GetVertices().size(), *offsets);
+	curHandles.context->Draw(staticTextTime.GetVertices().size(), 0);
+
+	unsigned int width;
+	unsigned int height;
+	window.GetWidth(width);
+	window.GetHeight(height);
+	static auto start = std::chrono::steady_clock::now();
+	double elapsedSec = std::chrono::duration_cast<std::chrono::seconds>(std::chrono::duration<double>(std::chrono::steady_clock::now() - start)).count();
+	double elapsedMin = std::chrono::duration_cast<std::chrono::minutes>(std::chrono::duration<double>(std::chrono::steady_clock::now() - start)).count();
+	if (int(elapsedSec) >= 60)
+	{
+		elapsedSec -= 60 * int(elapsedSec/60);
+	}
+	dynamicTextTime.SetText("0" + std::to_string(int(elapsedMin)) + ":" + "0" + std::to_string(int(elapsedSec)));
+	if (elapsedSec >= 10 || elapsedMin >= 10)
+	{
+		if (elapsedSec >= 10 || elapsedMin >= 10)
+		{
+			dynamicTextTime.SetText("0" + std::to_string(int(elapsedMin)) + ":" + std::to_string(int(elapsedSec)));
+		}
+		if (elapsedMin >= 10)
+		{
+			dynamicTextTime.SetText(std::to_string(int(elapsedMin)) + ":0" + std::to_string(int(elapsedSec)));
+		}
+	}
+	// update the dynamic text so we create the vertices
+	dynamicTextTime.Update(width, height);
+	// upload the new information to the vertex buffer using map / unmap
+	const auto& verts = dynamicTextTime.GetVertices();
+	D3D11_MAPPED_SUBRESOURCE msr = { 0 };
+	curHandles.context->Map(vertexBufferDynamicTextTime.Get(), 0, D3D11_MAP_WRITE_DISCARD, 0, &msr);
+	memcpy(msr.pData, verts.data(), sizeof(TextVertex) * verts.size());
+	curHandles.context->Unmap(vertexBufferDynamicTextTime.Get(), 0);
+	
+	curHandles.context->IASetVertexBuffers(0, 1, vertexBufferDynamicTextTime.GetAddressOf(), strides, offsets);
+	// change the topology to a triangle list
+	curHandles.context->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+	// update the constant buffer data for the text
+	constantBufferData = UpdateTextConstantBufferData(dynamicTextTime);
+	// bind the texture used for rendering the font
+	curHandles.context->PSSetShaderResources(0, 1, shaderResourceView[TEXTURE_ID::FONT_CONSOLAS].GetAddressOf());
+	// update the constant buffer with the text's data
+	curHandles.context->UpdateSubresource(constantBufferHUD.Get(), 0, nullptr, &constantBufferData, 0, 0);
+	// draw the static text using the number of vertices
+	curHandles.context->Draw(dynamicTextTime.GetVertices().size(), 0);
+
+	curHandles.context->IASetVertexBuffers(0, 1, vertexBufferStaticTextHS.GetAddressOf(), strides, offsets);
+	// change the topology to a triangle list
+	curHandles.context->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+	// update the constant buffer data for the text
+	constantBufferData = UpdateTextConstantBufferData(staticTextHS);
+	// bind the texture used for rendering the font
+	curHandles.context->PSSetShaderResources(0, 1, shaderResourceView[TEXTURE_ID::FONT_CONSOLAS].GetAddressOf());
+	// update the constant buffer with the text's data
+	curHandles.context->UpdateSubresource(constantBufferHUD.Get(), 0, nullptr, &constantBufferData, 0, 0);
+	// draw the static text using the number of vertices
+	curHandles.context->Draw(staticTextHS.GetVertices().size(), 0);
+
+	dynamicTextHS.SetText(std::to_string(elapsedSec));
+	// update the dynamic text so we create the vertices
+	dynamicTextHS.Update(width, height);
+	const auto& HSverts = dynamicTextHS.GetVertices();
+	D3D11_MAPPED_SUBRESOURCE HSmsr = { 0 };
+	curHandles.context->Map(vertexBufferDynamicTextHS.Get(), 0, D3D11_MAP_WRITE_DISCARD, 0, &HSmsr);
+	memcpy(HSmsr.pData, HSverts.data(), sizeof(TextVertex) * HSverts.size());
+	curHandles.context->Unmap(vertexBufferDynamicTextHS.Get(), 0);
+
+	curHandles.context->IASetVertexBuffers(0, 1, vertexBufferDynamicTextHS.GetAddressOf(), strides, offsets);
+	// change the topology to a triangle list
+	curHandles.context->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+	// update the constant buffer data for the text
+	constantBufferData = UpdateTextConstantBufferData(dynamicTextHS);
+	// bind the texture used for rendering the font
+	curHandles.context->PSSetShaderResources(0, 1, shaderResourceView[TEXTURE_ID::FONT_CONSOLAS].GetAddressOf());
+	// update the constant buffer with the text's data
+	curHandles.context->UpdateSubresource(constantBufferHUD.Get(), 0, nullptr, &constantBufferData, 0, 0);
+	// draw the static text using the number of vertices
+	curHandles.context->Draw(dynamicTextHS.GetVertices().size(), 0);
+
+	curHandles.context->IASetVertexBuffers(0, 1, vertexBufferStaticTextLives.GetAddressOf(), strides, offsets);
+	// change the topology to a triangle list
+	curHandles.context->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+	// update the constant buffer data for the text
+	constantBufferData = UpdateTextConstantBufferData(staticTextLives);
+	// bind the texture used for rendering the font
+	curHandles.context->PSSetShaderResources(0, 1, shaderResourceView[TEXTURE_ID::FONT_CONSOLAS].GetAddressOf());
+	// update the constant buffer with the text's data
+	curHandles.context->UpdateSubresource(constantBufferHUD.Get(), 0, nullptr, &constantBufferData, 0, 0);
+	// draw the static text using the number of vertices
+	curHandles.context->Draw(staticTextLives.GetVertices().size(), 0);
+
 }
 
 bool ESG::D3DRendererLogic::FreeResources()

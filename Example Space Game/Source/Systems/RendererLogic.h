@@ -78,7 +78,11 @@ namespace ESG
 		Microsoft::WRL::ComPtr<ID3D11PixelShader>	pixelShader2D;
 		Microsoft::WRL::ComPtr<ID3D11InputLayout>	vertexFormat3D;
 		Microsoft::WRL::ComPtr<ID3D11InputLayout>	vertexFormat2D;
-		Microsoft::WRL::ComPtr<ID3D11Buffer>		vertexBufferStaticText;
+		Microsoft::WRL::ComPtr<ID3D11Buffer>		vertexBufferStaticTextHS;
+		Microsoft::WRL::ComPtr<ID3D11Buffer>		vertexBufferDynamicTextHS;
+		Microsoft::WRL::ComPtr<ID3D11Buffer>		vertexBufferStaticTextTime;
+		Microsoft::WRL::ComPtr<ID3D11Buffer>		vertexBufferDynamicTextTime;
+		Microsoft::WRL::ComPtr<ID3D11Buffer>		vertexBufferStaticTextLives;
 
 
 		GW::MATH::GMATRIXF worldMatrix[500];
@@ -106,16 +110,18 @@ namespace ESG
 
 		HUD	hud;
 		Font consolas32;
-		Text staticText;
+		Text staticTextHS;
+		Text dynamicTextHS;
+		Text staticTextTime;
+		Text dynamicTextTime;
+		Text staticTextLives;
 		SPRITE_DATA	constantBufferData = { 0 };
 		Microsoft::WRL::ComPtr<ID3D11ShaderResourceView> shaderResourceView[TEXTURE_ID::COUNT];
 		Microsoft::WRL::ComPtr<ID3D11SamplerState>			samplerState;
-		Sprite												greenDragon;
 		Microsoft::WRL::ComPtr<ID3D11BlendState>			blendState;
 		Microsoft::WRL::ComPtr<ID3D11DepthStencilState>		depthStencilState;
 		Microsoft::WRL::ComPtr<ID3D11RasterizerState>		rasterizerState;
-		
-		int instance = 0;
+		bool timercheck;
 
 		// used to trigger clean up of vulkan resources
 		GW::CORE::GEventReceiver shutdown;
