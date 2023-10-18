@@ -69,6 +69,7 @@ bool ESG::EnemyLogic::Init(std::shared_ptr<flecs::world> _game,
 			RetreivePrefab("Death", playerDeath);
 			GW::AUDIO::GSound death = *playerDeath.get<GW::AUDIO::GSound>();
 			death.Play();
+			//GW::AUDIO::GSound death = = 
 			std::cout << "Player Dies...You Lose";
 		}
 		p.value = { 0, 0 };
