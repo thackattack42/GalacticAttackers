@@ -192,6 +192,8 @@ namespace ESG
 			GW::MATH::GVECTORF instance_colors[Instance_Max];
 		}instanceData;
 		// how many instances will be drawn this frame
+		std::vector<GW::MATH::GMATRIXF> bulletMoves;
+		// how many instances will be drawn this frame
 		int draw_counter = 0;
 
 		
