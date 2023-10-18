@@ -20,7 +20,7 @@ bool ESG::PhysicsLogic::Init(	std::shared_ptr<flecs::world> _game,
 	});
 	// update position by velocity
 	game->system<Position, const Velocity>("Translation System")
-		.each([this](flecs::entity e, Position& p, const Velocity &v) {
+		.each([](flecs::entity e, Position& p, const Velocity &v) {
 		GW::MATH2D::GVECTOR2F speed;
 		GW::MATH2D::GVector2D::Scale2F(v.value, e.delta_time(), speed);
 		// adding is simple but doesn't account for orientation
@@ -30,7 +30,7 @@ bool ESG::PhysicsLogic::Init(	std::shared_ptr<flecs::world> _game,
 		{
 			GW::MATH::GMatrix::TranslateGlobalF(e.get_mut<ModelTransform>()->matrix, GW::MATH::GVECTORF { -p.value.x, p.value.y, 0, 0 }, e.get_mut<ModelTransform>()->matrix);
 			//GW::MATH::GMatrix::TranslateGlobalF(e.get_mut<ModelTransform>()->matrix, GW::MATH::GVECTORF { 0, 0, 0, 1 }, e.get_mut<ModelTransform>()->matrix);
-			levelData->levelTransforms[e.get_mut<ModelTransform>()->rendererIndex] = e.get_mut<ModelTransform>()->matrix;
+			
 			//std::cout << "Moving " << p.value.x << " " << p.value.y << std::endl;6
 			GW::MATH::GMATRIXF temp = e.get<ModelTransform>()->matrix;
 			std::cout << "Moving " << temp.row4.x << " " << temp.row4.y << " " << temp.row4.z << std::endl;

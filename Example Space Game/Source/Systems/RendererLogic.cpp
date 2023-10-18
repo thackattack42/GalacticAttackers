@@ -19,8 +19,7 @@ void PrintLabeledDebugString(const char* label, const char* toPrint)
 bool ESG::D3DRendererLogic::Init(	std::shared_ptr<flecs::world> _game, 
 								std::weak_ptr<const GameConfig> _gameConfig,
 								GW::GRAPHICS::GDirectX11Surface d3d11,
-								GW::SYSTEM::GWindow _window, std::shared_ptr<Level_Data> _levelData,
-								std::shared_ptr<int> _currentLevel)
+								GW::SYSTEM::GWindow _window, std::shared_ptr<Level_Data> _levelData)
 {
 	// save a handle to the ECS & game settings
 	game = _game;
@@ -28,7 +27,7 @@ bool ESG::D3DRendererLogic::Init(	std::shared_ptr<flecs::world> _game,
 	direct11 = d3d11;
 	window = _window;
 	levelData = _levelData;
-	currentLevel = _currentLevel;
+
 	
 	// Setup all vulkan resources
 	if (LoadShaders() == false) 
@@ -76,47 +75,6 @@ bool ESG::D3DRendererLogic::Shutdown()
 	return true; // vulkan resource shutdown handled via GEvent in Init()
 }
 
-void ESG::D3DRendererLogic::LevelSwitching(int currentLevel, GW::SYSTEM::GLog log)
-{
-	switch (currentLevel)
-	{
-	case 1:
-		levelData->LoadLevel("../GameLevel_1.txt", "../Models", log);
-		break;
-	case 2:
-		levelData->LoadLevel("../GameLevel_2.txt", "../Models", log);
-		break;
-	case 3:
-		levelData->LoadLevel("../GameLevel_3.txt", "../Models", log);
-		break;
-	}
-	UpdateBuffers();
-}
-void ESG::D3DRendererLogic::UpdateBuffers()
-{
-	ID3D11Device* creator;
-	direct11.GetDevice((void**)&creator);
-
-	InitializeVertexBuffer(creator);
-	InitializeIndexBuffer(creator);
-	InitializeConstantBuffer(creator);
-
-	for (int i = 0; i < levelData->levelTransforms.size(); ++i)
-	{
-		mesh.worldMatrix[i] = levelData->levelTransforms[i];
-	}
-	for (int i = 0; i < levelData->levelMaterials.size(); ++i)
-	{
-		mesh.material[i] = levelData->levelMaterials[i].attrib;
-	}
-	modelID.numLights = levelData->levelLighting.size();
-	for (int i = 0; i < levelData->levelLighting.size(); ++i)
-	{
-		lights.myLights[i] = levelData->levelLighting[i];
-	}
-
-	creator->Release();
-}
 std::string ESG::D3DRendererLogic::ShaderAsString(const char* shaderFilePath)
 {
 	std::string output;
@@ -609,7 +567,7 @@ bool ESG::D3DRendererLogic::SetupDrawcalls() // I SCREWED THIS UP MAKES SO MUCH 
 		// copy all data to our instancing array
 		if(e.has<BulletTest>())
 		{
-		/*	GW::MATH::GMATRIXF bullet = GW::MATH::GIdentityMatrixF;
+			GW::MATH::GMATRIXF bullet = GW::MATH::GIdentityMatrixF;
 			bullet.row4.x = p.value.x;
 			bullet.row4.y = p.value.y;
 
@@ -617,7 +575,7 @@ bool ESG::D3DRendererLogic::SetupDrawcalls() // I SCREWED THIS UP MAKES SO MUCH 
 			bullet.row1.y = o.value.row1.y;
 			bullet.row2.x = o.value.row2.x;
 			bullet.row2.y = o.value.row2.y;
-			bulletMoves.push_back(bullet);*/
+			bulletMoves.push_back(bullet);
 			//int i = draw_counter;
 			//instanceData.instance_transforms[i] = GW::MATH::GIdentityMatrixF;
 			//instanceData.instance_transforms[i].row4.x = p.value.x;
