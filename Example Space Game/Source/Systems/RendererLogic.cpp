@@ -497,6 +497,7 @@ bool ESG::D3DRendererLogic::LoadGeometry()
 	ID3D11Device* creator;
 	direct11.GetDevice((void**)&creator);
 	proxy.Create();
+	inputProxy.Create(window);
 
 	/*viewTranslation = { 55.0f,5.0f, 25.0f, 1.0f };*/
 	viewTranslation = { 140.0f, 5.0f, 0.0f, 1.0f };
@@ -712,6 +713,40 @@ bool ESG::D3DRendererLogic::LoadGeometry()
 	D3D11_SUBRESOURCE_DATA lsvbData = { LstaticVerts.data(), 0, 0 };
 	CD3D11_BUFFER_DESC lsvbDesc(sizeof(TextVertex) * LstaticVerts.size(), D3D11_BIND_VERTEX_BUFFER);
 	creator->CreateBuffer(&lsvbDesc, &lsvbData, vertexBufferStaticTextLives.GetAddressOf());
+
+	staticTextWin = Text();
+	staticTextWin.SetText("YOU WIN");
+	staticTextWin.SetFont(&consolas32);
+	staticTextWin.SetPosition(0.0f, 0.0f);
+	staticTextWin.SetScale(2.0f, 2.0f);
+	staticTextWin.SetRotation(0.0f);
+	staticTextWin.SetDepth(0.0f);
+	// update will create the vertices so they will be ready to use
+	// for static text this only needs to be done one time
+	staticTextWin.Update(width, height);
+
+	// vertex buffer creation for the staticText
+	const auto& WstaticVerts = staticTextWin.GetVertices();
+	D3D11_SUBRESOURCE_DATA wsvbData = { WstaticVerts.data(), 0, 0 };
+	CD3D11_BUFFER_DESC wsvbDesc(sizeof(TextVertex)* WstaticVerts.size(), D3D11_BIND_VERTEX_BUFFER);
+	creator->CreateBuffer(&wsvbDesc, &wsvbData, vertexBufferStaticTextWin.GetAddressOf());
+
+	staticTextLose = Text();
+	staticTextLose.SetText("YOU LOSE");
+	staticTextLose.SetFont(&consolas32);
+	staticTextLose.SetPosition(0.0f, 0.0f);
+	staticTextLose.SetScale(2.0f, 2.0f);
+	staticTextLose.SetRotation(0.0f);
+	staticTextLose.SetDepth(0.0f);
+	// update will create the vertices so they will be ready to use
+	// for static text this only needs to be done one time
+	staticTextLose.Update(width, height);
+
+	// vertex buffer creation for the staticText
+	const auto& LSstaticVerts = staticTextLose.GetVertices();
+	D3D11_SUBRESOURCE_DATA lssvbData = { LSstaticVerts.data(), 0, 0 };
+	CD3D11_BUFFER_DESC lssvbDesc(sizeof(TextVertex)* LSstaticVerts.size(), D3D11_BIND_VERTEX_BUFFER);
+	creator->CreateBuffer(&lssvbDesc, &lssvbData, vertexBufferStaticTextLose.GetAddressOf());
 
 	return true;
 }
@@ -1065,6 +1100,39 @@ void ESG::D3DRendererLogic::UIDraw()
 	curHandles.context->UpdateSubresource(constantBufferHUD.Get(), 0, nullptr, &constantBufferData, 0, 0);
 	// draw the static text using the number of vertices
 	curHandles.context->Draw(staticTextLives.GetVertices().size(), 0);
+	float one;
+	float two;
+	inputProxy.GetState(65, one);
+	inputProxy.GetState(66, two);
+
+	if (one > 0)
+	{
+		curHandles.context->IASetVertexBuffers(0, 1, vertexBufferStaticTextWin.GetAddressOf(), strides, offsets);
+		// change the topology to a triangle list
+		curHandles.context->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+		// update the constant buffer data for the text
+		constantBufferData = UpdateTextConstantBufferData(staticTextWin);
+		// bind the texture used for rendering the font
+		curHandles.context->PSSetShaderResources(0, 1, shaderResourceView[TEXTURE_ID::FONT_CONSOLAS].GetAddressOf());
+		// update the constant buffer with the text's data
+		curHandles.context->UpdateSubresource(constantBufferHUD.Get(), 0, nullptr, &constantBufferData, 0, 0);
+		// draw the static text using the number of vertices
+		curHandles.context->Draw(staticTextWin.GetVertices().size(), 0);
+	}
+	if (two > 0)
+	{
+		curHandles.context->IASetVertexBuffers(0, 1, vertexBufferStaticTextLose.GetAddressOf(), strides, offsets);
+		// change the topology to a triangle list
+		curHandles.context->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+		// update the constant buffer data for the text
+		constantBufferData = UpdateTextConstantBufferData(staticTextLose);
+		// bind the texture used for rendering the font
+		curHandles.context->PSSetShaderResources(0, 1, shaderResourceView[TEXTURE_ID::FONT_CONSOLAS].GetAddressOf());
+		// update the constant buffer with the text's data
+		curHandles.context->UpdateSubresource(constantBufferHUD.Get(), 0, nullptr, &constantBufferData, 0, 0);
+		// draw the static text using the number of vertices
+		curHandles.context->Draw(staticTextLose.GetVertices().size(), 0);
+	}
 
 }
 

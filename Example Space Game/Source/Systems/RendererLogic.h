@@ -83,6 +83,8 @@ namespace ESG
 		Microsoft::WRL::ComPtr<ID3D11Buffer>		vertexBufferStaticTextTime;
 		Microsoft::WRL::ComPtr<ID3D11Buffer>		vertexBufferDynamicTextTime;
 		Microsoft::WRL::ComPtr<ID3D11Buffer>		vertexBufferStaticTextLives;
+		Microsoft::WRL::ComPtr<ID3D11Buffer>		vertexBufferStaticTextWin;
+		Microsoft::WRL::ComPtr<ID3D11Buffer>		vertexBufferStaticTextLose;
 
 
 		GW::MATH::GMATRIXF worldMatrix[500];
@@ -115,6 +117,8 @@ namespace ESG
 		Text staticTextTime;
 		Text dynamicTextTime;
 		Text staticTextLives;
+		Text staticTextWin;
+		Text staticTextLose;
 		SPRITE_DATA	constantBufferData = { 0 };
 		Microsoft::WRL::ComPtr<ID3D11ShaderResourceView> shaderResourceView[TEXTURE_ID::COUNT];
 		Microsoft::WRL::ComPtr<ID3D11SamplerState>			samplerState;
@@ -122,6 +126,7 @@ namespace ESG
 		Microsoft::WRL::ComPtr<ID3D11DepthStencilState>		depthStencilState;
 		Microsoft::WRL::ComPtr<ID3D11RasterizerState>		rasterizerState;
 		bool timercheck;
+		GW::INPUT::GInput inputProxy;
 
 		// used to trigger clean up of vulkan resources
 		GW::CORE::GEventReceiver shutdown;
