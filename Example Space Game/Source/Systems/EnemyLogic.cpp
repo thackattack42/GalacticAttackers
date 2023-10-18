@@ -34,11 +34,32 @@ bool ESG::EnemyLogic::Init(std::shared_ptr<flecs::world> _game,
 			explode.Write(ESG::PLAY_EVENT::ENEMY_DESTROYED, x);
 			eventPusher.Push(explode);
 		}
-
 		ModelTransform* edit = e.get_mut<ModelTransform>();
-		GW::MATH::GMatrix::TranslateGlobalF(edit->matrix, GW::MATH::GVECTORF{ p.value.x, -p.value.y, 0, 1}, edit->matrix);
-		levelData->levelTransforms[edit->rendererIndex] = edit->matrix;
-		
+		//moveRight = true;
+
+		if (moveRight)
+		{
+			GW::MATH::GMatrix::TranslateGlobalF(edit->matrix, GW::MATH::GVECTORF{ 0, 0, 1, 1 }, edit->matrix);
+			levelData->levelTransforms[edit->rendererIndex] = edit->matrix;
+			if (edit->matrix.row4.z >= 40)
+			{
+				moveRight = false;
+				GW::MATH::GMatrix::TranslateGlobalF(edit->matrix, GW::MATH::GVECTORF{ 0, -5, 0, 1 }, edit->matrix);
+				levelData->levelTransforms[edit->rendererIndex] = edit->matrix;
+			}
+		}
+		else if (!moveRight)
+		{
+			GW::MATH::GMatrix::TranslateGlobalF(edit->matrix, GW::MATH::GVECTORF{ 0, 0, -1, 1 }, edit->matrix);
+			levelData->levelTransforms[edit->rendererIndex] = edit->matrix;
+			if (edit->matrix.row4.z <= -40)
+			{
+				moveRight = true;
+				GW::MATH::GMatrix::TranslateGlobalF(edit->matrix, GW::MATH::GVECTORF{ 0, -5, 0, 1 }, edit->matrix);
+				levelData->levelTransforms[edit->rendererIndex] = edit->matrix;
+			}
+		}
+
 		std::cout << "Moving " << edit->matrix.row4.x << " " << edit->matrix.row4.y << " " << edit->matrix.row4.z << std::endl;
 
 		if (edit->matrix.row4.y <= 30)
@@ -51,12 +72,10 @@ bool ESG::EnemyLogic::Init(std::shared_ptr<flecs::world> _game,
 			//GW::AUDIO::GSound death = = 
 			std::cout << "Player Dies...You Lose";
 		}
-		p.value.x = 0;
-		p.value.y = 0;
+		p.value = { 0, 0 };
 
-			
-			//FireLasersEnemy(e.world(), p);
-	});
+		//FireLasersEnemy(e.world(), p);
+		});
 
 	return true;
 }
