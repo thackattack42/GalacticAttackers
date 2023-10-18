@@ -127,7 +127,8 @@ namespace ESG
 		Microsoft::WRL::ComPtr<ID3D11RasterizerState>		rasterizerState;
 		bool timercheck;
 		GW::INPUT::GInput inputProxy;
-
+		bool conditionWin = false;
+		bool conditionLose = false;
 		// used to trigger clean up of vulkan resources
 		GW::CORE::GEventReceiver shutdown;
 	public:

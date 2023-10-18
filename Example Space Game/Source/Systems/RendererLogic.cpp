@@ -1105,8 +1105,9 @@ void ESG::D3DRendererLogic::UIDraw()
 	inputProxy.GetState(65, one);
 	inputProxy.GetState(66, two);
 
-	if (one > 0)
+	if (one > 0 || conditionWin)
 	{
+		conditionLose = false;
 		curHandles.context->IASetVertexBuffers(0, 1, vertexBufferStaticTextWin.GetAddressOf(), strides, offsets);
 		// change the topology to a triangle list
 		curHandles.context->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
@@ -1118,9 +1119,11 @@ void ESG::D3DRendererLogic::UIDraw()
 		curHandles.context->UpdateSubresource(constantBufferHUD.Get(), 0, nullptr, &constantBufferData, 0, 0);
 		// draw the static text using the number of vertices
 		curHandles.context->Draw(staticTextWin.GetVertices().size(), 0);
+		conditionWin = true;
 	}
-	if (two > 0)
+	if (two > 0 || conditionLose)
 	{
+		conditionWin = false;
 		curHandles.context->IASetVertexBuffers(0, 1, vertexBufferStaticTextLose.GetAddressOf(), strides, offsets);
 		// change the topology to a triangle list
 		curHandles.context->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
@@ -1132,6 +1135,7 @@ void ESG::D3DRendererLogic::UIDraw()
 		curHandles.context->UpdateSubresource(constantBufferHUD.Get(), 0, nullptr, &constantBufferData, 0, 0);
 		// draw the static text using the number of vertices
 		curHandles.context->Draw(staticTextLose.GetVertices().size(), 0);
+		conditionLose = true;
 	}
 
 }

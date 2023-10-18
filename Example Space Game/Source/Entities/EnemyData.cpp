@@ -57,6 +57,7 @@ bool ESG::EnemyData::Load(	std::shared_ptr<flecs::world> _game,
 		//.set(spaceship)
 			.set<Material>({ red, green, blue })
 			.set<Orientation>({ world })
+			.set<Score>({50})
 		// .override<> ensures a component is unique to each entity created from a prefab
 			.set_override<Health>({ health })
 			.override<Acceleration>()
@@ -67,6 +68,7 @@ bool ESG::EnemyData::Load(	std::shared_ptr<flecs::world> _game,
 
 		 auto enemyPrefab2 = _game->prefab("Spaceship2") 
 			.set<Material>({ red2, green2, blue2 }) 
+			.set<Score>({ 200 })
 			.set<Orientation>({ world }) 
 			.set_override<Health>({ health })
 			.override<Acceleration>() 
@@ -77,6 +79,7 @@ bool ESG::EnemyData::Load(	std::shared_ptr<flecs::world> _game,
 	
 		 auto enemyPrefab3 = _game->prefab("Spaceship4")
 			 .set<Material>({ red3, green3, blue3 })
+			 .set<Score>({ 100 })
 			 .set<Orientation>({ world })
 			 .set_override<Health>({ health })
 			 .override<Acceleration>()
