@@ -65,7 +65,10 @@ bool ESG::EnemyLogic::Init(std::shared_ptr<flecs::world> _game,
 		if (edit->matrix.row4.y <= 30)
 		{
 			e.destruct();
-
+			flecs::entity playerDeath;
+			RetreivePrefab("Death", playerDeath);
+			GW::AUDIO::GSound death = *playerDeath.get<GW::AUDIO::GSound>();
+			death.Play();
 			std::cout << "Player Dies...You Lose";
 		}
 		p.value = { 0, 0 };
