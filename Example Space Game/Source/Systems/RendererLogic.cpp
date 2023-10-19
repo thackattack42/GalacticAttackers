@@ -2,7 +2,6 @@
 #include "../Components/Identification.h"
 #include "../Components/Visuals.h"
 #include "../Components/Physics.h"
-#include <DDSTextureloader.h>
 #include "../Components/Components.h"
 #include <Shobjidl.h>
 #include <d3dcompiler.h>
@@ -21,106 +20,32 @@ void PrintLabeledDebugString(const char* label, const char* toPrint)
 bool ESG::D3DRendererLogic::Init(	std::shared_ptr<flecs::world> _game, 
 								std::weak_ptr<const GameConfig> _gameConfig,
 								GW::GRAPHICS::GDirectX11Surface d3d11,
-								GW::SYSTEM::GWindow _window, std::shared_ptr<const Level_Data> _levelData, std::shared_ptr<bool> _levelChange)
+								GW::SYSTEM::GWindow _window, std::shared_ptr<Level_Data> _levelData, std::shared_ptr<bool> _levelChange)
 {
-// save a handle to the ECS & game settings
-game = _game;
-gameConfig = _gameConfig;
-direct11 = d3d11;
-window = _window;
-levelData = _levelData;
-levelChange = _levelChange;
-// Setup all vulkan resources
-if (LoadShaders3D() == false)
-return false;
-if (LoadShaders2D() == false)
-return false;
-if (LoadUniforms() == false)
-return false;
-if (LoadGeometry() == false)
-return false;
-//if (SetupPipeline() == false)
-//	return false;
-// Setup drawing engine
-if (SetupDrawcalls() == false)
-return false;
-// GVulkanSurface will inform us when to release any allocated resources
-InitializeGraphics();
+	// save a handle to the ECS & game settings
+	game = _game;
+	gameConfig = _gameConfig;
+	direct11 = d3d11;
+	window = _window;
+	levelData = _levelData;
+	levelChange = _levelChange;
+	
+	// Setup all vulkan resources
+	if (LoadShaders() == false) 
+		return false;
+	if (LoadUniforms() == false)
+		return false;
+	if (LoadGeometry() == false)
+		return false;
+	//if (SetupPipeline() == false)
+	//	return false;
+	// Setup drawing engine
+	if (SetupDrawcalls() == false)
+		return false;
+	// GVulkanSurface will inform us when to release any allocated resources
+	InitializeGraphics();
 
-return true;
-}
-
-std::vector<Sprite>	ESG::D3DRendererLogic::LoadHudFromXML(std::string filepath)
-{
-	std::vector<Sprite> result;
-
-	tinyxml2::XMLDocument document;
-	tinyxml2::XMLError error_message = document.LoadFile(filepath.c_str());
-	if (error_message != tinyxml2::XML_SUCCESS)
-	{
-		std::cout << "XML file [" + filepath + "] did not load properly." << std::endl;
-		return std::vector<Sprite>();
-	}
-
-	std::string name = document.FirstChildElement("hud")->FindAttribute("name")->Value();
-	GW::MATH2D::GVECTOR2F screen_size;
-	screen_size.x = atof(document.FirstChildElement("hud")->FindAttribute("width")->Value());
-	screen_size.y = atof(document.FirstChildElement("hud")->FindAttribute("height")->Value());
-
-	tinyxml2::XMLElement* current = document.FirstChildElement("hud")->FirstChildElement("element");
-	while (current)
-	{
-		Sprite s = Sprite();
-		name = current->FindAttribute("name")->Value();
-		FLOAT x = atof(current->FindAttribute("pos_x")->Value());
-		FLOAT y = atof(current->FindAttribute("pos_y")->Value());
-		FLOAT sx = atof(current->FindAttribute("scale_x")->Value());
-		FLOAT sy = atof(current->FindAttribute("scale_y")->Value());
-		FLOAT r = atof(current->FindAttribute("rotation")->Value());
-		FLOAT d = atof(current->FindAttribute("depth")->Value());
-		GW::MATH2D::GVECTOR2F s_min, s_max;
-		s_min.x = atof(current->FindAttribute("sr_x")->Value());
-		s_min.y = atof(current->FindAttribute("sr_y")->Value());
-		s_max.x = atof(current->FindAttribute("sr_w")->Value());
-		s_max.y = atof(current->FindAttribute("sr_h")->Value());
-		UINT tid = atoi(current->FindAttribute("textureID")->Value());
-
-		s.SetName(name);
-		s.SetScale(sx, sy);
-		s.SetPosition(x, y);
-		s.SetRotation(r);
-		s.SetDepth(d);
-		s.SetScissorRect({ s_min, s_max });
-		s.SetTextureIndex(tid);
-
-		result.push_back(s);
-
-		current = current->NextSiblingElement();
-	}
-	return result;
-}
-
-SPRITE_DATA ESG::D3DRendererLogic::UpdateSpriteConstantBufferData(const Sprite& s)
-{
-	SPRITE_DATA temp = { 0 };
-	temp.pos_scale.x = s.GetPosition().x;
-	temp.pos_scale.y = s.GetPosition().y;
-	temp.pos_scale.z = s.GetScale().x;
-	temp.pos_scale.w = s.GetScale().y;
-	temp.rotation_depth.x = s.GetRotation();
-	temp.rotation_depth.y = s.GetDepth();
-	return temp;
-}
-SPRITE_DATA ESG::D3DRendererLogic::UpdateTextConstantBufferData(const Text& s)
-{
-	SPRITE_DATA temp = { 0 };
-	temp.pos_scale.x = s.GetPosition().x;
-	temp.pos_scale.y = s.GetPosition().y;
-	temp.pos_scale.z = s.GetScale().x;
-	temp.pos_scale.w = s.GetScale().y;
-	temp.rotation_depth.x = s.GetRotation();
-	temp.rotation_depth.y = s.GetDepth();
-	return temp;
+	return true;
 }
 
 bool ESG::D3DRendererLogic::Activate(bool runSystem)
@@ -166,39 +91,22 @@ std::string ESG::D3DRendererLogic::ShaderAsString(const char* shaderFilePath)
 	return output;
 }
 
-bool ESG::D3DRendererLogic::LoadShaders3D()
+bool ESG::D3DRendererLogic::LoadShaders()
 {
 	std::shared_ptr<const GameConfig> readCfg = gameConfig.lock();
-	vertexShader3DSource = (*readCfg).at("Shaders").at("vertex3D").as<std::string>();
-	pixelShader3DSource = (*readCfg).at("Shaders").at("pixel3D").as<std::string>();
+	vertexShaderSource = (*readCfg).at("Shaders").at("vertex").as<std::string>();
+	pixelShaderSource = (*readCfg).at("Shaders").at("pixel").as<std::string>();
 	
-	if (vertexShader3DSource.empty() || pixelShader3DSource.empty())
+	if (vertexShaderSource.empty() || pixelShaderSource.empty())
 		return false;
 
-	vertexShader3DSource = ShaderAsString(vertexShader3DSource.c_str());
-	pixelShader3DSource = ShaderAsString(pixelShader3DSource.c_str());
+	vertexShaderSource = ShaderAsString(vertexShaderSource.c_str());
+	pixelShaderSource = ShaderAsString(pixelShaderSource.c_str());
 
-	if (vertexShader3DSource.empty() || pixelShader3DSource.empty())
+	if (vertexShaderSource.empty() || pixelShaderSource.empty())
 		return false;
 	
-	return true;
-}
-bool ESG::D3DRendererLogic::LoadShaders2D()
-{
-	std::shared_ptr<const GameConfig> readCfg = gameConfig.lock();
-	vertexShader2DSource = (*readCfg).at("Shaders").at("vertex2D").as<std::string>();
-	pixelShader2DSource = (*readCfg).at("Shaders").at("pixel2D").as<std::string>();
 
-	if (vertexShader2DSource.empty() || pixelShader2DSource.empty())
-		return false;
-
-	vertexShader2DSource = ShaderAsString(vertexShader2DSource.c_str());
-	pixelShader2DSource = ShaderAsString(pixelShader2DSource.c_str());
-
-	if (vertexShader2DSource.empty() || pixelShader2DSource.empty())
-		return false;
-
-	return true;
 }
 
 void ESG::D3DRendererLogic::InitializeGraphics()
@@ -207,8 +115,7 @@ void ESG::D3DRendererLogic::InitializeGraphics()
 	direct11.GetDevice((void**)&creator);
 	//InitializeVertexBuffer(creator);
 	//InitializeIndexBuffer(creator);
-	InitializePipeline3D(creator);
-	InitializePipeline2D(creator);
+	InitializePipeline(creator);
 
 	// free temporary handle
 	creator->Release();
@@ -273,23 +180,14 @@ bool ESG::D3DRendererLogic::LoadUniforms()
 	return true;
 }
 
-void  ESG::D3DRendererLogic::Initialize3DVertexBuffer(ID3D11Device* creator)
+void  ESG::D3DRendererLogic::InitializeVertexBuffer(ID3D11Device* creator)
 {
-	Create3DVertexBuffer(creator, levelData->levelVertices.data(), sizeof(H2B::VERTEX) * levelData->levelVertices.size());
+	CreateVertexBuffer(creator, levelData->levelVertices.data(), sizeof(H2B::VERTEX) * levelData->levelVertices.size());
 }
 
-void  ESG::D3DRendererLogic::Initialize3DIndexBuffer(ID3D11Device* creator)
+void  ESG::D3DRendererLogic::InitializeIndexBuffer(ID3D11Device* creator)
 {
-	Create3DIndexBuffer(creator, levelData->levelIndices.data(), sizeof(unsigned int) * levelData->levelIndices.size());
-}
-void  ESG::D3DRendererLogic::Initialize2DVertexBuffer(ID3D11Device* creator)
-{
-	Create2DVertexBuffer(creator/*, levelData->levelVertices.data(), sizeof(H2B::VERTEX) * levelData->levelVertices.size()*/);
-}
-
-void  ESG::D3DRendererLogic::Initialize2DIndexBuffer(ID3D11Device* creator)
-{
-	Create2DIndexBuffer(creator/*, levelData->levelIndices.data(), sizeof(unsigned int) * levelData->levelIndices.size()*/);
+	CreateIndexBuffer(creator, levelData->levelIndices.data(), sizeof(unsigned int) * levelData->levelIndices.size());
 }
 
 void  ESG::D3DRendererLogic::InitializeConstantBuffer(ID3D11Device* creator)
@@ -313,52 +211,22 @@ void  ESG::D3DRendererLogic::InitializeConstantBuffer(ID3D11Device* creator)
 
 }
 
-void ESG::D3DRendererLogic::Create3DVertexBuffer(ID3D11Device* creator, const void* data, unsigned int sizeInBytes)
+void ESG::D3DRendererLogic::CreateVertexBuffer(ID3D11Device* creator, const void* data, unsigned int sizeInBytes)
 {
 	D3D11_SUBRESOURCE_DATA bData = { data, 0, 0 };
 	CD3D11_BUFFER_DESC bDesc(sizeInBytes, D3D11_BIND_VERTEX_BUFFER);
-	creator->CreateBuffer(&bDesc, &bData, vertexBuffer3D.ReleaseAndGetAddressOf());
+	creator->CreateBuffer(&bDesc, &bData, vertexBuffer.ReleaseAndGetAddressOf());
 }
 
-void  ESG::D3DRendererLogic::Create3DIndexBuffer(ID3D11Device* creator, const void* data, unsigned int sizeInBytes)
+void  ESG::D3DRendererLogic::CreateIndexBuffer(ID3D11Device* creator, const void* data, unsigned int sizeInBytes)
 {
 	D3D11_SUBRESOURCE_DATA iData = { data, 0, 0 };
 	CD3D11_BUFFER_DESC iDesc(sizeInBytes, D3D11_BIND_INDEX_BUFFER);
-	creator->CreateBuffer(&iDesc, &iData, indexBuffer3D.ReleaseAndGetAddressOf());
-}
-
-void ESG::D3DRendererLogic::Create2DVertexBuffer(ID3D11Device* creator/*, const void* data, unsigned int sizeInBytes*/)
-{
-	float verts[] =
-	{
-		-1.0f,  1.0f, 0.0f, 0.0f,		//[x,y,u,v]
-		 1.0f,  1.0f, 1.0f, 0.0f,
-		-1.0f, -1.0f, 0.0f, 1.0f,
-		 1.0f, -1.0f, 1.0f, 1.0f
-	};
-
-	// vertex buffer creation
-	D3D11_SUBRESOURCE_DATA vbData = { verts, 0, 0 };
-	CD3D11_BUFFER_DESC vbDesc(sizeof(verts), D3D11_BIND_VERTEX_BUFFER);
-	creator->CreateBuffer(&vbDesc, &vbData, vertexBuffer2D.GetAddressOf());
+	creator->CreateBuffer(&iDesc, &iData, indexBuffer.ReleaseAndGetAddressOf());
 }
 
 
-void ESG::D3DRendererLogic::Create2DIndexBuffer(ID3D11Device* creator/*, const void* data, unsigned int sizeInBytes*/)
-{
-	unsigned int indices[] =
-	{
-		0, 1, 2,
-		1, 3, 2
-	};
-	// index buffer creation
-	D3D11_SUBRESOURCE_DATA ibData = { indices, 0, 0 };
-	CD3D11_BUFFER_DESC ibDesc(sizeof(indices), D3D11_BIND_INDEX_BUFFER);
-	creator->CreateBuffer(&ibDesc, &ibData, indexBuffer2D.GetAddressOf());
-}
-
-
-void ESG::D3DRendererLogic::InitializePipeline3D(ID3D11Device* creator)
+void ESG::D3DRendererLogic::InitializePipeline(ID3D11Device* creator)
 {
 	//Initialixe pipeline
 	direct11.GetDevice((void**)&creator);
@@ -366,37 +234,25 @@ void ESG::D3DRendererLogic::InitializePipeline3D(ID3D11Device* creator)
 #if _DEBUG
 	compilerFlags |= D3DCOMPILE_DEBUG;
 #endif
-	Microsoft::WRL::ComPtr<ID3DBlob> vsBlob = CompileVertexShader3D(creator, compilerFlags);
-	Microsoft::WRL::ComPtr<ID3DBlob> psBlob = CompilePixelShader3D(creator, compilerFlags);
-	Create3DVertexInputLayout(creator, vsBlob);
-}
-void ESG::D3DRendererLogic::InitializePipeline2D(ID3D11Device* creator)
-{
-	//Initialixe pipeline
-	direct11.GetDevice((void**)&creator);
-	UINT compilerFlags = D3DCOMPILE_ENABLE_STRICTNESS;
-#if _DEBUG
-	compilerFlags |= D3DCOMPILE_DEBUG;
-#endif
-	Microsoft::WRL::ComPtr<ID3DBlob> vsBlob = CompileVertexShader2D(creator, compilerFlags);
-	Microsoft::WRL::ComPtr<ID3DBlob> psBlob = CompilePixelShader2D(creator, compilerFlags);
-	Create2DVertexInputLayout(creator, vsBlob);
+	Microsoft::WRL::ComPtr<ID3DBlob> vsBlob = CompileVertexShader(creator, compilerFlags);
+	Microsoft::WRL::ComPtr<ID3DBlob> psBlob = CompilePixelShader(creator, compilerFlags);
+	CreateVertexInputLayout(creator, vsBlob);
 }
 
-Microsoft::WRL::ComPtr<ID3DBlob> ESG::D3DRendererLogic::CompilePixelShader3D(ID3D11Device* creator, UINT compilerFlags)
+Microsoft::WRL::ComPtr<ID3DBlob> ESG::D3DRendererLogic::CompilePixelShader(ID3D11Device* creator, UINT compilerFlags)
 {
 
 	Microsoft::WRL::ComPtr<ID3DBlob> psBlob, errors;
 
 	HRESULT compilationResult =
-		D3DCompile(pixelShader3DSource.c_str(), pixelShader3DSource.length(),
+		D3DCompile(pixelShaderSource.c_str(), pixelShaderSource.length(),
 			nullptr, nullptr, nullptr, "main", "ps_4_0", compilerFlags, 0,
 			psBlob.GetAddressOf(), errors.GetAddressOf());
 
 	if (SUCCEEDED(compilationResult))
 	{
 		creator->CreatePixelShader(psBlob->GetBufferPointer(),
-			psBlob->GetBufferSize(), nullptr, pixelShader3D.GetAddressOf());
+			psBlob->GetBufferSize(), nullptr, pixelShader.GetAddressOf());
 	}
 	else
 	{
@@ -407,19 +263,19 @@ Microsoft::WRL::ComPtr<ID3DBlob> ESG::D3DRendererLogic::CompilePixelShader3D(ID3
 
 	return psBlob;
 }
-Microsoft::WRL::ComPtr<ID3DBlob>  ESG::D3DRendererLogic::CompileVertexShader3D(ID3D11Device* creator, UINT compilerFlags)
+Microsoft::WRL::ComPtr<ID3DBlob>  ESG::D3DRendererLogic::CompileVertexShader(ID3D11Device* creator, UINT compilerFlags)
 {
 	Microsoft::WRL::ComPtr<ID3DBlob> vsBlob, errors;
 
 	HRESULT compilationResult =
-		D3DCompile(vertexShader3DSource.c_str(), vertexShader3DSource.length(),
+		D3DCompile(vertexShaderSource.c_str(), vertexShaderSource.length(),
 			nullptr, nullptr, nullptr, "main", "vs_4_0", compilerFlags, 0,
 			vsBlob.GetAddressOf(), errors.GetAddressOf());
 
 	if (SUCCEEDED(compilationResult))
 	{
 		creator->CreateVertexShader(vsBlob->GetBufferPointer(),
-			vsBlob->GetBufferSize(), nullptr, vertexShader3D.GetAddressOf());
+			vsBlob->GetBufferSize(), nullptr, vertexShader.GetAddressOf());
 	}
 	else
 	{
@@ -431,55 +287,7 @@ Microsoft::WRL::ComPtr<ID3DBlob>  ESG::D3DRendererLogic::CompileVertexShader3D(I
 	return vsBlob;
 }
 
-Microsoft::WRL::ComPtr<ID3DBlob> ESG::D3DRendererLogic::CompilePixelShader2D(ID3D11Device* creator, UINT compilerFlags)
-{
-
-	Microsoft::WRL::ComPtr<ID3DBlob> psBlob, errors;
-
-	HRESULT compilationResult =
-		D3DCompile(pixelShader2DSource.c_str(), pixelShader2DSource.length(),
-			nullptr, nullptr, nullptr, "main", "ps_4_0", compilerFlags, 0,
-			psBlob.GetAddressOf(), errors.GetAddressOf());
-
-	if (SUCCEEDED(compilationResult))
-	{
-		creator->CreatePixelShader(psBlob->GetBufferPointer(),
-			psBlob->GetBufferSize(), nullptr, pixelShader2D.GetAddressOf());
-	}
-	else
-	{
-		PrintLabeledDebugString("Pixel Shader Errors:\n", (char*)errors->GetBufferPointer());
-		abort();
-		return nullptr;
-	}
-
-	return psBlob;
-}
-Microsoft::WRL::ComPtr<ID3DBlob>  ESG::D3DRendererLogic::CompileVertexShader2D(ID3D11Device* creator, UINT compilerFlags)
-{
-	Microsoft::WRL::ComPtr<ID3DBlob> vsBlob, errors;
-
-	HRESULT compilationResult =
-		D3DCompile(vertexShader2DSource.c_str(), vertexShader2DSource.length(),
-			nullptr, nullptr, nullptr, "main", "vs_4_0", compilerFlags, 0,
-			vsBlob.GetAddressOf(), errors.GetAddressOf());
-
-	if (SUCCEEDED(compilationResult))
-	{
-		creator->CreateVertexShader(vsBlob->GetBufferPointer(),
-			vsBlob->GetBufferSize(), nullptr, vertexShader2D.GetAddressOf());
-	}
-	else
-	{
-		PrintLabeledDebugString("Vertex Shader Errors:\n", (char*)errors->GetBufferPointer());
-		abort();
-		return nullptr;
-	}
-
-	return vsBlob;
-}
-
-void ESG::D3DRendererLogic::Create3DVertexInputLayout(ID3D11Device* creator, Microsoft::WRL::ComPtr<ID3DBlob>& vsBlob)
+void ESG::D3DRendererLogic::CreateVertexInputLayout(ID3D11Device* creator, Microsoft::WRL::ComPtr<ID3DBlob>& vsBlob)
 {
 	D3D11_INPUT_ELEMENT_DESC attributes[3];
 
@@ -509,59 +317,15 @@ void ESG::D3DRendererLogic::Create3DVertexInputLayout(ID3D11Device* creator, Mic
 
 	creator->CreateInputLayout(attributes, ARRAYSIZE(attributes),
 		vsBlob->GetBufferPointer(), vsBlob->GetBufferSize(),
-		vertexFormat3D.GetAddressOf());
+		vertexFormat.GetAddressOf());
 }
-void ESG::D3DRendererLogic::Create2DVertexInputLayout(ID3D11Device* creator, Microsoft::WRL::ComPtr<ID3DBlob>& vsBlob)
-{
-	D3D11_INPUT_ELEMENT_DESC format[] =
-	{
-		{ "POSITION", 0, DXGI_FORMAT_R32G32_FLOAT, 0, D3D11_APPEND_ALIGNED_ELEMENT, D3D11_INPUT_PER_VERTEX_DATA, 0 },
-		{ "TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT, 0, D3D11_APPEND_ALIGNED_ELEMENT, D3D11_INPUT_PER_VERTEX_DATA, 0 },
-	};
 
-	creator->CreateInputLayout(format, ARRAYSIZE(format),
-		vsBlob->GetBufferPointer(), vsBlob->GetBufferSize(),
-		vertexFormat2D.GetAddressOf());
-}
 bool ESG::D3DRendererLogic::LoadGeometry()
 {
 	ID3D11Device* creator;
 	direct11.GetDevice((void**)&creator);
-	proxy.Create();
-	inputProxy.Create(window);
-
-	/*viewTranslation = { 55.0f,5.0f, 25.0f, 1.0f };*/
-	viewTranslation = { 140.0f, 5.0f, 0.0f, 1.0f };
-	//ViewMatrix
-	GW::MATH::GVECTORF viewCenter = { 0.0, 1.0f, 0.0f, 1.0f };
-	GW::MATH::GVECTORF viewUp = { 0.0f, 1.0f, 0.0f, 1.0f };
-	GW::MATH::GVECTORF vTranslate = { 0.0, -90.0f, 0.0f, 1.0f };
-	proxy.IdentityF(viewMatrix);
-	proxy.LookAtLHF(viewTranslation, viewCenter, viewUp, viewMatrix);
-	proxy.TranslateLocalF(viewMatrix, vTranslate, viewMatrix);
-
-	float ratio;
-	direct11.GetAspectRatio(ratio);
-	proxy.ProjectionDirectXLHF(G_DEGREE_TO_RADIAN(65.0f), ratio, 0.1f, 200.0f, projectionMatrix);
-
-	lightDir = { -1.0f, -1.0f, -2.0f, 1.0f };
-	lightColor = { 0.9f, 0.9f,1.0f, 1.0f };
-
-
-	scene.viewMatrix = viewMatrix;
-	scene.projectionMatrix = projectionMatrix;
-	scene.sunColor = lightColor;
-	scene.sunDirection = lightDir;
-	modelID.mat_id = levelData->levelMeshes[0].materialIndex;
-	modelID.mod_id = levelData->levelInstances[0].modelIndex;
-	modelID.numLights = levelData->levelLighting.size();
-
-	lightAmbient = { 0.25f, 0.25f, 0.35f, 1.0f };
-	scene.sunAmbient = lightAmbient;
-	scene.camerPos = viewTranslation;
-
-	Initialize3DVertexBuffer(creator);
-	Initialize3DIndexBuffer(creator);
+	InitializeVertexBuffer(creator);
+	InitializeIndexBuffer(creator);
 	InitializeConstantBuffer(creator);
 	for (int i = 0; i < levelData->levelMaterials.size(); ++i)
 	{
@@ -579,211 +343,6 @@ bool ESG::D3DRendererLogic::LoadGeometry()
 	{
 		lights.myLights[i] = levelData->levelLighting[i];
 	}
-	//std::vector<float> verts = {
-	//	-0.5f, -0.5f,
-	//	0, 0.5f,
-	//	0, -0.25f,
-	//	0.5f, -0.5f
-	//};
-	// Transfer triangle data to the vertex buffer. (staging buffer would be prefered here)
-	Initialize3DVertexBuffer(creator);
-	Initialize3DIndexBuffer(creator);
-
-
-	unsigned int width;
-	unsigned int height;
-
-	CD3D11_BLEND_DESC blendDesc = CD3D11_BLEND_DESC(CD3D11_DEFAULT());
-	blendDesc.RenderTarget[0].BlendEnable = true;
-	blendDesc.RenderTarget[0].SrcBlend = D3D11_BLEND_SRC_ALPHA;
-	blendDesc.RenderTarget[0].DestBlend = D3D11_BLEND_INV_SRC_ALPHA;
-	blendDesc.RenderTarget[0].SrcBlendAlpha = D3D11_BLEND_SRC_ALPHA;
-	blendDesc.RenderTarget[0].DestBlendAlpha = D3D11_BLEND_INV_SRC_ALPHA;
-	blendDesc.RenderTarget[0].RenderTargetWriteMask = D3D11_COLOR_WRITE_ENABLE_ALL;
-	creator->CreateBlendState(&blendDesc, blendState.GetAddressOf());
-
-	// creation of the depth stencil state
-	// this is used to blend with objects when they are on the same z-plane
-	// the depth function needs to be set to less_equal instead of less
-	CD3D11_DEPTH_STENCIL_DESC depthStencilDesc = CD3D11_DEPTH_STENCIL_DESC(CD3D11_DEFAULT());
-	depthStencilDesc.DepthFunc = D3D11_COMPARISON_LESS_EQUAL;
-	creator->CreateDepthStencilState(&depthStencilDesc, depthStencilState.GetAddressOf());
-
-	CD3D11_RASTERIZER_DESC rasterizerDesc = CD3D11_RASTERIZER_DESC(CD3D11_DEFAULT());
-	rasterizerDesc.ScissorEnable = true;
-	creator->CreateRasterizerState(&rasterizerDesc, rasterizerState.GetAddressOf());
-
-	// when loading a texture from disk to an interface object for directx 11
-	// we use this function call "CreateDDSTextureFromFile"
-	// this requires a wide string as a parameter for the file path
-	// the shaderResourceView is a directx 11 interface object that points to the texture information on the gpu
-
-	// an array to store all of the texture names
-	// this makes looping over and creating shader resource views easier
-	std::wstring texture_names[] =
-	{
-		L"greendragon.dds",
-		L"HUD_Sharp_backplate.dds",
-		L"Health_left.dds",
-		L"Health_right.dds",
-		L"Mana_left.dds",
-		L"Mana_right.dds",
-		L"Stamina_backplate.dds",
-		L"Stamina.dds",
-		L"Center_top.dds",
-		L"font_consolas_32.dds"
-	};
-
-	// loop used for creating shader resource views
-	for (size_t i = 0; i < ARRAYSIZE(texture_names); i++)
-	{
-		// create a wide string to store the file path and file name
-		std::wstring texturePath = LTEXTURES_PATH;
-		texturePath += texture_names[i];
-		// load texture from disk 
-		DirectX::CreateDDSTextureFromFile(creator, texturePath.c_str(), nullptr, shaderResourceView[i].GetAddressOf());
-	}
-
-	// samplerStates are needed when using textures
-	// this is for filtering the texture
-	// some options are bilinear, trilinear, anisotropic, etc..
-	CD3D11_SAMPLER_DESC samp_desc = CD3D11_SAMPLER_DESC(CD3D11_DEFAULT());
-	creator->CreateSamplerState(&samp_desc, samplerState.GetAddressOf());
-
-	// this is where we create the constant buffer
-	// it is used to store constant data for each draw call
-	// we will use this to send sprite data to the vertex shader
-	D3D11_SUBRESOURCE_DATA cbData = { &constantBufferData, 0, 0 };
-	// DEFAULT usage lets us use UpdateSubResource
-	// DYNAMIC usage lets us use Map / Unmap
-	CD3D11_BUFFER_DESC cbDesc(sizeof(constantBufferData), D3D11_BIND_CONSTANT_BUFFER);
-	creator->CreateBuffer(&cbDesc, &cbData, constantBufferHUD.GetAddressOf());
-
-	// store the current width and height of the client's window
-	window.GetClientWidth(width);
-	window.GetClientHeight(height);
-	// font loading
-	// credit for generating font texture
-	// https://evanw.github.io/font-texture-generator/
-	std::string filepath = XML_PATH;
-	filepath += "font_consolas_32.xml";
-	bool success = consolas32.LoadFromXML(filepath);
-
-	// setting up the static text object with information
-	// keep in mind the position will always be the center of the text
-	staticTextHS = Text();
-	staticTextHS.SetText("HIGHSCORE:");
-	staticTextHS.SetFont(&consolas32);
-	staticTextHS.SetPosition(0.67f, 0.7f);
-	staticTextHS.SetScale(0.75f, 0.5f);
-	staticTextHS.SetRotation(0.0f);
-	staticTextHS.SetDepth(0.0f);
-	// update will create the vertices so they will be ready to use
-	// for static text this only needs to be done one time
-	staticTextHS.Update(width, height);
-
-	// vertex buffer creation for the staticText
-	const auto& staticVerts = staticTextHS.GetVertices();
-	D3D11_SUBRESOURCE_DATA svbData = { staticVerts.data(), 0, 0 };
-	CD3D11_BUFFER_DESC svbDesc(sizeof(TextVertex) * staticVerts.size(), D3D11_BIND_VERTEX_BUFFER);
-	creator->CreateBuffer(&svbDesc, &svbData, vertexBufferStaticTextHS.GetAddressOf());
-
-	dynamicTextHS = Text();
-	dynamicTextHS.SetFont(&consolas32);
-	dynamicTextHS.SetPosition(0.67f, 0.65f);
-	dynamicTextHS.SetScale(0.75f, 0.5f);
-	dynamicTextHS.SetRotation(0.0f);
-	dynamicTextHS.SetDepth(0.0f);
-	// update will create the vertices so they will be ready to use
-	// for static text this only needs to be done one time
-	dynamicTextHS.Update(width, height);
-
-	// vertex buffer creation for the staticText
-	CD3D11_BUFFER_DESC dvbDesc(sizeof(TextVertex) * 6 * 5000, D3D11_BIND_VERTEX_BUFFER, D3D11_USAGE_DYNAMIC, D3D11_CPU_ACCESS_WRITE);
-	creator->CreateBuffer(&dvbDesc, nullptr, vertexBufferDynamicTextHS.GetAddressOf());
-
-	staticTextTime = Text();
-	staticTextTime.SetText("TIME:");
-	staticTextTime.SetFont(&consolas32);
-	staticTextTime.SetPosition(0.67f, 0.85f);
-	staticTextTime.SetScale(0.75f, 0.5f);
-	staticTextTime.SetRotation(0.0f);
-	staticTextTime.SetDepth(0.0f);
-	// update will create the vertices so they will be ready to use
-	// for static text this only needs to be done one time
-	staticTextTime.Update(width, height);
-
-	// vertex buffer creation for the staticText
-	const auto& TstaticVerts = staticTextTime.GetVertices();
-	D3D11_SUBRESOURCE_DATA tsvbData = { TstaticVerts.data(), 0, 0 };
-	CD3D11_BUFFER_DESC tsvbDesc(sizeof(TextVertex) * TstaticVerts.size(), D3D11_BIND_VERTEX_BUFFER);
-	creator->CreateBuffer(&tsvbDesc, &tsvbData, vertexBufferStaticTextTime.GetAddressOf());
-
-	dynamicTextTime = Text();
-	dynamicTextTime.SetFont(&consolas32);
-	dynamicTextTime.SetPosition(0.67f, 0.8f);
-	dynamicTextTime.SetScale(0.75f, 0.5f);
-	dynamicTextTime.SetRotation(0.0f);
-	dynamicTextTime.SetDepth(0.0f);
-	// update will create the vertices so they will be ready to use
-	// for static text this only needs to be done one time
-	dynamicTextTime.Update(width, height);
-
-	// vertex buffer creation for the staticText
-	CD3D11_BUFFER_DESC tdvbDesc(sizeof(TextVertex) * 6 * 5000, D3D11_BIND_VERTEX_BUFFER, D3D11_USAGE_DYNAMIC, D3D11_CPU_ACCESS_WRITE);
-	creator->CreateBuffer(&tdvbDesc, nullptr, vertexBufferDynamicTextTime.GetAddressOf());
-
-	staticTextLives = Text();
-	staticTextLives.SetText("LIVES:");
-	staticTextLives.SetFont(&consolas32);
-	staticTextLives.SetPosition(-0.6f, -0.85f);
-	staticTextLives.SetScale(1.25f, 1.25f);
-	staticTextLives.SetRotation(0.0f);
-	staticTextLives.SetDepth(0.0f);
-	// update will create the vertices so they will be ready to use
-	// for static text this only needs to be done one time
-	staticTextLives.Update(width, height);
-
-	// vertex buffer creation for the staticText
-	const auto& LstaticVerts = staticTextLives.GetVertices();
-	D3D11_SUBRESOURCE_DATA lsvbData = { LstaticVerts.data(), 0, 0 };
-	CD3D11_BUFFER_DESC lsvbDesc(sizeof(TextVertex) * LstaticVerts.size(), D3D11_BIND_VERTEX_BUFFER);
-	creator->CreateBuffer(&lsvbDesc, &lsvbData, vertexBufferStaticTextLives.GetAddressOf());
-
-	staticTextWin = Text();
-	staticTextWin.SetText("YOU WIN");
-	staticTextWin.SetFont(&consolas32);
-	staticTextWin.SetPosition(0.0f, 0.0f);
-	staticTextWin.SetScale(2.0f, 2.0f);
-	staticTextWin.SetRotation(0.0f);
-	staticTextWin.SetDepth(0.0f);
-	// update will create the vertices so they will be ready to use
-	// for static text this only needs to be done one time
-	staticTextWin.Update(width, height);
-
-	// vertex buffer creation for the staticText
-	const auto& WstaticVerts = staticTextWin.GetVertices();
-	D3D11_SUBRESOURCE_DATA wsvbData = { WstaticVerts.data(), 0, 0 };
-	CD3D11_BUFFER_DESC wsvbDesc(sizeof(TextVertex)* WstaticVerts.size(), D3D11_BIND_VERTEX_BUFFER);
-	creator->CreateBuffer(&wsvbDesc, &wsvbData, vertexBufferStaticTextWin.GetAddressOf());
-
-	staticTextLose = Text();
-	staticTextLose.SetText("YOU LOSE");
-	staticTextLose.SetFont(&consolas32);
-	staticTextLose.SetPosition(0.0f, 0.0f);
-	staticTextLose.SetScale(2.0f, 2.0f);
-	staticTextLose.SetRotation(0.0f);
-	staticTextLose.SetDepth(0.0f);
-	// update will create the vertices so they will be ready to use
-	// for static text this only needs to be done one time
-	staticTextLose.Update(width, height);
-
-	// vertex buffer creation for the staticText
-	const auto& LSstaticVerts = staticTextLose.GetVertices();
-	D3D11_SUBRESOURCE_DATA lssvbData = { LSstaticVerts.data(), 0, 0 };
-	CD3D11_BUFFER_DESC lssvbDesc(sizeof(TextVertex)* LSstaticVerts.size(), D3D11_BIND_VERTEX_BUFFER);
-	creator->CreateBuffer(&lssvbDesc, &lssvbData, vertexBufferStaticTextLose.GetAddressOf());
-
 	creator->Release();
 	return true;
 }
@@ -799,27 +358,20 @@ ESG::D3DRendererLogic::PipelineHandles ESG::D3DRendererLogic::GetCurrentPipeline
 
 void ESG::D3DRendererLogic::SetUpPipeline(PipelineHandles handles)
 {
-	//float blendFactor[] = {0.799f, 0.799f, 0.799f, 1.0f};
 	//Set Render Targets
 	ID3D11RenderTargetView* const views[] = { handles.targetView };
 	handles.context->OMSetRenderTargets(ARRAYSIZE(views), views, handles.depthStencil);
 	
-	handles.context->OMSetBlendState(blendState.Get(), NULL, 0xFFFFFFFF);
-	// set the depth stencil state for depth comparison [useful for transparency with the hud objects]
-	handles.context->OMSetDepthStencilState(depthStencilState.Get(), 0xFFFFFFFF);
-	// set the rasterization state for use with the scissor rectangle
-	handles.context->RSSetState(rasterizerState.Get());
-
 	//Set Vertex Buffers
 	const UINT strides[] = { sizeof(H2B::VERTEX) };
 	const UINT offsets[] = { 0 };
-	ID3D11Buffer* const buffs[] = { vertexBuffer3D.Get() };
+	ID3D11Buffer* const buffs[] = { vertexBuffer.Get() };
 	handles.context->IASetVertexBuffers(0, ARRAYSIZE(buffs), buffs, strides, offsets);
-	handles.context->IASetIndexBuffer(indexBuffer3D.Get(), DXGI_FORMAT_R32_UINT, 0);
+	handles.context->IASetIndexBuffer(indexBuffer.Get(), DXGI_FORMAT_R32_UINT, 0);
 
 	//Set Shaders
-	handles.context->VSSetShader(vertexShader3D.Get(), nullptr, 0);
-	handles.context->PSSetShader(pixelShader3D.Get(), nullptr, 0);
+	handles.context->VSSetShader(vertexShader.Get(), nullptr, 0);
+	handles.context->PSSetShader(pixelShader.Get(), nullptr, 0);
 
 	//// Create Stage Info for Vertex Shader
 	//
@@ -837,9 +389,8 @@ void ESG::D3DRendererLogic::SetUpPipeline(PipelineHandles handles)
 	handles.context->PSSetConstantBuffers(2, 1, constantModelBuffer.GetAddressOf());
 	handles.context->PSSetConstantBuffers(3, 1, constantLightBuffer.GetAddressOf());
 	// Assembly State
-	handles.context->IASetInputLayout(vertexFormat3D.Get());
+	handles.context->IASetInputLayout(vertexFormat.Get());
 	handles.context->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
-
 	// Vertex Input State
 
 	//// viewport state (we still need to set this up even though we will overwrite the values)
@@ -852,7 +403,127 @@ void ESG::D3DRendererLogic::SetUpPipeline(PipelineHandles handles)
 	//
 
 	//// Depth-Stencil State
-	
+	//VkPipelineDepthStencilStateCreateInfo depth_stencil_create_info = {};
+	//depth_stencil_create_info.sType = VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO;
+	//depth_stencil_create_info.depthTestEnable = VK_TRUE;
+	//depth_stencil_create_info.depthWriteEnable = VK_TRUE;
+	//depth_stencil_create_info.depthCompareOp = VK_COMPARE_OP_LESS;
+	//depth_stencil_create_info.depthBoundsTestEnable = VK_FALSE;
+	//depth_stencil_create_info.minDepthBounds = 0.0f;
+	//depth_stencil_create_info.maxDepthBounds = 1.0f;
+	//depth_stencil_create_info.stencilTestEnable = VK_FALSE;
+	//// Color Blending Attachment & State
+	//VkPipelineColorBlendAttachmentState color_blend_attachment_state = {};
+	//color_blend_attachment_state.colorWriteMask = 0xF;
+	//color_blend_attachment_state.blendEnable = VK_FALSE;
+	//color_blend_attachment_state.srcColorBlendFactor = VK_BLEND_FACTOR_SRC_COLOR;
+	//color_blend_attachment_state.dstColorBlendFactor = VK_BLEND_FACTOR_DST_COLOR;
+	//color_blend_attachment_state.colorBlendOp = VK_BLEND_OP_ADD;
+	//color_blend_attachment_state.srcAlphaBlendFactor = VK_BLEND_FACTOR_SRC_ALPHA;
+	//color_blend_attachment_state.dstAlphaBlendFactor = VK_BLEND_FACTOR_DST_ALPHA;
+	//color_blend_attachment_state.alphaBlendOp = VK_BLEND_OP_ADD;
+	//VkPipelineColorBlendStateCreateInfo color_blend_create_info = {};
+	//color_blend_create_info.sType = VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO;
+	//color_blend_create_info.logicOpEnable = VK_FALSE;
+	//color_blend_create_info.logicOp = VK_LOGIC_OP_COPY;
+	//color_blend_create_info.attachmentCount = 1;
+	//color_blend_create_info.pAttachments = &color_blend_attachment_state;
+	//color_blend_create_info.blendConstants[0] = 0.0f;
+	//color_blend_create_info.blendConstants[1] = 0.0f;
+	//color_blend_create_info.blendConstants[2] = 0.0f;
+	//color_blend_create_info.blendConstants[3] = 0.0f;
+	//// Dynamic State 
+	//VkDynamicState dynamic_state[2] = { 
+	//	// By setting these we do not need to re-create the pipeline on Resize
+	//	VK_DYNAMIC_STATE_VIEWPORT, VK_DYNAMIC_STATE_SCISSOR
+	//};
+	//VkPipelineDynamicStateCreateInfo dynamic_create_info = {};
+	//dynamic_create_info.sType = VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO;
+	//dynamic_create_info.dynamicStateCount = 2;
+	//dynamic_create_info.pDynamicStates = dynamic_state;
+	//// Descriptor Setup
+	//VkDescriptorSetLayoutBinding descriptor_layout_binding = {};
+	//descriptor_layout_binding.binding = 0;
+	//descriptor_layout_binding.descriptorCount = 1;
+	//descriptor_layout_binding.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+	//// In this scenario we have the same descriptorSetLayout for both shaders...
+	//// However, many times you would want seperate layouts for each since they tend to have different needs 
+	//descriptor_layout_binding.stageFlags = VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT;
+	//descriptor_layout_binding.pImmutableSamplers = nullptr;
+	//VkDescriptorSetLayoutCreateInfo descriptor_create_info = {};
+	//descriptor_create_info.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
+	//descriptor_create_info.flags = 0; 
+	//descriptor_create_info.bindingCount = 1;
+	//descriptor_create_info.pBindings = &descriptor_layout_binding;
+	//descriptor_create_info.pNext = nullptr;
+	//// Descriptor layout
+	//vkCreateDescriptorSetLayout(device, &descriptor_create_info, nullptr, &descriptorLayout);
+	//// Create a descriptor pool!
+	//unsigned max_frames = 0;
+	//vulkan.GetSwapchainImageCount(max_frames);
+	//VkDescriptorPoolCreateInfo descriptorpool_create_info = {};
+	//descriptorpool_create_info.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
+	//VkDescriptorPoolSize descriptorpool_size = { VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, max_frames };
+	//descriptorpool_create_info.poolSizeCount = 1;
+	//descriptorpool_create_info.pPoolSizes = &descriptorpool_size;
+	//descriptorpool_create_info.maxSets = max_frames;
+	//descriptorpool_create_info.flags = 0;
+	//descriptorpool_create_info.pNext = nullptr;
+	//vkCreateDescriptorPool(device, &descriptorpool_create_info, nullptr, &descriptorPool);
+	//// Create a descriptorSet for each uniform buffer!
+	//VkDescriptorSetAllocateInfo descriptorset_allocate_info = {};
+	//descriptorset_allocate_info.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
+	//descriptorset_allocate_info.descriptorSetCount = 1;
+	//descriptorset_allocate_info.pSetLayouts = &descriptorLayout;
+	//descriptorset_allocate_info.descriptorPool = descriptorPool;
+	//descriptorset_allocate_info.pNext = nullptr;
+	//descriptorSet.resize(max_frames);
+	//for (int i = 0; i < max_frames; ++i) {
+	//	vkAllocateDescriptorSets(device, &descriptorset_allocate_info, &descriptorSet[i]);
+	//}
+	//// link descriptor sets to uniform buffers (one for each bufferimage)
+	//VkWriteDescriptorSet write_descriptorset = {};
+	//write_descriptorset.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+	//write_descriptorset.descriptorCount = 1;
+	//write_descriptorset.dstArrayElement = 0;
+	//write_descriptorset.dstBinding = 0;
+	//write_descriptorset.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+	//for (int i = 0; i < max_frames; ++i) {
+	//	write_descriptorset.dstSet = descriptorSet[i];
+	//	VkDescriptorBufferInfo dbinfo = { uniformHandle[i], 0, VK_WHOLE_SIZE };
+	//	write_descriptorset.pBufferInfo = &dbinfo;
+	//	vkUpdateDescriptorSets(device, 1, &write_descriptorset, 0, nullptr);
+	//}
+	//// Descriptor pipeline layout
+	//VkPipelineLayoutCreateInfo pipeline_layout_create_info = {};
+	//pipeline_layout_create_info.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
+	//pipeline_layout_create_info.setLayoutCount = 1;
+	//pipeline_layout_create_info.pSetLayouts = &descriptorLayout;
+	//pipeline_layout_create_info.pushConstantRangeCount = 0;
+	//pipeline_layout_create_info.pPushConstantRanges = nullptr;
+	//vkCreatePipelineLayout(device, &pipeline_layout_create_info, nullptr, &pipelineLayout);
+	//// Pipeline State... (FINALLY) 
+	//VkGraphicsPipelineCreateInfo pipeline_create_info = {};
+	//pipeline_create_info.sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO;
+	//pipeline_create_info.stageCount = 2;
+	//pipeline_create_info.pStages = stage_create_info;
+	//pipeline_create_info.pInputAssemblyState = &assembly_create_info;
+	//pipeline_create_info.pVertexInputState = &input_vertex_info;
+	//pipeline_create_info.pViewportState = &viewport_create_info;
+	//pipeline_create_info.pRasterizationState = &rasterization_create_info;
+	//pipeline_create_info.pMultisampleState = &multisample_create_info;
+	//pipeline_create_info.pDepthStencilState = &depth_stencil_create_info;
+	//pipeline_create_info.pColorBlendState = &color_blend_create_info;
+	//pipeline_create_info.pDynamicState = &dynamic_create_info;
+	//pipeline_create_info.layout = pipelineLayout;
+	//pipeline_create_info.renderPass = renderPass;
+	//pipeline_create_info.subpass = 0;
+	//pipeline_create_info.basePipelineHandle = VK_NULL_HANDLE;
+	//if (VK_SUCCESS != vkCreateGraphicsPipelines(device, VK_NULL_HANDLE, 1,
+	//	&pipeline_create_info, nullptr, &pipeline))
+	//	return false; // something went wrong
+
+//	return true;
 }
 
 void ESG::D3DRendererLogic::ReleasePipelineHandles(PipelineHandles toRelease)
@@ -877,30 +548,18 @@ bool ESG::D3DRendererLogic::SetupDrawcalls() // I SCREWED THIS UP MAKES SO MUCH 
 	startDraw = game->system<RenderingSystem>().kind(flecs::PreUpdate)
 		.each([this](flecs::entity e, RenderingSystem& s) {
 		// reset the draw counter only once per frame
-		draw_counter = 0;
 		//loop over levelData->levelTransforms
 		//copy over to mesh.WorldMatrix[i] = levelTransforms
 		for (int i = 0; i < levelData->levelTransforms.size(); ++i)
 		{
 			mesh.worldMatrix[i] = levelData->levelTransforms[i];
 		}
-			});
+	});
 	// may run multiple times per frame, will run after startDraw
 	updateDraw = game->system<Position, Orientation, Material>().kind(flecs::OnUpdate)
 		.each([this](flecs::entity e, Position& p, Orientation& o, Material& m) {
 		// copy all data to our instancing array
-		if (e.has<BulletTest>())
-		{
-			GW::MATH::GMATRIXF bullet = GW::MATH::GIdentityMatrixF;
-			bullet.row4.x = p.value.x;
-			bullet.row4.y = p.value.y;
-
-			bullet.row1.x = o.value.row1.x;
-			bullet.row1.y = o.value.row1.y;
-			bullet.row2.x = o.value.row2.x;
-			bullet.row2.y = o.value.row2.y;
-			bulletMoves.push_back(bullet);
-			LevelSwitch();
+		LevelSwitch();
 			//int i = draw_counter;
 			//instanceData.instance_transforms[i] = GW::MATH::GIdentityMatrixF;
 			//instanceData.instance_transforms[i].row4.x = p.value.x;
@@ -920,12 +579,10 @@ bool ESG::D3DRendererLogic::SetupDrawcalls() // I SCREWED THIS UP MAKES SO MUCH 
 			//// if v < 0 then 0, else 1, https://graphics.stanford.edu/~seander/bithacks.html
 			//int sign = 1 ^ ((unsigned int)v >> (sizeof(int) * CHAR_BIT - 1));
 			//draw_counter += sign;
-		}
-			});
-
+	});
 	// runs once per frame after updateDraw
-	completeDraw = game->system<Instance>().kind(flecs::PostUpdate)
-		.each([this](flecs::entity e, Instance& s) {
+	completeDraw = game->system<RenderingSystem>().kind(flecs::PostUpdate)
+		.each([this](flecs::entity e, RenderingSystem& s) {
 		// run the rendering code just once!
 		// Copy data to this frame's buffer
 		//VkDevice device = nullptr;
@@ -960,223 +617,61 @@ bool ESG::D3DRendererLogic::SetupDrawcalls() // I SCREWED THIS UP MAKES SO MUCH 
 		//vkCmdDraw(commandBuffer, 4, draw_counter, 0, 0); // draw'em all!
 		PipelineHandles curHandles = GetCurrentPipelineHandles();
 		SetUpPipeline(curHandles);
-		curHandles.context->UpdateSubresource(constantSceneBuffer.Get(), 0, nullptr, &scene, 0, 0);
-		curHandles.context->UpdateSubresource(constantMeshBuffer.Get(), 0, nullptr, &mesh, 0, 0);
-		curHandles.context->UpdateSubresource(constantLightBuffer.Get(), 0, nullptr, &lights, 0, 0);
+			curHandles.context->UpdateSubresource(constantSceneBuffer.Get(), 0, nullptr, &scene, 0, 0);
+			curHandles.context->UpdateSubresource(constantMeshBuffer.Get(), 0, nullptr, &mesh, 0, 0);
+			curHandles.context->UpdateSubresource(constantLightBuffer.Get(), 0, nullptr, &lights, 0, 0);
 
-		modelID.mod_id = e.get<Instance>()->transformStart;
-		/*if (e.has<BulletTest>())
-		{
-			for (int i = 0; i < (int)bulletMoves.size(); i++)
-			{
-				curHandles.context->UpdateSubresource(constantMeshBuffer.Get(), 0, nullptr, &mesh, 0, 0);
-				auto meshCount = e.get_mut<Object>()->meshStart;
-				modelID.mat_id = levelData->levelMeshes[meshCount].materialIndex + e.get_mut<Object>()->materialStart;
+				modelID.mod_id = e.get_mut<Instance>()->transformStart;
+				/*if (e.has<BulletTest>())
+				{
+					for (int i = 0; i < (int)bulletMoves.size(); i++)
+					{
+						curHandles.context->UpdateSubresource(constantMeshBuffer.Get(), 0, nullptr, &mesh, 0, 0);
+						auto meshCount = e.get_mut<Object>()->meshStart;
+						modelID.mat_id = levelData->levelMeshes[meshCount].materialIndex + e.get_mut<Object>()->materialStart;
 
-				auto colorModel = e.get_mut<Material>()->diffuse.value;
-				modelID.color = GW::MATH::GVECTORF{ colorModel.x, colorModel.y, colorModel.z, 1 };
-				curHandles.context->UpdateSubresource(constantModelBuffer.Get(), 0, nullptr, &modelID, 0, 0);
-				curHandles.context->DrawIndexedInstanced(levelData->levelMeshes[2].drawInfo.indexCount,
-					draw_counter,
-					levelData->levelMeshes[2].drawInfo.indexOffset + e.get_mut<Object>()->indexStart
-					,e.get_mut<Object>()->vertexStart, 0);
-			}
-		}
-		else {*/
-		for (unsigned int j = 0; j < e.get<Object>()->meshCount; ++j)
-		{
-			auto meshCount = e.get<Object>()->meshStart + j;
-			modelID.mat_id = levelData->levelMeshes[meshCount].materialIndex + e.get<Object>()->materialStart;
+						auto colorModel = e.get_mut<Material>()->diffuse.value;
+						modelID.color = GW::MATH::GVECTORF{ colorModel.x, colorModel.y, colorModel.z, 1 };
+						curHandles.context->UpdateSubresource(constantModelBuffer.Get(), 0, nullptr, &modelID, 0, 0);
+						curHandles.context->DrawIndexedInstanced(levelData->levelMeshes[2].drawInfo.indexCount,
+							draw_counter,
+							levelData->levelMeshes[2].drawInfo.indexOffset + e.get_mut<Object>()->indexStart
+							,e.get_mut<Object>()->vertexStart, 0);
+					}
+				}
+				else {*/
+					for (unsigned int j = 0; j < e.get_mut<Object>()->meshCount; ++j)
+					{
+						auto meshCount = e.get_mut<Object>()->meshStart + j;
+						modelID.mat_id = levelData->levelMeshes[meshCount].materialIndex + e.get_mut<Object>()->materialStart;
 
-			auto colorModel = e.get<Material>()->diffuse.value;
-			modelID.color = GW::MATH::GVECTORF{ colorModel.x, colorModel.y, colorModel.z, 1 };
+						auto colorModel = e.get_mut<Material>()->diffuse.value;
+						modelID.color = GW::MATH::GVECTORF{ colorModel.x, colorModel.y, colorModel.z, 1 };
 
-			curHandles.context->UpdateSubresource(constantModelBuffer.Get(), 0, nullptr, &modelID, 0, 0);
+						curHandles.context->UpdateSubresource(constantModelBuffer.Get(), 0, nullptr, &modelID, 0, 0);
 
-			curHandles.context->DrawIndexedInstanced(levelData->levelMeshes[meshCount].drawInfo.indexCount,
-				e.get<Instance>()->transformCount,
-				levelData->levelMeshes[meshCount].drawInfo.indexOffset + e.get<Object>()->indexStart,
-				e.get<Object>()->vertexStart,
-				0);
+						curHandles.context->DrawIndexedInstanced(levelData->levelMeshes[meshCount].drawInfo.indexCount,
+							e.get_mut<Instance>()->transformCount,
+							levelData->levelMeshes[meshCount].drawInfo.indexOffset + e.get_mut<Object>()->indexStart,
+							e.get_mut<Object>()->vertexStart,
+							0);
 
-		}
-		/*}*/
+					}
+				/*}*/
+				
 
-
-
+				
 
 		ReleasePipelineHandles(curHandles);
-		UIDraw();
-			});
+	});
 	// NOTE: I went with multi-system approach for the ease of passing lambdas with "this"
 	// There is a built-in solution for this problem referred to as a "custom runner":
 	// https://github.com/SanderMertens/flecs/blob/master/examples/cpp/systems/custom_runner/src/main.cpp
 	// The negative is that it requires the use of a C callback which is less flexibe vs the lambda
 	// you could embed what you need in the ecs and use a lookup to get it but I think that is less clean
-
+	
 	// all drawing operations have been setup
 	return true;
-}
-
-void ESG::D3DRendererLogic::UIDraw()
-{
-	PipelineHandles curHandles = GetCurrentPipelineHandles();
-	SetUpPipeline(curHandles);
-	curHandles.context->VSSetShader(vertexShader2D.Get(), nullptr, 0);
-	curHandles.context->PSSetShader(pixelShader2D.Get(), nullptr, 0);
-
-	const UINT strides[] = { sizeof(float) * 4 };
-	const UINT offsets[] = { 0 };
-	ID3D11Buffer* const buffs[] = { vertexBuffer2D.Get() };
-	// set the vertex buffer to the pipeline
-	curHandles.context->IASetVertexBuffers(0, ARRAYSIZE(buffs), buffs, strides, offsets);
-	curHandles.context->IASetIndexBuffer(indexBuffer2D.Get(), DXGI_FORMAT_R32_UINT, 0);
-	curHandles.context->VSSetShader(vertexShader2D.Get(), nullptr, 0);
-	curHandles.context->PSSetShader(pixelShader2D.Get(), nullptr, 0);
-	curHandles.context->IASetInputLayout(vertexFormat2D.Get());
-	// set the topology
-	curHandles.context->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP);
-	// set and update the constant buffer (cb)
-	curHandles.context->VSSetConstantBuffers(0, 1, constantBufferHUD.GetAddressOf());
-
-	curHandles.context->IASetVertexBuffers(0, 1, vertexBufferStaticTextTime.GetAddressOf(), strides, offsets);
-	// change the topology to a triangle list
-	curHandles.context->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
-	// update the constant buffer data for the text
-	constantBufferData = UpdateTextConstantBufferData(staticTextTime);
-	// bind the texture used for rendering the font
-	curHandles.context->PSSetShaderResources(0, 1, shaderResourceView[TEXTURE_ID::FONT_CONSOLAS].GetAddressOf());
-	// update the constant buffer with the text's data
-	curHandles.context->UpdateSubresource(constantBufferHUD.Get(), 0, nullptr, &constantBufferData, 0, 0);
-	// draw the static text using the number of vertices
-	curHandles.context->Draw(staticTextTime.GetVertices().size(), 0);
-
-	unsigned int width;
-	unsigned int height;
-	window.GetWidth(width);
-	window.GetHeight(height);
-	static auto start = std::chrono::steady_clock::now();
-	double elapsedSec = std::chrono::duration_cast<std::chrono::seconds>(std::chrono::duration<double>(std::chrono::steady_clock::now() - start)).count();
-	double elapsedMin = std::chrono::duration_cast<std::chrono::minutes>(std::chrono::duration<double>(std::chrono::steady_clock::now() - start)).count();
-	if (int(elapsedSec) >= 60)
-	{
-		elapsedSec -= 60 * int(elapsedSec/60);
-	}
-	dynamicTextTime.SetText("0" + std::to_string(int(elapsedMin)) + ":" + "0" + std::to_string(int(elapsedSec)));
-	if (elapsedSec >= 10 || elapsedMin >= 10)
-	{
-		if (elapsedSec >= 10 || elapsedMin >= 10)
-		{
-			dynamicTextTime.SetText("0" + std::to_string(int(elapsedMin)) + ":" + std::to_string(int(elapsedSec)));
-		}
-		if (elapsedMin >= 10)
-		{
-			dynamicTextTime.SetText(std::to_string(int(elapsedMin)) + ":0" + std::to_string(int(elapsedSec)));
-		}
-	}
-	// update the dynamic text so we create the vertices
-	dynamicTextTime.Update(width, height);
-	// upload the new information to the vertex buffer using map / unmap
-	const auto& verts = dynamicTextTime.GetVertices();
-	D3D11_MAPPED_SUBRESOURCE msr = { 0 };
-	curHandles.context->Map(vertexBufferDynamicTextTime.Get(), 0, D3D11_MAP_WRITE_DISCARD, 0, &msr);
-	memcpy(msr.pData, verts.data(), sizeof(TextVertex) * verts.size());
-	curHandles.context->Unmap(vertexBufferDynamicTextTime.Get(), 0);
-	
-	curHandles.context->IASetVertexBuffers(0, 1, vertexBufferDynamicTextTime.GetAddressOf(), strides, offsets);
-	// change the topology to a triangle list
-	curHandles.context->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
-	// update the constant buffer data for the text
-	constantBufferData = UpdateTextConstantBufferData(dynamicTextTime);
-	// bind the texture used for rendering the font
-	curHandles.context->PSSetShaderResources(0, 1, shaderResourceView[TEXTURE_ID::FONT_CONSOLAS].GetAddressOf());
-	// update the constant buffer with the text's data
-	curHandles.context->UpdateSubresource(constantBufferHUD.Get(), 0, nullptr, &constantBufferData, 0, 0);
-	// draw the static text using the number of vertices
-	curHandles.context->Draw(dynamicTextTime.GetVertices().size(), 0);
-
-	curHandles.context->IASetVertexBuffers(0, 1, vertexBufferStaticTextHS.GetAddressOf(), strides, offsets);
-	// change the topology to a triangle list
-	curHandles.context->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
-	// update the constant buffer data for the text
-	constantBufferData = UpdateTextConstantBufferData(staticTextHS);
-	// bind the texture used for rendering the font
-	curHandles.context->PSSetShaderResources(0, 1, shaderResourceView[TEXTURE_ID::FONT_CONSOLAS].GetAddressOf());
-	// update the constant buffer with the text's data
-	curHandles.context->UpdateSubresource(constantBufferHUD.Get(), 0, nullptr, &constantBufferData, 0, 0);
-	// draw the static text using the number of vertices
-	curHandles.context->Draw(staticTextHS.GetVertices().size(), 0);
-
-	dynamicTextHS.SetText(std::to_string(elapsedSec));
-	// update the dynamic text so we create the vertices
-	dynamicTextHS.Update(width, height);
-	const auto& HSverts = dynamicTextHS.GetVertices();
-	D3D11_MAPPED_SUBRESOURCE HSmsr = { 0 };
-	curHandles.context->Map(vertexBufferDynamicTextHS.Get(), 0, D3D11_MAP_WRITE_DISCARD, 0, &HSmsr);
-	memcpy(HSmsr.pData, HSverts.data(), sizeof(TextVertex) * HSverts.size());
-	curHandles.context->Unmap(vertexBufferDynamicTextHS.Get(), 0);
-
-	curHandles.context->IASetVertexBuffers(0, 1, vertexBufferDynamicTextHS.GetAddressOf(), strides, offsets);
-	// change the topology to a triangle list
-	curHandles.context->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
-	// update the constant buffer data for the text
-	constantBufferData = UpdateTextConstantBufferData(dynamicTextHS);
-	// bind the texture used for rendering the font
-	curHandles.context->PSSetShaderResources(0, 1, shaderResourceView[TEXTURE_ID::FONT_CONSOLAS].GetAddressOf());
-	// update the constant buffer with the text's data
-	curHandles.context->UpdateSubresource(constantBufferHUD.Get(), 0, nullptr, &constantBufferData, 0, 0);
-	// draw the static text using the number of vertices
-	curHandles.context->Draw(dynamicTextHS.GetVertices().size(), 0);
-
-	curHandles.context->IASetVertexBuffers(0, 1, vertexBufferStaticTextLives.GetAddressOf(), strides, offsets);
-	// change the topology to a triangle list
-	curHandles.context->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
-	// update the constant buffer data for the text
-	constantBufferData = UpdateTextConstantBufferData(staticTextLives);
-	// bind the texture used for rendering the font
-	curHandles.context->PSSetShaderResources(0, 1, shaderResourceView[TEXTURE_ID::FONT_CONSOLAS].GetAddressOf());
-	// update the constant buffer with the text's data
-	curHandles.context->UpdateSubresource(constantBufferHUD.Get(), 0, nullptr, &constantBufferData, 0, 0);
-	// draw the static text using the number of vertices
-	curHandles.context->Draw(staticTextLives.GetVertices().size(), 0);
-	float one;
-	float two;
-	inputProxy.GetState(65, one);
-	inputProxy.GetState(66, two);
-
-	if (one > 0 || conditionWin)
-	{
-		conditionLose = false;
-		curHandles.context->IASetVertexBuffers(0, 1, vertexBufferStaticTextWin.GetAddressOf(), strides, offsets);
-		// change the topology to a triangle list
-		curHandles.context->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
-		// update the constant buffer data for the text
-		constantBufferData = UpdateTextConstantBufferData(staticTextWin);
-		// bind the texture used for rendering the font
-		curHandles.context->PSSetShaderResources(0, 1, shaderResourceView[TEXTURE_ID::FONT_CONSOLAS].GetAddressOf());
-		// update the constant buffer with the text's data
-		curHandles.context->UpdateSubresource(constantBufferHUD.Get(), 0, nullptr, &constantBufferData, 0, 0);
-		// draw the static text using the number of vertices
-		curHandles.context->Draw(staticTextWin.GetVertices().size(), 0);
-		conditionWin = true;
-	}
-	if (two > 0 || conditionLose)
-	{
-		conditionWin = false;
-		curHandles.context->IASetVertexBuffers(0, 1, vertexBufferStaticTextLose.GetAddressOf(), strides, offsets);
-		// change the topology to a triangle list
-		curHandles.context->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
-		// update the constant buffer data for the text
-		constantBufferData = UpdateTextConstantBufferData(staticTextLose);
-		// bind the texture used for rendering the font
-		curHandles.context->PSSetShaderResources(0, 1, shaderResourceView[TEXTURE_ID::FONT_CONSOLAS].GetAddressOf());
-		// update the constant buffer with the text's data
-		curHandles.context->UpdateSubresource(constantBufferHUD.Get(), 0, nullptr, &constantBufferData, 0, 0);
-		// draw the static text using the number of vertices
-		curHandles.context->Draw(staticTextLose.GetVertices().size(), 0);
-		conditionLose = true;
-	}
-
 }
 
 bool ESG::D3DRendererLogic::FreeResources()

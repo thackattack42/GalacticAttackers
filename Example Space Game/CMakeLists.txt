@@ -1,4 +1,4 @@
-	cmake_minimum_required(VERSION 3.16)
+cmake_minimum_required(VERSION 3.16)
 
 project(ExampleSpaceGame)
 
@@ -15,13 +15,6 @@ file(
 	GLOB_RECURSE SOURCE_FILES CONFIGURE_DEPENDS
 	./Source/*.h
 	./Source/*.cpp
-	./Source/HUD/*.h
-	./Source/HUD/*.cpp
-	./Source/xml/tinyxml2/tinyxml2.h
-	./Source/xml/tinyxml2/tinyxml2.cpp
-	./Source/xml/*.xml
-	./Source/Components/*.h
-	#./Source/directxtk11/inc/*.h
     ./Shaders/*.hlsl
 	./gateware-main/Gateware.h
 	./flecs-3.1.4/flecs.h
@@ -48,7 +41,7 @@ if (WIN32)
 	target_include_directories(ExampleSpaceGame PUBLIC $ENV{VULKAN_SDK}/Include/)
 	target_link_directories(ExampleSpaceGame PUBLIC $ENV{VULKAN_SDK}/Lib/)
 	# shaderc_combined.lib in Vulkan requires this for debug & release (runtime shader compiling)
-	#target_compile_options(ExampleSpaceGame PRIVATE "/MD")
+	target_compile_options(ExampleSpaceGame PRIVATE "/MD")
 	# IMPORTANT! Below is the OLD way of setting the compiler options it does NOT work with pre-compiled headers!
 	#set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} /MD") // DO NOT USE
 endif(WIN32)
@@ -103,8 +96,3 @@ set_source_files_properties( ${SHADER_FILES} PROPERTIES
         VS_SHADER_ENTRYPOINT main
         VS_TOOL_OVERRIDE "None" # stop VS from compiling, we will do it
 )
-
-include_directories(${CMAKE_SOURCE_DIR}/Source/directxtk11/inc)
-find_library(DDS_LIB_D NAMES DirectXTK11_x64_Debug PATHS ${CMAKE_SOURCE_DIR}/Source/directxtk11/lib)
-find_library(DDS_LIB_R NAMES DirectXTK11_x64_Release PATHS ${CMAKE_SOURCE_DIR}/Source/directxtk11/lib)
-target_link_libraries(ExampleSpaceGame debug ${DDS_LIB_D} optimized ${DDS_LIB_R})
