@@ -46,7 +46,7 @@ namespace ESG
 					GW::INPUT::GController _controllerInput,
 					GW::AUDIO::GAudio _audioEngine,
 					GW::CORE::GEventGenerator _eventPusher,
-			std::shared_ptr<Level_Data> _levelData,
+					std::shared_ptr<Level_Data> _levelData,
 					std::shared_ptr<int> _currentLevel,
 			std::shared_ptr<bool> _levelChange);
 		// control if the system is actively running
