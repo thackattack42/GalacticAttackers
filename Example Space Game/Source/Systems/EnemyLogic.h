@@ -34,6 +34,8 @@ namespace ESG
 		// release any resources allocated by the system
 		bool Shutdown();
 		bool moveRight;
+		int timesMoved = 0;
+		float timer;
 
 	private:
 		bool FireLasersEnemy(flecs::world& stage, ESG::Position origin);
