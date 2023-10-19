@@ -61,6 +61,23 @@ bool ESG::EnemyLogic::Init(std::shared_ptr<flecs::world> _game,
 		}
 
 		//std::cout << "Moving " << edit->matrix.row4.x << " " << edit->matrix.row4.y << " " << edit->matrix.row4.z << std::endl;
+		if (shieldon1)
+		{
+			if (edit->matrix.row4.y <= 56)
+			{
+				GW::MATH::GMatrix::TranslateGlobalF(edit->matrix, GW::MATH::GVECTORF{ 0, 500, 0, 1 }, edit->matrix);
+				levelData->levelTransforms[edit->rendererIndex] = edit->matrix;
+				//e.destruct();
+				//e.set<Health>({ 0 });
+				//e.set<Material>({ 0, 0, 0 });
+				auto a = game->lookup("shield");
+				if (a.is_valid()) {
+					//a.set<Material>({ 0, 0, 0 });
+					a.destruct();
+				}
+			}
+			shieldon1 = false;
+		}
 
 		if (edit->matrix.row4.y <= 30)
 		{

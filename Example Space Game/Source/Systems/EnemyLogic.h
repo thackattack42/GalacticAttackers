@@ -20,6 +20,9 @@ namespace ESG
 		// handle to events
 		GW::CORE::GEventGenerator eventPusher;
 		std::shared_ptr<Level_Data> levelData;
+		bool shieldon1 = true;
+		bool shieldon2 = true;
+		bool shieldon3 = true;
 
 	public:
 		// attach the required logic to the ECS 
