@@ -1,7 +1,7 @@
 # Blender v3.6.4 OBJ File: 'TemplateLvl.blend'
 # www.blender.org
 mtllib Crystal1.mtl
-o Crystal1.003
+o Crystal1
 v -0.109012 -0.378179 0.065416
 v -0.116071 -0.206853 0.127685
 v -0.229016 -0.255743 0.065708
@@ -101,7 +101,7 @@ vn 1.0000 0.0000 0.0000
 vn -0.3383 -0.3337 0.8799
 vn -0.4811 0.0000 0.8767
 vn 0.0000 1.0000 0.0000
-usemtl Purple.003
+usemtl Purple
 s 1
 f 14/1/1 17/2/1 15/3/1
 f 7/4/2 20/5/2 19/6/2

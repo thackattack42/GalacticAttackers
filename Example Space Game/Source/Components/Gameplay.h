@@ -9,6 +9,7 @@ namespace ESG
 	struct Health { int value; };
 	struct Firerate { float value; };
 	struct Cooldown { float value; };
+	struct Score { int value; };
 	
 	// gameplay tags (states)
 	struct Firing {};

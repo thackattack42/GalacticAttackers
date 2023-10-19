@@ -1,4 +1,5 @@
 // The Enemy system is responsible for enemy behaviors
+// The Enemy system is responsible for enemy behaviors
 #ifndef ENEMYLOGIC_H
 #define ENEMYLOGIC_H
 
