@@ -68,7 +68,7 @@ bool GA::BulletData::Load(	std::shared_ptr<flecs::world> _game,
 
 	GW::AUDIO::GSound death;
 	death.Create(deathFX.c_str(), _audioEngine, 0.15f);
-	auto deathPrefab = _game->prefab("Crystal1")
+	auto deathPrefab = _game->prefab("sheild")
 		.set<GW::AUDIO::GSound>(death.Relinquish());
 	// register this prefab by name so other systems can use it
 	RegisterPrefab("Lazer Bullet", lazerPrefab);
