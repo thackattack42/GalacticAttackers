@@ -157,7 +157,7 @@ bool GA::PlayerLogic::Init(std::shared_ptr<flecs::world> _game,
 	_eventPusher.Register(nextLevel);
 	_eventPusher.Register(resetLevel);
 	_eventPusher.Register(youWon);
-	_eventPusher.Register(youLose);
+	_eventPusher.Register(youLost);
 	return true;
 }
 
