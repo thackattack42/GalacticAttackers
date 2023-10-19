@@ -1116,6 +1116,38 @@ void ESG::D3DRendererLogic::UIDraw()
 	memcpy(HSmsr.pData, HSverts.data(), sizeof(TextVertex) * HSverts.size());
 	curHandles.context->Unmap(vertexBufferDynamicTextHS.Get(), 0);
 
+	dynamicTextHS.SetText("00000000" + std::to_string(int(elapsedSec)));
+	if (elapsedSec >= 10)
+	{
+		if (elapsedSec >= 10)
+		{
+			dynamicTextHS.SetText("0000000" + std::to_string(int(elapsedSec)));
+		}
+		if (elapsedMin >= 100)
+		{
+			dynamicTextHS.SetText("000000" + std::to_string(int(elapsedSec)));
+		}
+		if (elapsedMin >= 1000)
+		{
+			dynamicTextHS.SetText("00000" + std::to_string(int(elapsedSec)));
+		}
+		if (elapsedMin >= 10000)
+		{
+			dynamicTextHS.SetText("0000" + std::to_string(int(elapsedSec)));
+		}
+		if (elapsedMin >= 100000)
+		{
+			dynamicTextHS.SetText("000" + std::to_string(int(elapsedSec)));
+		}
+	}
+	dynamicTextHS.Update(width, height);
+	// upload the new information to the vertex buffer using map / unmap
+	const auto& Hverts = dynamicTextHS.GetVertices();
+	D3D11_MAPPED_SUBRESOURCE Hmsr = { 0 };
+	curHandles.context->Map(vertexBufferDynamicTextHS.Get(), 0, D3D11_MAP_WRITE_DISCARD, 0, &Hmsr);
+	memcpy(Hmsr.pData, Hverts.data(), sizeof(TextVertex) * Hverts.size());
+	curHandles.context->Unmap(vertexBufferDynamicTextHS.Get(), 0);
+
 	curHandles.context->IASetVertexBuffers(0, 1, vertexBufferDynamicTextHS.GetAddressOf(), strides, offsets);
 	// change the topology to a triangle list
 	curHandles.context->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
