@@ -22,6 +22,7 @@ bool ESG::EnemyLogic::Init(std::shared_ptr<flecs::world> _game,
 	eventPusher = _eventPusher;
 	levelData = _levelData;
 
+
 	// destroy any bullets that have the CollidedWith relationship
 	game->system<Enemy, Health, Position>("Enemy System")
 		.each([this](flecs::entity e, Enemy, Health& h, Position& p) {
@@ -39,20 +40,24 @@ bool ESG::EnemyLogic::Init(std::shared_ptr<flecs::world> _game,
 		GW::MATH::GMatrix::TranslateGlobalF(edit->matrix, GW::MATH::GVECTORF{ p.value.x, -p.value.y, 0, 1}, edit->matrix);
 		levelData->levelTransforms[edit->rendererIndex] = edit->matrix;
 		
-		std::cout << "Moving " << edit->matrix.row4.x << " " << edit->matrix.row4.y << " " << edit->matrix.row4.z << std::endl;
+		//std::cout << "Moving " << edit->matrix.row4.x << " " << edit->matrix.row4.y << " " << edit->matrix.row4.z << std::endl;
 
 		if (edit->matrix.row4.y <= 30)
 		{
 			e.destruct();
-			
 			std::cout << "Player Dies...You Lose";
 		}
 		p.value.x = 0;
 		p.value.y = 0;
 
-			
-			//FireLasersEnemy(e.world(), p);
-	});
+			/*for (int i = 0; i < 100; i++)
+			{
+				if (i == 5)
+				{
+					FireLasersEnemy(e.world(), p);
+				}
+			}*/
+		});
 
 	return true;
 }
@@ -83,15 +88,16 @@ bool ESG::EnemyLogic::FireLasersEnemy(flecs::world& stage, Position origin)
 {
 	// Grab laser prefab
 	flecs::entity bullet;
+	bullet = game->lookup("Crystal3.001");
 	RetreivePrefab("Lazer Bullet", bullet);
 
 	// Laser start shoot position
-	origin.value.x -= 0.05f;
-	auto laserLeft = stage.entity().is_a(bullet)
+	auto laser = stage.entity().is_a(bullet)
 		.set<Position>(origin);
-	origin.value.x += 0.1f;
-	auto laserRight = stage.entity().is_a(bullet)
-		.set<Position>(origin);
+	
+	ModelTransform* edit = bullet.get_mut<ModelTransform>();
+	GW::MATH::GMatrix::TranslateGlobalF(edit->matrix, GW::MATH::GVECTORF{ origin.value.x, -origin.value.y, 0, 1 }, edit->matrix);
+	levelData->levelTransforms[edit->rendererIndex] = edit->matrix;
 
 	// Tank shot
 

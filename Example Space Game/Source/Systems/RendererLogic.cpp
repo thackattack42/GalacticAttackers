@@ -565,17 +565,29 @@ bool ESG::D3DRendererLogic::SetupDrawcalls() // I SCREWED THIS UP MAKES SO MUCH 
 	updateDraw = game->system<Position, Orientation, Material>().kind(flecs::OnUpdate)
 		.each([this](flecs::entity e, Position& p, Orientation& o, Material& m) {
 		// copy all data to our instancing array
+
+		e = game->lookup("Crystal3");
+
 		if(e.has<BulletTest>())
 		{
-			GW::MATH::GMATRIXF bullet = GW::MATH::GIdentityMatrixF;
-			bullet.row4.x = p.value.x;
-			bullet.row4.y = p.value.y;
 
-			bullet.row1.x = o.value.row1.x;
-			bullet.row1.y = o.value.row1.y;
-			bullet.row2.x = o.value.row2.x;
-			bullet.row2.y = o.value.row2.y;
+			/*ModelTransform* bullet = e.get_mut<ModelTransform>(); 
+			GW::MATH::GMatrix::TranslateGlobalF(bullet->matrix, GW::MATH::GVECTORF{ p.value.x, p.value.y, 0, 1 }, bullet->matrix); 
+			levelData->levelTransforms[bullet->rendererIndex] = bullet->matrix; 
+			
+			std::cout << "Bullet moving: " << " X: " << bullet->matrix.row4.x << " Y: " << bullet->matrix.row4.y << '\n';*/
+
+			GW::MATH::GMATRIXF bullet = GW::MATH::GIdentityMatrixF;
+			bullet.row4.x = p.value.x; 
+			bullet.row4.y = p.value.y; 
+			bullet.row1.x = o.value.row1.x; 
+			bullet.row1.y = o.value.row1.y; 
+			bullet.row2.x = o.value.row2.x; 
+			bullet.row2.y = o.value.row2.y; 
 			bulletMoves.push_back(bullet);
+
+			std::cout << "Bullet moving: " << "R4x: " << bullet.row4.x << " R4y: " << bullet.row4.y << " R1x: " << bullet.row1.x << " R1y: " << bullet.row1.y << " R2x: " << bullet.row2.x << " R2y: " << bullet.row2.y << '\n';
+		
 			//int i = draw_counter;
 			//instanceData.instance_transforms[i] = GW::MATH::GIdentityMatrixF;
 			//instanceData.instance_transforms[i].row4.x = p.value.x;

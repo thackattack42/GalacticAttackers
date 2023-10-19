@@ -22,18 +22,19 @@ bool ESG::PhysicsLogic::Init(	std::shared_ptr<flecs::world> _game,
 	// update position by velocity
 	game->system<Position, const Velocity>("Translation System")
 		.each([](flecs::entity e, Position& p, const Velocity &v) {
-		GW::MATH2D::GVECTOR2F speed; 
+		GW::MATH2D::GVECTOR2F speed;
 		GW::MATH2D::GVector2D::Scale2F(v.value, e.delta_time(), speed);
 		// adding is simple but doesn't account for orientation
 		GW::MATH2D::GVector2D::Add2F(speed, p.value, p.value);
 		
  		if (e.has<BulletTest>())
 		{
+			//ModelTransform* edit = e.get_mut<ModelTransform>();
 			GW::MATH::GMatrix::TranslateGlobalF(e.get_mut<ModelTransform>()->matrix, GW::MATH::GVECTORF { -p.value.x, p.value.y, 0, 0 }, e.get_mut<ModelTransform>()->matrix);
+			//levelData->levelTransforms[edit->rendererIndex] = edit->matrix;
 			//GW::MATH::GMatrix::TranslateGlobalF(e.get_mut<ModelTransform>()->matrix, GW::MATH::GVECTORF { 0, 0, 0, 1 }, e.get_mut<ModelTransform>()->matrix);
-			
-			//std::cout << "Moving " << p.value.x << " " << p.value.y << std::endl;6
 			GW::MATH::GMATRIXF temp = e.get<ModelTransform>()->matrix;
+			//std::cout << "Moving " << p.value.x << " " << p.value.y << std::endl;
 			std::cout << "Moving " << temp.row4.x << " " << temp.row4.y << " " << temp.row4.z << std::endl;
 		}
 		//std::cout << "Moving\n";
@@ -96,7 +97,7 @@ bool ESG::PhysicsLogic::Init(	std::shared_ptr<flecs::world> _game,
 			SHAPE polygon; // compute buffer for this objects polygon
 			// This is critical, if you want to store an entity handle it must be mutable
 			polygon.owner = e; // allows later changes
-			for (int i = 0; i < polysize; ++i) {
+			for (int i = 0; ++i < polysize; ++i) {
 				GW::MATH2D::GVECTOR3F v = { poly[i].x, poly[i].y, 1 };
 				GW::MATH2D::GMatrix2D::MatrixXVector3F(matrix, v, v);
 				polygon.poly[i].x = v.x;

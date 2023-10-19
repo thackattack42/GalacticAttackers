@@ -34,12 +34,14 @@ bool ESG::EnemyData::Load(	std::shared_ptr<flecs::world> _game,
 	//auto enemyPrefab = _game->lookup("Spaceship5");
 	//auto enemyPrefab = _game->entity("Spaceship5")
 		//auto spaceship = _game->entity("Spaceship5");
-		auto enemyPrefab = _game->prefab("Spaceship5")
+	auto enemyPrefab = _game->lookup("Spaceship5");
 		// .set<> in a prefab means components are shared (instanced)
 		//.set(spaceship)
-			.set<Material>({ red, green, blue })
+	if (enemyPrefab.is_valid())
+	{
+	enemyPrefab.set<Material>({ red, green, blue })
 			.set<Orientation>({ world })
-		// .override<> ensures a component is unique to each entity created from a prefab
+			// .override<> ensures a component is unique to each entity created from a prefab
 			.set_override<Health>({ health })
 			.override<Acceleration>()
 			.override<Velocity>()
@@ -47,7 +49,24 @@ bool ESG::EnemyData::Load(	std::shared_ptr<flecs::world> _game,
 			.override<Enemy>() // Tag this prefab as an enemy (for queries/systems)
 			//.override<PrefabEnemy>() // Tag this prefab as an enemy (for queries/systems)
 			.override<Collidable>(); // can be collided with
+	}
 
+	auto enemyPrefab2 = _game->lookup("Spaceship5.001");
+	// .set<> in a prefab means components are shared (instanced)
+	//.set(spaceship)
+	if (enemyPrefab2.is_valid())
+	{
+		enemyPrefab2.set<Material>({ red, green, blue })
+			.set<Orientation>({ world })
+			// .override<> ensures a component is unique to each entity created from a prefab
+			.set_override<Health>({ health })
+			.override<Acceleration>()
+			.override<Velocity>()
+			.override<Position>()
+			.override<Enemy>() // Tag this prefab as an enemy (for queries/systems)
+			//.override<PrefabEnemy>() // Tag this prefab as an enemy (for queries/systems)
+			.override<Collidable>(); // can be collided with
+	}
 		 /*auto enemyPrefab2 = _game->prefab("Spaceship2") 
 			.set<Material>({ red2, green2, blue2 }) 
 			.set<Orientation>({ world }) 
@@ -70,7 +89,7 @@ bool ESG::EnemyData::Load(	std::shared_ptr<flecs::world> _game,
 
 	// register this prefab by name so other systems can use it
 	RegisterPrefab("Enemy Type1", enemyPrefab);
-	//RegisterPrefab("Enemy Type2", enemyPrefab2);
+	RegisterPrefab("Enemy Type2", enemyPrefab2);
 	//RegisterPrefab("Enemy Type3", enemyPrefab3);
 	//RegisterPrefab("Enemy Type2", enemyPrefab2);
 

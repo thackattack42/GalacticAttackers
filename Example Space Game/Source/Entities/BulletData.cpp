@@ -40,6 +40,7 @@ bool ESG::BulletData::Load(	std::shared_ptr<flecs::world> _game,
 		.set<Orientation>({ world })
 		.set<Acceleration>({ 0, 0 })
 		.set<Velocity>({ 0, speed })
+		.add<BulletTest>()
 		.set<ModelTransform>({GW::MATH::GIdentityMatrixF})
 		.set<GW::AUDIO::GSound>(shoot.Relinquish())
 		// .override<> ensures a component is unique to each entity created from a prefab 
@@ -49,12 +50,13 @@ bool ESG::BulletData::Load(	std::shared_ptr<flecs::world> _game,
 		.override<Bullet>() // Tag this prefab as a bullet (for queries/systems)
 		.override<Collidable>(); // can be collided with
 
-	auto lazerPrefab2 = _game->prefab("Crystal4")
+	auto lazerPrefab2 = _game->prefab("Crystal3.001")
 		// .set<> in a prefab means components are shared (instanced)
 		.set<Material>({ red, green, blue })
 		.set<Orientation>({ world })
 		.set<Acceleration>({ 0, 0 })
 		.set<Velocity>({ 0, speed })
+		.set<ModelTransform>({ GW::MATH::GIdentityMatrixF })
 		.set<GW::AUDIO::GSound>(shoot.Relinquish())
 		// .override<> ensures a component is unique to each entity created from a prefab 
 		.set_override<Damage>({ dmg })
@@ -81,6 +83,7 @@ bool ESG::BulletData::Unload(std::shared_ptr<flecs::world> _game)
 
 	// unregister this prefab by name
 	UnregisterPrefab("Lazer Bullet");
+	UnregisterPrefab("Lazer Bullet2");
 
 	return true;
 }

@@ -296,4 +296,6 @@ void Application::UpdateLevelData()
 						levelData->levelMeshes[i.modelIndex].materialIndex });
 
 	}
+
+	int offset = 0;
 }
