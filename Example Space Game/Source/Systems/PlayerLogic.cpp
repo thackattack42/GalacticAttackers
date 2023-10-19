@@ -63,15 +63,24 @@ bool ESG::PlayerLogic::Init(std::shared_ptr<flecs::world> _game,
 			p[i].value.x = G_LARGER(p[i].value.x, -0.4f);
 			p[i].value.x = G_SMALLER(p[i].value.x, +0.4f);
 
-			// fire weapon if they are in a firing state
-			if (it.entity(i).has<Firing>()) {
-				Position offset = p[i];
-				offset.value.x = p[i].value.x;
-				offset.value.y += 0.05;
-				FireLasers(it.world(), offset);
-				it.entity(i).remove<Firing>();
-			}
 			ModelTransform* edit = it.entity(i).get_mut<ModelTransform>();
+		    ModelTransform* bullet = it.entity(i).get_mut<ModelTransform>();
+
+			// fire weapon if they are in a firing state
+				if (it.entity(i).has<Firing>()) {
+					bullet->matrix.row4.x = edit->matrix.row4.x;
+					Position offset = p[i];
+					offset.value.x = p[i].value.x;
+					offset.value.y = 0.05;
+					FireLasers(it.entity(i).world(), offset);
+					std::cout << "offset x: " << offset.value.y << '\n';
+
+					if (offset.value.y >= 50)
+					{
+						it.entity(i).remove<Firing>();
+						std::cout << "Bullet Moved \n";
+					}
+			}
 			if (edit->matrix.row4.z > -42 && edit->matrix.row4.z < +42)
 			{
 				GW::MATH::GMatrix::TranslateLocalF(edit->matrix, GW::MATH::GVECTORF{ -p[i].value.x, p[i].value.y, 0, 1 }, edit->matrix);
@@ -205,16 +214,57 @@ bool ESG::PlayerLogic::FireLasers(flecs::world& stage, Position origin)
 {
 	// Grab the prefab for a laser round
 	flecs::entity bullet;
+	flecs::entity bullet2;
 	RetreivePrefab("Lazer Bullet", bullet);
-	//ModelTransform* original = bullet.get_mut<ModelTransform>();
+	RetreivePrefab("Lazer Bullet2", bullet2);
+
+	flecs::entity bulletRay[] = { bullet, bullet2 };
+
+	//if (bulletRay[1].is_valid())
+	//{
+		bullet.add<BulletTest>();
+
+		ModelTransform* bulletT = bullet.get_mut<ModelTransform>();
+
+		/*if (bulletT->matrix.row4.y >= 200)
+		{
+			std::cout << "Bullet destruct \n";
+			return false;
+		}
+		else
+		{*/
+		GW::MATH::GMatrix::TranslateGlobalF(bulletT->matrix, GW::MATH::GVECTORF{ origin.value.x, 5, 0, 1 }, bulletT->matrix);
+		levelData->levelTransforms[bulletT->rendererIndex] = bulletT->matrix;
+		origin.value.x = bulletT->matrix.row4.x;
+		origin.value.y = bulletT->matrix.row4.y;
+		std::cout << "Bullet Matrix changes: " << "x: " << bulletT->matrix.row4.x << " y: " << bulletT->matrix.row4.y << " orginY: " << origin.value.y << '\n';
+	//}
+	//else
+	//{
+	//	bulletRay[2].add<BulletTest>();
+
+	//	ModelTransform* bulletT = bulletRay[2].get_mut<ModelTransform>();
+
+	//	/*if (bulletT->matrix.row4.y >= 200)
+	//	{
+	//		std::cout << "Bullet destruct \n";
+	//		return false;
+	//	}
+	//	else
+	//	{*/
+	//	GW::MATH::GMatrix::TranslateGlobalF(bulletT->matrix, GW::MATH::GVECTORF{ origin.value.x, 5, 0, 1 }, bulletT->matrix);
+	//	levelData->levelTransforms[bulletT->rendererIndex] = bulletT->matrix;
+	//	std::cout << "Bullet Matrix changes: " << "x: " << bulletT->matrix.row4.x << " y: " << bulletT->matrix.row4.y << " z: " << bulletT->matrix.row4.z << '\n';
+	//}
+	//}
 
 	//origin.value.x -= 0.05f;
 	//auto laserLeft = stage.entity().is_a(bullet)
 	//	.set<Position>(origin);
 	/*origin.value.x += 0.1f;*/
-	auto laserRight = stage.entity().is_a(bullet)
+	/*auto laserRight = stage.entity().is_a(bullet)
 		.set<Position>(origin);
-	laserRight.add<BulletTest>();
+	laserRight.add<BulletTest>();*/
 
 	//ModelTransform* edit = laserRight.get_mut<ModelTransform>();
 	//edit = original;
@@ -236,6 +286,6 @@ bool ESG::PlayerLogic::FireLasers(flecs::world& stage, Position origin)
 	// play the sound of the Lazer prefab
 	GW::AUDIO::GSound shoot = *bullet.get<GW::AUDIO::GSound>();
 	shoot.Play();
-
+	
 	return true;
 }

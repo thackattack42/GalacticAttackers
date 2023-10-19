@@ -327,4 +327,6 @@ void Application::UpdateLevelData()
 		
 		
 	}
+
+	int offset = 0;
 }
