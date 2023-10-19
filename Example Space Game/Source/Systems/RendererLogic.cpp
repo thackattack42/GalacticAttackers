@@ -1000,11 +1000,6 @@ bool ESG::D3DRendererLogic::SetupDrawcalls() // I SCREWED THIS UP MAKES SO MUCH 
 				0);
 
 		}
-		/*}*/
-
-
-
-
 		ReleasePipelineHandles(curHandles);
 		UIDraw();
 			});
@@ -1281,7 +1276,6 @@ void ESG::D3DRendererLogic::LevelSwitch()
 							CoTaskMemFree(filePath);
 							pShellItem->Release();
 						}
-
 					}
 				}
 				pFileOpen->Release();
