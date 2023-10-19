@@ -889,9 +889,17 @@ bool ESG::D3DRendererLogic::SetupDrawcalls() // I SCREWED THIS UP MAKES SO MUCH 
 	updateDraw = game->system<Position, Orientation, Material>().kind(flecs::OnUpdate)
 		.each([this](flecs::entity e, Position& p, Orientation& o, Material& m) {
 		// copy all data to our instancing array
+
+		
+		ModelTransform* bullet = e.get_mut<ModelTransform>();
+
 		if (e.has<BulletTest>())
 		{
-			GW::MATH::GMATRIXF bullet = GW::MATH::GIdentityMatrixF;
+
+			//GW::MATH::GMatrix::TranslateGlobalF(bullet->matrix, GW::MATH::GVECTORF{ 5, 5, 0, 1 }, bullet->matrix);
+			//levelData->levelTransforms[bullet->rendererIndex] = bullet->matrix;
+
+			/*GW::MATH::GMATRIXF bullet = GW::MATH::GIdentityMatrixF;
 			bullet.row4.x = p.value.x;
 			bullet.row4.y = p.value.y;
 
@@ -899,7 +907,9 @@ bool ESG::D3DRendererLogic::SetupDrawcalls() // I SCREWED THIS UP MAKES SO MUCH 
 			bullet.row1.y = o.value.row1.y;
 			bullet.row2.x = o.value.row2.x;
 			bullet.row2.y = o.value.row2.y;
-			bulletMoves.push_back(bullet);
+			bulletMoves.push_back(bullet);*/
+
+
 			LevelSwitch();
 			//int i = draw_counter;
 			//instanceData.instance_transforms[i] = GW::MATH::GIdentityMatrixF;

@@ -29,13 +29,13 @@ bool ESG::PhysicsLogic::Init(	std::shared_ptr<flecs::world> _game,
 		
  		if (e.has<BulletTest>())
 		{
-			//ModelTransform* edit = e.get_mut<ModelTransform>();
-			GW::MATH::GMatrix::TranslateGlobalF(e.get_mut<ModelTransform>()->matrix, GW::MATH::GVECTORF { -p.value.x, p.value.y, 0, 0 }, e.get_mut<ModelTransform>()->matrix);
-			//levelData->levelTransforms[edit->rendererIndex] = edit->matrix;
-			//GW::MATH::GMatrix::TranslateGlobalF(e.get_mut<ModelTransform>()->matrix, GW::MATH::GVECTORF { 0, 0, 0, 1 }, e.get_mut<ModelTransform>()->matrix);
-			GW::MATH::GMATRIXF temp = e.get<ModelTransform>()->matrix;
-			//std::cout << "Moving " << p.value.x << " " << p.value.y << std::endl;
-			std::cout << "Moving " << temp.row4.x << " " << temp.row4.y << " " << temp.row4.z << std::endl;
+		//	//ModelTransform* edit = e.get_mut<ModelTransform>();
+		//	GW::MATH::GMatrix::TranslateGlobalF(e.get_mut<ModelTransform>()->matrix, GW::MATH::GVECTORF { -p.value.x, p.value.y, 0, 0 }, e.get_mut<ModelTransform>()->matrix);
+		//	//levelData->levelTransforms[edit->rendererIndex] = edit->matrix;
+		//	//GW::MATH::GMatrix::TranslateGlobalF(e.get_mut<ModelTransform>()->matrix, GW::MATH::GVECTORF { 0, 0, 0, 1 }, e.get_mut<ModelTransform>()->matrix);
+		//	GW::MATH::GMATRIXF temp = e.get<ModelTransform>()->matrix;
+		//	//std::cout << "Moving " << p.value.x << " " << p.value.y << std::endl;
+		//	std::cout << "Moving " << temp.row4.x << " " << temp.row4.y << " " << temp.row4.z << std::endl;
 		}
 		//std::cout << "Moving\n";
 	});
