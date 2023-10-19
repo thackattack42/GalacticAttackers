@@ -6,6 +6,8 @@
 #include "../Components/Components.h"
 #include <Shobjidl.h>
 #include <d3dcompiler.h>
+#include "../Components/Gameplay.h"
+#include "../Entities/Prefabs.h"
 #pragma comment(lib, "d3dcompiler.lib") 
 using namespace GA; // Example Space Game
 
@@ -22,7 +24,7 @@ bool GA::D3DRendererLogic::Init(	std::shared_ptr<flecs::world> _game,
 								std::weak_ptr<const GameConfig> _gameConfig,
 								GW::GRAPHICS::GDirectX11Surface d3d11,
 								GW::SYSTEM::GWindow _window, std::shared_ptr<Level_Data> _levelData, std::shared_ptr<bool> _levelChange,
-								std::shared_ptr<bool> _youWin, std::shared_ptr<bool> _youLose)
+								std::shared_ptr<bool> _youWin, std::shared_ptr<bool> _youLose, std::vector<flecs::entity> _entityVec)
 {
 // save a handle to the ECS & game settings
 game = _game;
@@ -33,6 +35,7 @@ levelData = _levelData;
 levelChange = _levelChange;
 youWin = _youWin;
 youLose = _youLose;
+entityVec = _entityVec;
 // Setup all vulkan resources
 if (LoadShaders3D() == false)
 return false;
@@ -822,7 +825,11 @@ bool GA::D3DRendererLogic::SetupDrawcalls() // I SCREWED THIS UP MAKES SO MUCH S
 	startDraw = game->system<RenderingSystem>().kind(flecs::PreUpdate)
 		.each([this](flecs::entity e, RenderingSystem& s) {
 		// reset the draw counter only once per frame
-		draw_counter = 0;
+		if (createEnt)
+		{
+			UpdateLevelEnt();
+			createEnt = false;
+		}
 		//loop over levelData->levelTransforms
 		//copy over to mesh.WorldMatrix[i] = levelTransforms
 		for (int i = 0; i < levelData->levelTransforms.size(); ++i)
@@ -860,38 +867,7 @@ bool GA::D3DRendererLogic::SetupDrawcalls() // I SCREWED THIS UP MAKES SO MUCH S
 	// runs once per frame after updateDraw
 	completeDraw = game->system<Instance>().kind(flecs::PostUpdate)
 		.each([this](flecs::entity e, Instance& s) {
-		// run the rendering code just once!
-		// Copy data to this frame's buffer
-		//VkDevice device = nullptr;
-		//vulkan.GetDevice((void**)&device);
-		//unsigned int activeBuffer;
-		//vulkan.GetSwapchainCurrentImage(activeBuffer);
-		//GvkHelper::write_to_buffer(device, 
-		//	uniformData[activeBuffer], &instanceData, sizeof(INSTANCE_UNIFORMS));
-		//// grab the current Vulkan commandBuffer
-		//unsigned int currentBuffer;
-		//vulkan.GetSwapchainCurrentImage(currentBuffer);
-		//VkCommandBuffer commandBuffer;
-		//vulkan.GetCommandBuffer(currentBuffer, (void**)&commandBuffer);
-		//// what is the current client area dimensions?
-		//unsigned int width, height;
-		//window.GetClientWidth(width);
-		//window.GetClientHeight(height);
-		//// setup the pipeline's dynamic settings
-		//VkViewport viewport = {
-		//	0, 0, static_cast<float>(width), static_cast<float>(height), 0, 1
-		//};
-		//VkRect2D scissor = { {0, 0}, {width, height} };
-		//vkCmdSetViewport(commandBuffer, 0, 1, &viewport);
-		//vkCmdSetScissor(commandBuffer, 0, 1, &scissor);
-		//vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline);
-		//// Set the descriptorSet that contains the uniform buffer allocated for this framebuffer 
-		//vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS,
-		//	pipelineLayout, 0, 1, &descriptorSet[currentBuffer], 0, nullptr);
-		//// now we can draw
-		//VkDeviceSize offsets[] = { 0 };
-		//vkCmdBindVertexBuffers(commandBuffer, 0, 1, &vertexHandle, offsets);
-		//vkCmdDraw(commandBuffer, 4, draw_counter, 0, 0); // draw'em all!
+
 		PipelineHandles curHandles = GetCurrentPipelineHandles();
 		SetUpPipeline(curHandles);
 		curHandles.context->UpdateSubresource(constantSceneBuffer.Get(), 0, nullptr, &scene, 0, 0);
@@ -899,24 +875,7 @@ bool GA::D3DRendererLogic::SetupDrawcalls() // I SCREWED THIS UP MAKES SO MUCH S
 		curHandles.context->UpdateSubresource(constantLightBuffer.Get(), 0, nullptr, &lights, 0, 0);
 
 		modelID.mod_id = e.get<Instance>()->transformStart;
-		/*if (e.has<BulletTest>())
-		{
-			for (int i = 0; i < (int)bulletMoves.size(); i++)
-			{
-				curHandles.context->UpdateSubresource(constantMeshBuffer.Get(), 0, nullptr, &mesh, 0, 0);
-				auto meshCount = e.get_mut<Object>()->meshStart;
-				modelID.mat_id = levelData->levelMeshes[meshCount].materialIndex + e.get_mut<Object>()->materialStart;
 
-				auto colorModel = e.get_mut<Material>()->diffuse.value;
-				modelID.color = GW::MATH::GVECTORF{ colorModel.x, colorModel.y, colorModel.z, 1 };
-				curHandles.context->UpdateSubresource(constantModelBuffer.Get(), 0, nullptr, &modelID, 0, 0);
-				curHandles.context->DrawIndexedInstanced(levelData->levelMeshes[2].drawInfo.indexCount,
-					draw_counter,
-					levelData->levelMeshes[2].drawInfo.indexOffset + e.get_mut<Object>()->indexStart
-					,e.get_mut<Object>()->vertexStart, 0);
-			}
-		}
-		else {*/
 		for (unsigned int j = 0; j < e.get<Object>()->meshCount; ++j)
 		{
 			auto meshCount = e.get<Object>()->meshStart + j;
@@ -1201,8 +1160,13 @@ void GA::D3DRendererLogic::LevelSwitch()
 							std::string base_file = fileName.substr(fileName.find_last_of("/\\") + 1);
 							std::string search = "../" + base_file;
 							GW::SYSTEM::GLog log;
-							
+							for (int i = 0; i < entityVec.size(); ++i)
+							{
+								entityVec[i].destruct();
+							}
+							entityVec.clear();
 							bool levelLoaded = levelData->LoadLevel(search.c_str(), "../Models", log);
+							createEnt = true;
 							if (LoadGeometry())
 							{
 								PipelineHandles handles = GetCurrentPipelineHandles();
@@ -1219,5 +1183,70 @@ void GA::D3DRendererLogic::LevelSwitch()
 			}
 			CoUninitialize();
 		}
+	}
+}
+void GA::D3DRendererLogic::UpdateLevelEnt()
+{
+	for (auto& i : levelData->blenderObjects) {
+		// create entity with same name as blender object
+		auto ent = game->entity(i.blendername);
+		ent.set<BlenderName>({ i.blendername });
+		ent.set<ModelBoundary>({
+			levelData->levelColliders[levelData->levelModels[i.modelIndex].colliderIndex] });
+
+		ent.set<ModelTransform>({
+			levelData->levelTransforms[i.transformIndex], i.transformIndex });
+		ent.set<Material>({ 1, 1, 1 });
+		ent.add<RenderingSystem>();
+		ent.set<Instance>({ levelData->levelInstances[i.modelIndex].transformStart,
+							levelData->levelInstances[i.modelIndex].transformCount });
+
+		ent.set<Object>({ levelData->levelModels[i.modelIndex].vertexCount,
+						levelData->levelModels[i.modelIndex].indexCount,
+						levelData->levelModels[i.modelIndex].materialCount,
+						levelData->levelModels[i.modelIndex].meshCount,
+						levelData->levelModels[i.modelIndex].vertexStart,
+						levelData->levelModels[i.modelIndex].indexStart,
+						levelData->levelModels[i.modelIndex].materialStart,
+						levelData->levelModels[i.modelIndex].meshStart });
+
+		ent.set<Mesh>({ levelData->levelMeshes[i.modelIndex].drawInfo.indexCount,
+						levelData->levelMeshes[i.modelIndex].drawInfo.indexOffset,
+						levelData->levelMeshes[i.modelIndex].materialIndex });
+
+		entityVec.push_back(ent);
+	}
+	CreatePlayer();
+}
+
+void GA::D3DRendererLogic::CreatePlayer()
+{
+	std::shared_ptr<const GameConfig> readCfg = gameConfig.lock();
+	// color
+	float red = (*readCfg).at("Player").at("red").as<float>();
+	float green = (*readCfg).at("Player").at("green").as<float>();
+	float blue = (*readCfg).at("Player").at("blue").as<float>();
+
+	float red1 = (*readCfg).at("Shield").at("red").as<float>();
+	float green1 = (*readCfg).at("Shield").at("green").as<float>();
+	float blue1 = (*readCfg).at("Shield").at("blue").as<float>();
+	// start position
+	float xstart = (*readCfg).at("Player").at("xstart").as<float>();
+	float ystart = (*readCfg).at("Player").at("ystart").as<float>();
+	float scale = (*readCfg).at("Player").at("scale").as<float>();
+
+	auto e = game->lookup("Player");
+	// if the entity is valid
+	if (e.is_valid()) {
+		e.add<Player>();
+		e.add<Collidable>();
+		e.set<Material>({ red, green, blue });
+		e.set<Position>({ xstart, ystart });
+		e.set<ControllerID>({ 0 });
+	}
+	auto a = game->lookup("shield");
+	if (a.is_valid()) {
+		a.add<Collidable>();
+		a.set<Material>({ red1, green1, blue1 });
 	}
 }
