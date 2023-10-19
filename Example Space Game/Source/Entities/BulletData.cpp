@@ -49,6 +49,7 @@ bool GA::BulletData::Load(	std::shared_ptr<flecs::world> _game,
 		//.set_override<ChargedShot>({ 2 })
 		.override<Position>()
 		.override<Bullet>() // Tag this prefab as a bullet (for queries/systems)
+		.add<BulletTest>()
 		.override<Collidable>(); // can be collided with
 
 	auto lazerPrefab2 = _game->prefab("Crystal3.001")

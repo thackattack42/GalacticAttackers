@@ -64,32 +64,41 @@ bool GA::PlayerLogic::Init(std::shared_ptr<flecs::world> _game,
 			p[i].value.x = G_SMALLER(p[i].value.x, +0.4f);
 
 			ModelTransform* edit = it.entity(i).get_mut<ModelTransform>();
-		    ModelTransform* bullet = it.entity(i).get_mut<ModelTransform>();
 
-			// fire weapon if they are in a firing state
+			if (edit->matrix.row4.z > -42 && edit->matrix.row4.z < +42)
+			{
+				GW::MATH::GMatrix::TranslateLocalF(edit->matrix, GW::MATH::GVECTORF{ -p[i].value.x, p[i].value.y, 0, 1 }, edit->matrix); 
+				if (edit->matrix.row4.z < -40) 
+					edit->matrix.row4.z = -40; 
+				else if (edit->matrix.row4.z > 40) 
+					edit->matrix.row4.z = 40; 
+
+				levelData->levelTransforms[edit->rendererIndex] = edit->matrix; 
+			}
+
+			flecs::entity bull;
+			RetreivePrefab("Lazer Bullet", bull);
+				ModelTransform* bullet = bull.get_mut<ModelTransform>();
+				bullet->matrix.row4.z = edit->matrix.row4.z;
+				std::cout << "bulletZ: " << bullet->matrix.row4.z << " playerZ: " << edit->matrix.row4.z << '\n';
+
+			if (bull.has<BulletTest>())
+			{
+				// fire weapon if they are in a firing state
 				if (it.entity(i).has<Firing>()) {
-					bullet->matrix.row4.x = edit->matrix.row4.x;
 					Position offset = p[i];
 					offset.value.x = p[i].value.x;
 					offset.value.y = 0.05;
 					FireLasers(it.entity(i).world(), offset);
-					std::cout << "offset x: " << offset.value.y << '\n';
+
+
 
 					if (offset.value.y >= 50)
 					{
 						it.entity(i).remove<Firing>();
 						std::cout << "Bullet Moved \n";
 					}
-			}
-			if (edit->matrix.row4.z > -42 && edit->matrix.row4.z < +42)
-			{
-				GW::MATH::GMatrix::TranslateLocalF(edit->matrix, GW::MATH::GVECTORF{ -p[i].value.x, p[i].value.y, 0, 1 }, edit->matrix);
-				if (edit->matrix.row4.z < -40)
-					edit->matrix.row4.z = -40;
-				else if (edit->matrix.row4.z > 40)
-					edit->matrix.row4.z = 40;
-
-				levelData->levelTransforms[edit->rendererIndex] = edit->matrix;
+				}
 			}
 			p[i].value.x = 0; 
 			p[i].value.y = 0;		
