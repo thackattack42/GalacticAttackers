@@ -138,10 +138,10 @@ namespace ESG
 		void ESG::D3DRendererLogic::UIDraw();
 
 		// attach the required logic to the ECS 
-		bool Init(	std::shared_ptr<flecs::world> _game,
-					std::weak_ptr<const GameConfig> _gameConfig,
-					GW::GRAPHICS::GDirectX11Surface _direct11,
-					GW::SYSTEM::GWindow _window, std::shared_ptr<Level_Data> _levelData, std::shared_ptr<bool> _levelChange);
+		bool Init(std::shared_ptr<flecs::world> _game,
+			std::weak_ptr<const GameConfig> _gameConfig,
+			GW::GRAPHICS::GDirectX11Surface _direct11,
+			GW::SYSTEM::GWindow _window, std::shared_ptr<Level_Data> _levelData, std::shared_ptr<bool> _levelChange);
 		// control if the system is actively running
 		bool Activate(bool runSystem);
 		// release any resources allocated by the system
