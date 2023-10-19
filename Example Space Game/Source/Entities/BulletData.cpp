@@ -42,7 +42,6 @@ bool ESG::BulletData::Load(	std::shared_ptr<flecs::world> _game,
 		.set<Orientation>({ world })
 		.set<Acceleration>({ 0, 0 })
 		.set<Velocity>({ 0, speed })
-		.set<ModelTransform>({GW::MATH::GIdentityMatrixF})
 		.set<GW::AUDIO::GSound>(shoot.Relinquish())
 		// .override<> ensures a component is unique to each entity created from a prefab 
 		.set_override<Damage>({ dmg })
@@ -55,7 +54,6 @@ bool ESG::BulletData::Load(	std::shared_ptr<flecs::world> _game,
 	death.Create(deathFX.c_str(), _audioEngine, 0.15f);
 	auto deathPrefab = _game->prefab("Crystal1")
 		.set<GW::AUDIO::GSound>(death.Relinquish());
-		
 	// register this prefab by name so other systems can use it
 	RegisterPrefab("Lazer Bullet", lazerPrefab);
 	RegisterPrefab("Death", deathPrefab);

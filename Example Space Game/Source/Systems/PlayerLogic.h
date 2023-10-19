@@ -30,10 +30,13 @@ namespace ESG
 		float chargeStart = 0, chargeEnd = 0, chargeTime;
 		// event responder
 		GW::CORE::GEventResponder onExplode;
+		GW::CORE::GEventResponder lostLife;
+		GW::CORE::GEventResponder nextLevel;
+		GW::CORE::GEventResponder resetLevel;
 		std::shared_ptr<Level_Data> levelData;
-
-		bool pause;
-
+		std::shared_ptr<int> currentLevel;
+		std::shared_ptr<bool> levelChange;
+		
 	public:
 		// attach the required logic to the ECS 
 		bool Init(	std::shared_ptr<flecs::world> _game,
@@ -44,7 +47,8 @@ namespace ESG
 					GW::AUDIO::GAudio _audioEngine,
 					GW::CORE::GEventGenerator _eventPusher,
 					std::shared_ptr<Level_Data> _levelData,
-					bool& pause);
+					std::shared_ptr<int> _currentLevel,
+			std::shared_ptr<bool> _levelChange);
 		// control if the system is actively running
 		bool Activate(bool runSystem);
 		// release any resources allocated by the system

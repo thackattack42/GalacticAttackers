@@ -1,4 +1,5 @@
 // The Enemy system is responsible for enemy behaviors
+// The Enemy system is responsible for enemy behaviors
 #ifndef ENEMYLOGIC_H
 #define ENEMYLOGIC_H
 
@@ -32,6 +33,7 @@ namespace ESG
 		bool Activate(bool runSystem);
 		// release any resources allocated by the system
 		bool Shutdown();
+		bool moveRight;
 
 	private:
 		bool FireLasersEnemy(flecs::world& stage, ESG::Position origin);

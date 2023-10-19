@@ -19,8 +19,8 @@ bool ESG::PlayerLogic::Init(std::shared_ptr<flecs::world> _game,
 							GW::INPUT::GController _controllerInput,
 							GW::AUDIO::GAudio _audioEngine,
 							GW::CORE::GEventGenerator _eventPusher,
-							std::shared_ptr<Level_Data> _levelData,
-							bool& _pause)
+							std::shared_ptr<Level_Data> _levelData, std::shared_ptr<int> _currentLevel,
+							std::shared_ptr<bool> _levelChange)
 {
 	// save a handle to the ECS & game settings
 	game = _game;
@@ -30,8 +30,8 @@ bool ESG::PlayerLogic::Init(std::shared_ptr<flecs::world> _game,
 	controllerInput =	_controllerInput;
 	audioEngine = _audioEngine;
 	levelData = _levelData;
-	pause = _pause;
-
+	currentLevel = _currentLevel;
+	levelChange = _levelChange;
 	// Init any helper systems required for this task
 	std::shared_ptr<const GameConfig> readCfg = gameConfig.lock();
 	int width = (*readCfg).at("Window").at("width").as<int>();
@@ -99,13 +99,36 @@ bool ESG::PlayerLogic::Init(std::shared_ptr<flecs::world> _game,
 	// create the on explode handler
 	onExplode.Create([this](const GW::GEvent& e) {
 		ESG::PLAY_EVENT event; ESG::PLAY_EVENT_DATA eventData;
-		if (+e.Read(event, eventData)) {
+		if (+e.Read(event, eventData) && event == ESG::PLAY_EVENT::ENEMY_DESTROYED) {
 			// only in here if event matches
-			std::cout << "Enemy Was Destroyed! You Win!\n";
+			std::cout << "Enemy Was Destroyed!\n";
 		}
-	});
-	_eventPusher.Register(onExplode);
+		});
 
+
+	nextLevel.Create([this](const GW::GEvent& e) {
+		ESG::PLAY_EVENT event; ESG::PLAY_EVENT_DATA eventData;
+		if (+e.Read(event, eventData) && event == ESG::PLAY_EVENT::NEXT_LEVEL) {
+			// only in here if event matches
+			GW::SYSTEM::GLog log;
+			++(*currentLevel);
+			(*levelChange) = true;
+		}
+		});
+
+	resetLevel.Create([this](const GW::GEvent& e) {
+		ESG::PLAY_EVENT event; ESG::PLAY_EVENT_DATA eventData;
+		if (+e.Read(event, eventData) && event == ESG::PLAY_EVENT::RESET_LEVEL) {
+			// only in here if event matches
+			GW::SYSTEM::GLog log;
+			(*currentLevel) = 1;
+			(*levelChange) == true;
+		}
+		});
+
+	_eventPusher.Register(onExplode);
+	_eventPusher.Register(nextLevel);
+	_eventPusher.Register(resetLevel);
 	return true;
 }
 
@@ -144,7 +167,7 @@ bool ESG::PlayerLogic::ProcessInputEvents(flecs::world& stage)
 		// these will only happen when needed
 		if (+event.Read(keyboard, k_data)) {
 			if (keyboard == GBufferedInput::Events::KEYPRESSED) {
-				if (k_data.data == G_KEY_SPACE && pause != true) {
+				if (k_data.data == G_KEY_SPACE) {
 					fire = true;
 					//chargeStart = stage.time();
 				}
@@ -183,7 +206,7 @@ bool ESG::PlayerLogic::FireLasers(flecs::world& stage, Position origin)
 	// Grab the prefab for a laser round
 	flecs::entity bullet;
 	RetreivePrefab("Lazer Bullet", bullet);
-	//ModelTransform* original = bullet.get_mut<ModelTransform>();
+	ModelTransform* original = bullet.get_mut<ModelTransform>();
 
 	//origin.value.x -= 0.05f;
 	//auto laserLeft = stage.entity().is_a(bullet)
@@ -193,8 +216,8 @@ bool ESG::PlayerLogic::FireLasers(flecs::world& stage, Position origin)
 		.set<Position>(origin);
 	laserRight.add<BulletTest>();
 	
-	//ModelTransform* edit = laserRight.get_mut<ModelTransform>();
-	//edit = original;
+	ModelTransform* edit = laserRight.get_mut<ModelTransform>();
+	edit = original;
 	// if this shot is charged
 	//if (chargeEnd - chargeStart >= chargeTime) {
 	//	chargeEnd = chargeStart;
@@ -204,10 +227,10 @@ bool ESG::PlayerLogic::FireLasers(flecs::world& stage, Position origin)
 	//		.set<Material>({ 1,0,0 });
 	//}
 	
-	//origin.value.y += 1.0f;
+	origin.value.y += 1.0f;
 
-	//GW::MATH::GMatrix::TranslateGlobalF(edit->matrix, GW::MATH::GVECTORF{ origin.value.x, origin.value.y, 0, 1 }, edit->matrix);
-	//levelData->levelTransforms[edit->rendererIndex] = edit->matrix;
+	GW::MATH::GMatrix::TranslateGlobalF(edit->matrix, GW::MATH::GVECTORF{ origin.value.x, origin.value.y, 0, 1 }, edit->matrix);
+	levelData->levelTransforms[edit->rendererIndex] = edit->matrix;
 	//printf("%f %f \n", edit->matrix.row4.x, edit->matrix.row4.y);
 
 	// play the sound of the Lazer prefab

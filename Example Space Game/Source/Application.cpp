@@ -19,32 +19,35 @@ bool Application::Init()
 	// create the ECS system
 	game = std::make_shared<flecs::world>(); 
 	levelData = std::make_shared<Level_Data>();
+	currentLevel = std::make_shared<int>();
+	levelChange = std::make_shared<bool>();
+	*(currentLevel) = 1;
 	//for changing level data				level positioning		level obj/mtl
-	switch (currentLevel)
-	{
-	case 1:
-		level = gameConfig->at("LevelFile").at("levelone").as<std::string>();
-		break;
-	case 2:
-		level = gameConfig->at("LevelFile").at("leveltwo").as<std::string>();
-		break;
-	case 3:
-		level = gameConfig->at("LevelFile").at("levelthree").as<std::string>();
-		break;
-	case 4:
-		level = gameConfig->at("LevelFile").at("levelstarting").as<std::string>();
-		break;
-	default:
-		level = gameConfig->at("LevelFile").at("levelone").as<std::string>();
-		break;
-	}
-	
-	models = gameConfig->at("ModelFolder").at("models").as<std::string>();
+	//switch (currentLevel)
+	//{
+	//case 1:
+	//	level = gameConfig->at("LevelFile").at("levelone").as<std::string>();
+	//	break;
+	//case 2:
+	//	level = gameConfig->at("LevelFile").at("leveltwo").as<std::string>();
+	//	break;
+	//case 3:
+	//	level = gameConfig->at("LevelFile").at("levelthree").as<std::string>();
+	//	break;
+	//case 4:
+	//	level = gameConfig->at("LevelFile").at("levelstarting").as<std::string>();
+	//	break;
+	//default:
+	//	level = gameConfig->at("LevelFile").at("levelone").as<std::string>();
+	//	break;
+	//}
+	//
+	//models = gameConfig->at("ModelFolder").at("models").as<std::string>();
 
-	if (levelData->LoadLevel(level.c_str(), models.c_str(), log) == false)
-		return false;
-	UpdateLevelData();
-	
+	//if (levelData->LoadLevel(level.c_str(), models.c_str(), log) == false)
+	//	return false;
+	//UpdateLevelData();
+	LoadLevel(*currentLevel);
 	// for now just print objects added to FLECS
 	/*auto f = game->filter<BlenderName, ModelTransform>();
 	f.each([&log](BlenderName& n, ModelTransform& t) {
@@ -53,6 +56,7 @@ bool Application::Init()
 			" Y " + std::to_string(t.matrix.row4.y) + " Z " + std::to_string(t.matrix.row4.z);
 		log.LogCategorized("GAMEPLAY", obj.c_str());
 		});*/
+
 	// init all other systems
 	if (InitWindow() == false) 
 		return false;
@@ -125,12 +129,9 @@ bool Application::Run()
 		{
 			con->ClearRenderTargetView(view, color);
 			con->ClearDepthStencilView(depth, D3D11_CLEAR_DEPTH, 1, 0);
-			//renderer.UpdateWindowSize();
-			//renderer.PlayerSwap();
-			//renderer.UpdateCamera();
+			
 			GameLoop();
-			//renderer.LevelSwitch(log);
-			//renderer.Render();
+			
 			swap->Present(1, 0);
 			// release incremented COM reference counts
 			swap->SetFullscreenState(FALSE, NULL);
@@ -138,14 +139,6 @@ bool Application::Run()
 			view->Release();
 			depth->Release();
 			con->Release();
-			float input = 0;
-			immediateInput.GetState(G_KEY_ESCAPE, input);
-			if (input == 1)
-			{
-				pause = true;
-			}
-			else
-				pause = false;
 		}
 
 	}
@@ -246,17 +239,17 @@ bool Application::InitSystems()
 {
 	// connect systems to global ECS
 	if (playerSystem.Init(	game, gameConfig, immediateInput, bufferedInput, 
-							gamePads, audioEngine, eventPusher, levelData, pause) == false)
+							gamePads, audioEngine, eventPusher, levelData, currentLevel, levelChange) == false)
 		return false;
 	if (levelSystem.Init(game, gameConfig, audioEngine) == false)
 		return false;
-	if (d3dRenderingSystem.Init(game, gameConfig, d3d11, window, levelData) == false)
+	if (d3dRenderingSystem.Init(game, gameConfig, d3d11, window, levelData, levelChange) == false)
 		return false;
-	if (physicsSystem.Init(game, gameConfig, levelData, pause) == false)
+	if (physicsSystem.Init(game, gameConfig, levelData) == false)
 		return false;
 	if (bulletSystem.Init(game, gameConfig, levelData) == false)
 		return false;
-	if (enemySystem.Init(game, gameConfig, eventPusher, levelData, pause) == false)
+	if (enemySystem.Init(game, gameConfig, eventPusher, levelData) == false)
 		return false;
 
 	return true;
@@ -270,7 +263,37 @@ bool Application::GameLoop()
 		std::chrono::steady_clock::now() - start).count();
 	start = std::chrono::steady_clock::now();
 	// let the ECS system run
+
 	return game->progress(static_cast<float>(elapsed)); 
+}
+
+void Application::LoadLevel(int currentLevel)
+{
+	switch (currentLevel)
+	{
+	case 1:
+		level = gameConfig->at("LevelFile").at("levelone").as<std::string>();
+		break;
+	case 2:
+		level = gameConfig->at("LevelFile").at("leveltwo").as<std::string>();
+		break;
+	case 3:
+		level = gameConfig->at("LevelFile").at("levelthree").as<std::string>();
+		break;
+	case 4:
+		level = gameConfig->at("LevelFile").at("levelstarting").as<std::string>();
+		break;
+	default:
+		level = gameConfig->at("LevelFile").at("levelone").as<std::string>();
+		break;
+	}
+
+	models = gameConfig->at("ModelFolder").at("models").as<std::string>();
+
+	levelData->LoadLevel(level.c_str(), models.c_str(), log);
+
+	UpdateLevelData();
+
 }
 
 void Application::UpdateLevelData()
@@ -301,6 +324,7 @@ void Application::UpdateLevelData()
 		ent.set<Mesh>({ levelData->levelMeshes[i.modelIndex].drawInfo.indexCount,
 						levelData->levelMeshes[i.modelIndex].drawInfo.indexOffset,
 						levelData->levelMeshes[i.modelIndex].materialIndex });
-
+		
+		
 	}
 }

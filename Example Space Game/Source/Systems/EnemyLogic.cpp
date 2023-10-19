@@ -14,16 +14,15 @@ using namespace ESG; // Example Space Game
 bool ESG::EnemyLogic::Init(std::shared_ptr<flecs::world> _game,
 	std::weak_ptr<const GameConfig> _gameConfig,
 	GW::CORE::GEventGenerator _eventPusher,
-	std::shared_ptr<Level_Data> _levelData,
-	bool& _pause)
+	std::shared_ptr<Level_Data> _levelData)
 {
 	// save a handle to the ECS & game settings
 	game = _game;
 	gameConfig = _gameConfig;
 	eventPusher = _eventPusher;
 	levelData = _levelData;
-	pause = _pause;
 
+	game->add<Score>();
 	// destroy any bullets that have the CollidedWith relationship
 	game->system<Enemy, Health, Position>("Enemy System")
 		.each([this](flecs::entity e, Enemy, Health& h, Position& p) {
@@ -36,33 +35,76 @@ bool ESG::EnemyLogic::Init(std::shared_ptr<flecs::world> _game,
 			explode.Write(ESG::PLAY_EVENT::ENEMY_DESTROYED, x);
 			eventPusher.Push(explode);
 		}
+		ModelTransform* edit = e.get_mut<ModelTransform>();
+		//moveRight = true;
 
-		if (!pause)
+		if (moveRight)
 		{
-			ModelTransform* edit = e.get_mut<ModelTransform>();
-			GW::MATH::GMatrix::TranslateGlobalF(edit->matrix, GW::MATH::GVECTORF{ p.value.x, -p.value.y, 0, 1 }, edit->matrix);
+			GW::MATH::GMatrix::TranslateGlobalF(edit->matrix, GW::MATH::GVECTORF{ 0, 0, 1, 1 }, edit->matrix);
 			levelData->levelTransforms[edit->rendererIndex] = edit->matrix;
-
-
-			std::cout << "Moving " << edit->matrix.row4.x << " " << edit->matrix.row4.y << " " << edit->matrix.row4.z << std::endl;
-
-			if (edit->matrix.row4.y <= 30)
+			if (edit->matrix.row4.z >= 40)
 			{
-				e.destruct();
-				flecs::entity playerDeath;
-				RetreivePrefab("Death", playerDeath);
-				GW::AUDIO::GSound death = *playerDeath.get<GW::AUDIO::GSound>();
-				death.Play();
-				pause = true;
-				//GW::AUDIO::GSound death = = 
-				std::cout << "Player Dies...You Lose";
+				moveRight = false;
+				GW::MATH::GMatrix::TranslateGlobalF(edit->matrix, GW::MATH::GVECTORF{ 0, -5, 0, 1 }, edit->matrix);
+				levelData->levelTransforms[edit->rendererIndex] = edit->matrix;
 			}
-			p.value.x = 0;
-			p.value.y = 0;
 		}
-			
-			//FireLasersEnemy(e.world(), p);
-	});
+		else if (!moveRight)
+		{
+			GW::MATH::GMatrix::TranslateGlobalF(edit->matrix, GW::MATH::GVECTORF{ 0, 0, -1, 1 }, edit->matrix);
+			levelData->levelTransforms[edit->rendererIndex] = edit->matrix;
+			if (edit->matrix.row4.z <= -40)
+			{
+				moveRight = true;
+				GW::MATH::GMatrix::TranslateGlobalF(edit->matrix, GW::MATH::GVECTORF{ 0, -5, 0, 1 }, edit->matrix);
+				levelData->levelTransforms[edit->rendererIndex] = edit->matrix;
+			}
+		}
+
+		//std::cout << "Moving " << edit->matrix.row4.x << " " << edit->matrix.row4.y << " " << edit->matrix.row4.z << std::endl;
+
+		if (edit->matrix.row4.y <= 30)
+		{
+			e.destruct();
+			flecs::entity playerDeath;
+			RetreivePrefab("Death", playerDeath);
+			GW::AUDIO::GSound death = *playerDeath.get<GW::AUDIO::GSound>();
+			death.Play();
+			auto live = game->lookup("life 1");
+			if (live.is_valid())
+			{
+				live.destruct();
+			}
+			else {
+				auto live2 = game->lookup("life 2");
+				if (live2.is_valid())
+				{
+					live2.destruct();
+					
+				}
+				else
+				{
+					auto live3 = game->lookup("life 3");
+					if (live3.is_valid())
+					{
+						live3.destruct();
+						auto player = game->lookup("Player");
+						player.destruct();
+
+						ESG::PLAY_EVENT_DATA y;
+						GW::GEvent reset;
+						reset.Write(ESG::PLAY_EVENT::NEXT_LEVEL, y);
+						eventPusher.Push(reset);
+						std::cout << "Player Dies...You Lose";
+					}
+				}
+			}
+	
+		}
+		p.value = { 0, 0 };
+
+		//FireLasersEnemy(e.world(), p);
+			});
 
 	return true;
 }
