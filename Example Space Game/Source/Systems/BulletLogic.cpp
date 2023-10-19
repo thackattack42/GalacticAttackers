@@ -22,8 +22,11 @@ bool GA::BulletLogic::Init(	std::shared_ptr<flecs::world> _game,
 		// damage anything we come into contact with
 		e.each<CollidedWith>([&e, d](flecs::entity hit) {
 			if (hit.has<Health>()) {
-				int current = hit.get<Health>()->value;
-				hit.set<Health>({ current - d.value });
+				/*int current = hit.get<Health>()->value;
+				hit.set<Health>({ current - d.value });*/
+
+				hit.destruct();
+
 				// reduce the amount of hits but the charged shot
 				if (e.has<ChargedShot>() && hit.get<Health>()->value <= 0) 
 				{

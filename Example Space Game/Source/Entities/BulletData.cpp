@@ -6,12 +6,14 @@
 #include "../Components/Gameplay.h"
 #include "../Components/Components.h"
 
+
 bool GA::BulletData::Load(	std::shared_ptr<flecs::world> _game,
 							std::weak_ptr<const GameConfig> _gameConfig,
 							GW::AUDIO::GAudio _audioEngine)
 {
 	// Grab init settings for players
 	std::shared_ptr<const GameConfig> readCfg = _gameConfig.lock();
+	Level_Data lvldata;
 	
 	// Create prefab for lazer weapon
 	// color
@@ -43,6 +45,7 @@ bool GA::BulletData::Load(	std::shared_ptr<flecs::world> _game,
 		.set<Acceleration>({ 0, 0 })
 		.set<Velocity>({ 0, speed })
 		.set<ModelTransform*>(_game->prefab("Crystal3").get_mut<ModelTransform>())
+		.set<ModelBoundary*>(_game->prefab("Crystal3").get_mut<ModelBoundary>())
 		.set<GW::AUDIO::GSound>(shoot.Relinquish())
 		// .override<> ensures a component is unique to each entity created from a prefab 
 		.set_override<Damage>({ dmg })

@@ -1,6 +1,7 @@
 #include "PhysicsLogic.h"
 #include "../Components/Physics.h"
 #include "../Components/Components.h"
+#include "../Entities/Prefabs.h"
 
 bool GA::PhysicsLogic::Init(	std::shared_ptr<flecs::world> _game, 
 								std::weak_ptr<const GameConfig> _gameConfig,
@@ -76,33 +77,37 @@ bool GA::PhysicsLogic::Init(	std::shared_ptr<flecs::world> _game,
 	// due to wanting to loop through all collidables at once, we do this in two steps:
 	// 1. A System will gather all collidables into a shared std::vector
 	// 2. A second system will run after, testing/resolving all collidables against each other
-	queryCache = game->query<Collidable, Position, Orientation>();
+	queryCache = game->query<Collidable, Position, Orientation, ModelBoundary>();
 	// only happens once per frame at the very start of the frame
 	struct CollisionSystem {}; // local definition so we control iteration count (singular)
 	game->entity("Detect-Collisions").add<CollisionSystem>();
 	game->system<CollisionSystem>()
 		.each([this](CollisionSystem& s) {
 		// This the base shape all objects use & draw, this might normally be a component collider.(ex:sphere/box)
-		constexpr GW::MATH2D::GVECTOR2F poly[polysize] = {
+		/*constexpr GW::MATH2D::GVECTOR2F poly[polysize] = {
 			{ -0.5f, -0.5f }, { 0, 0.5f }, { 0.5f, -0.5f }, { 0, -0.25f }
-		};
+		};*/
 		// collect any and all collidable objects
-		queryCache.each([this, poly](flecs::entity e, Collidable& c, Position& p, Orientation& o) {
+		queryCache.each([this](flecs::entity e, Collidable& c, Position& p, Orientation& o, ModelBoundary& m) {
 			// create a 3x3 matrix for transformation
-			GW::MATH2D::GMATRIX3F matrix = {
+			RetreivePrefab("Lazer Bullet", e);
+
+			/*GW::MATH2D::GMATRIX3F matrix = {
 				o.value.row1.x, o.value.row1.y, 0,
 				o.value.row2.x, o.value.row2.y, 0,
 				p.value.x, p.value.y, 1
-			};
+			};*/
 			SHAPE polygon; // compute buffer for this objects polygon
 			// This is critical, if you want to store an entity handle it must be mutable
+			
 			polygon.owner = e; // allows later changes
-			for (int i = 0; ++i < polysize; ++i) {
+			polygon.poly = m.obb;
+		/*	for (int i = 0; ++i < polysize; ++i) {
 				GW::MATH2D::GVECTOR3F v = { poly[i].x, poly[i].y, 1 };
 				GW::MATH2D::GMatrix2D::MatrixXVector3F(matrix, v, v);
 				polygon.poly[i].x = v.x;
 				polygon.poly[i].y = v.y;
-			}
+			}*/
 			// add to vector
 			testCache.push_back(polygon);
 		});
@@ -113,10 +118,10 @@ bool GA::PhysicsLogic::Init(	std::shared_ptr<flecs::world> _game,
 
 				// test the two world space polygons for collision
 				// possibly make this cheaper by leaving one of them local and using an inverse matrix
-				GW::MATH2D::GCollision2D::GCollisionCheck2D result;
-				GW::MATH2D::GCollision2D::TestPolygonToPolygon2F(
-					testCache[i].poly, polysize, testCache[j].poly, polysize, result);
-				if (result == GW::MATH2D::GCollision2D::GCollisionCheck2D::COLLISION) {
+				GW::MATH::GCollision::GCollisionCheck result;
+				GW::MATH::GCollision::TestOBBToOBBF(
+					testCache[i].poly, testCache[j].poly, result);
+				if (result == GW::MATH::GCollision::GCollisionCheck::COLLISION) {
 					// Create an ECS relationship between the colliders
 					// Each system can decide how to respond to this info independently
 					testCache[j].owner.add<CollidedWith>(testCache[i].owner);
