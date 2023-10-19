@@ -2,14 +2,10 @@
 #ifndef RENDERERLOGIC_H
 #define RENDERERLOGIC_H
 
-#define TEXTURES_PATH "../DDS/"
-#define LTEXTURES_PATH L"../DDS/"
-#define XML_PATH "../Source/xml/"
-
 // Contains our global game settings
 #include "../GameConfig.h"
-#include "../../Source/HUD/Font.h"
-#include "../../Source/HUD/Sprite.h"
+
+
 // example space game (avoid name collisions)
 namespace ESG
 {
@@ -41,15 +37,6 @@ namespace ESG
 		Level_Data::LIGHT_SETTINGS myLights[400];
 	};
 
-	using HUD = std::vector<Sprite>;
-
-	struct SPRITE_DATA
-	{
-		GW::MATH::GVECTORF pos_scale;
-		GW::MATH::GVECTORF rotation_depth;
-	};
-
-	enum TEXTURE_ID { DRAGON = 0, HUD_BACKPLATE, HUD_HP_LEFT, HUD_HP_RIGHT, HUD_MP_LEFT, HUD_MP_RIGHT, HUD_STAM_BACKPLATE, HUD_STAM, HUD_CENTER, FONT_CONSOLAS, COUNT };
 
 	class D3DRendererLogic
 	{
@@ -66,25 +53,13 @@ namespace ESG
 		GW::MATH::GMatrix proxy;
 		std::shared_ptr<bool> levelChange;
 		// Directx11 resources used for rendering
-		std::shared_ptr<const Level_Data> levelData;
+		std::shared_ptr<Level_Data> levelData;
 		GW::GRAPHICS::GDirectX11Surface direct11;
-		Microsoft::WRL::ComPtr<ID3D11Buffer>		vertexBuffer3D;
-		Microsoft::WRL::ComPtr<ID3D11Buffer>	    indexBuffer3D;
-		Microsoft::WRL::ComPtr<ID3D11Buffer>		vertexBuffer2D;
-		Microsoft::WRL::ComPtr<ID3D11Buffer>	    indexBuffer2D;
-		Microsoft::WRL::ComPtr<ID3D11VertexShader>	vertexShader3D;
-		Microsoft::WRL::ComPtr<ID3D11PixelShader>	pixelShader3D;
-		Microsoft::WRL::ComPtr<ID3D11VertexShader>	vertexShader2D;
-		Microsoft::WRL::ComPtr<ID3D11PixelShader>	pixelShader2D;
-		Microsoft::WRL::ComPtr<ID3D11InputLayout>	vertexFormat3D;
-		Microsoft::WRL::ComPtr<ID3D11InputLayout>	vertexFormat2D;
-		Microsoft::WRL::ComPtr<ID3D11Buffer>		vertexBufferStaticTextHS;
-		Microsoft::WRL::ComPtr<ID3D11Buffer>		vertexBufferDynamicTextHS;
-		Microsoft::WRL::ComPtr<ID3D11Buffer>		vertexBufferStaticTextTime;
-		Microsoft::WRL::ComPtr<ID3D11Buffer>		vertexBufferDynamicTextTime;
-		Microsoft::WRL::ComPtr<ID3D11Buffer>		vertexBufferStaticTextLives;
-		Microsoft::WRL::ComPtr<ID3D11Buffer>		vertexBufferStaticTextWin;
-		Microsoft::WRL::ComPtr<ID3D11Buffer>		vertexBufferStaticTextLose;
+		Microsoft::WRL::ComPtr<ID3D11Buffer>		vertexBuffer;
+		Microsoft::WRL::ComPtr<ID3D11Buffer>	    indexBuffer;
+		Microsoft::WRL::ComPtr<ID3D11VertexShader>	vertexShader;
+		Microsoft::WRL::ComPtr<ID3D11PixelShader>	pixelShader;
+		Microsoft::WRL::ComPtr<ID3D11InputLayout>	vertexFormat;
 
 
 		GW::MATH::GMATRIXF worldMatrix[500];
@@ -103,45 +78,18 @@ namespace ESG
 		Microsoft::WRL::ComPtr<ID3D11Buffer> constantMeshBuffer;
 		Microsoft::WRL::ComPtr<ID3D11Buffer> constantModelBuffer;
 		Microsoft::WRL::ComPtr<ID3D11Buffer> constantLightBuffer;
-		Microsoft::WRL::ComPtr<ID3D11Buffer> constantBufferHUD;
 
-		std::string vertexShader3DSource;
-		std::string pixelShader3DSource;
-		std::string vertexShader2DSource;
-		std::string pixelShader2DSource;
-
-		HUD	hud;
-		Font consolas32;
-		Text staticTextHS;
-		Text dynamicTextHS;
-		Text staticTextTime;
-		Text dynamicTextTime;
-		Text staticTextLives;
-		Text staticTextWin;
-		Text staticTextLose;
-		SPRITE_DATA	constantBufferData = { 0 };
-		Microsoft::WRL::ComPtr<ID3D11ShaderResourceView> shaderResourceView[TEXTURE_ID::COUNT];
-		Microsoft::WRL::ComPtr<ID3D11SamplerState>			samplerState;
-		Microsoft::WRL::ComPtr<ID3D11BlendState>			blendState;
-		Microsoft::WRL::ComPtr<ID3D11DepthStencilState>		depthStencilState;
-		Microsoft::WRL::ComPtr<ID3D11RasterizerState>		rasterizerState;
-		bool timercheck;
-		GW::INPUT::GInput inputProxy;
-		bool conditionWin = false;
-		bool conditionLose = false;
+		std::string vertexShaderSource;
+		std::string pixelShaderSource;
 		// used to trigger clean up of vulkan resources
 		GW::CORE::GEventReceiver shutdown;
 	public:
-		std::vector<Sprite>	LoadHudFromXML(std::string filepath);
-		SPRITE_DATA UpdateSpriteConstantBufferData(const Sprite& s);
-		SPRITE_DATA UpdateTextConstantBufferData(const Text& s);
-		void ESG::D3DRendererLogic::UIDraw();
-
 		// attach the required logic to the ECS 
 		bool Init(	std::shared_ptr<flecs::world> _game,
 					std::weak_ptr<const GameConfig> _gameConfig,
 					GW::GRAPHICS::GDirectX11Surface _direct11,
-					GW::SYSTEM::GWindow _window, std::shared_ptr<const Level_Data> _levelData, std::shared_ptr<bool> _levelChange);
+					GW::SYSTEM::GWindow _window, std::shared_ptr<Level_Data> _levelData,
+			std::shared_ptr<bool> _levelChange);
 		// control if the system is actively running
 		bool Activate(bool runSystem);
 		// release any resources allocated by the system
@@ -154,32 +102,23 @@ namespace ESG
 			ID3D11DepthStencilView* depthStencil;
 		};
 		// Loading funcs
-		bool LoadShaders3D();
-		bool LoadShaders2D();
+		bool LoadShaders();
 		bool LoadUniforms();
 		bool LoadGeometry();
 		bool SetupDrawcalls();
 
 		void InitializeGraphics();
-		void Initialize3DVertexBuffer(ID3D11Device* creator);
-		void Initialize3DIndexBuffer(ID3D11Device* creator);
-		void Initialize2DVertexBuffer(ID3D11Device* creator);
-		void Initialize2DIndexBuffer(ID3D11Device* creator);
+		void InitializeVertexBuffer(ID3D11Device* creator);
+		void InitializeIndexBuffer(ID3D11Device* creator);
 		void InitializeConstantBuffer(ID3D11Device* creator);
-		void InitializePipeline3D(ID3D11Device* creator);
-		void InitializePipeline2D(ID3D11Device* creator);
+		void InitializePipeline(ID3D11Device* creator);
 
-		void Create3DVertexBuffer(ID3D11Device* creator, const void* data, unsigned int sizeInBytes);
-		void Create3DIndexBuffer(ID3D11Device* creator, const void* data, unsigned int sizeInBytes);
-		void Create2DVertexBuffer(ID3D11Device* creator/*, const void* data, unsigned int sizeInBytes*/);
-		void Create2DIndexBuffer(ID3D11Device* creator/*, const void* data, unsigned int sizeInBytes*/);
+		void CreateVertexBuffer(ID3D11Device* creator, const void* data, unsigned int sizeInBytes);
+		void CreateIndexBuffer(ID3D11Device* creator, const void* data, unsigned int sizeInBytes);
 
-		Microsoft::WRL::ComPtr<ID3DBlob> CompileVertexShader3D(ID3D11Device* creator, UINT compilerFlags);
-		Microsoft::WRL::ComPtr<ID3DBlob> CompilePixelShader3D(ID3D11Device* creator, UINT compilerFlags);
-		Microsoft::WRL::ComPtr<ID3DBlob> CompileVertexShader2D(ID3D11Device* creator, UINT compilerFlags);
-		Microsoft::WRL::ComPtr<ID3DBlob> CompilePixelShader2D(ID3D11Device* creator, UINT compilerFlags);
-		void Create3DVertexInputLayout(ID3D11Device* creator, Microsoft::WRL::ComPtr<ID3DBlob>& vsBlob);
-		void Create2DVertexInputLayout(ID3D11Device* creator, Microsoft::WRL::ComPtr<ID3DBlob>& vsBlob);
+		Microsoft::WRL::ComPtr<ID3DBlob> CompileVertexShader(ID3D11Device* creator, UINT compilerFlags);
+		Microsoft::WRL::ComPtr<ID3DBlob> CompilePixelShader(ID3D11Device* creator, UINT compilerFlags);
+		void CreateVertexInputLayout(ID3D11Device* creator, Microsoft::WRL::ComPtr<ID3DBlob>& vsBlob);
 		
 		void SetUpPipeline(PipelineHandles handles);
 		void ESG::D3DRendererLogic::ReleasePipelineHandles(PipelineHandles toRelease);
@@ -191,13 +130,12 @@ namespace ESG
 		std::string ShaderAsString(const char* shaderFilePath);
 	private:
 		// Uniform Data Definitions
-		static constexpr unsigned int Instance_Max = 240;
+		/*static constexpr unsigned int Instance_Max = 240;
 		struct INSTANCE_UNIFORMS
 		{
 			GW::MATH::GMATRIXF instance_transforms[Instance_Max];
 			GW::MATH::GVECTORF instance_colors[Instance_Max];
-		}instanceData;
-		// how many instances will be drawn this frame
+		}instanceData;*/
 		std::vector<GW::MATH::GMATRIXF> bulletMoves;
 		// how many instances will be drawn this frame
 		int draw_counter = 0;
