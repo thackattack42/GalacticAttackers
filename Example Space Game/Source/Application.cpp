@@ -21,6 +21,10 @@ bool Application::Init()
 	levelData = std::make_shared<Level_Data>();
 	currentLevel = std::make_shared<int>();
 	levelChange = std::make_shared<bool>();
+	youLose = std::make_shared<bool>();
+	youWin = std::make_shared<bool>();
+	*youLose = false;
+	*youWin = false;
 	*(currentLevel) = 1;
 	//for changing level data				level positioning		level obj/mtl
 	//switch (currentLevel)
@@ -239,11 +243,11 @@ bool Application::InitSystems()
 {
 	// connect systems to global ECS
 	if (playerSystem.Init(	game, gameConfig, immediateInput, bufferedInput, 
-							gamePads, audioEngine, eventPusher, levelData, currentLevel, levelChange) == false)
+							gamePads, audioEngine, eventPusher, levelData, currentLevel, levelChange, youWin,youLose) == false)
 		return false;
 	if (levelSystem.Init(game, gameConfig, audioEngine) == false)
 		return false;
-	if (d3dRenderingSystem.Init(game, gameConfig, d3d11, window, levelData, levelChange) == false)
+	if (d3dRenderingSystem.Init(game, gameConfig, d3d11, window, levelData, levelChange, youWin, youLose) == false)
 		return false;
 	if (physicsSystem.Init(game, gameConfig, levelData) == false)
 		return false;
@@ -325,7 +329,7 @@ void Application::UpdateLevelData()
 						levelData->levelMeshes[i.modelIndex].drawInfo.indexOffset,
 						levelData->levelMeshes[i.modelIndex].materialIndex });
 		
-		
+		entityVec.push_back(ent);
 	}
 
 	int offset = 0;

@@ -119,9 +119,9 @@ bool GA::EnemyLogic::Init(std::shared_ptr<flecs::world> _game,
 						player.destruct();
 
 						GA::PLAY_EVENT_DATA y;
-						GW::GEvent reset;
-						reset.Write(GA::PLAY_EVENT::NEXT_LEVEL, y);
-						eventPusher.Push(reset);
+						GW::GEvent youLose;
+						youLose.Write(GA::PLAY_EVENT::LOSE, y);
+						eventPusher.Push(youLose);
 						std::cout << "Player Dies...You Lose";
 					}
 				}

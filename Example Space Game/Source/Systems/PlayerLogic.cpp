@@ -20,7 +20,7 @@ bool GA::PlayerLogic::Init(std::shared_ptr<flecs::world> _game,
 							GW::AUDIO::GAudio _audioEngine,
 							GW::CORE::GEventGenerator _eventPusher,
 							std::shared_ptr<Level_Data> _levelData, std::shared_ptr<int> _currentLevel,
-							std::shared_ptr<bool> _levelChange)
+							std::shared_ptr<bool> _levelChange, std::shared_ptr<bool> _youWin, std::shared_ptr<bool> _youLose)
 {
 	// save a handle to the ECS & game settings
 	game = _game;
@@ -32,6 +32,8 @@ bool GA::PlayerLogic::Init(std::shared_ptr<flecs::world> _game,
 	levelData = _levelData;
 	currentLevel = _currentLevel;
 	levelChange = _levelChange;
+	youWin = _youWin;
+	youLose = _youLose;
 	// Init any helper systems required for this task
 	std::shared_ptr<const GameConfig> readCfg = gameConfig.lock();
 	int width = (*readCfg).at("Window").at("width").as<int>();
@@ -135,9 +137,27 @@ bool GA::PlayerLogic::Init(std::shared_ptr<flecs::world> _game,
 		}
 		});
 
+	youWon.Create([this](const GW::GEvent& e) {
+		GA::PLAY_EVENT event; GA::PLAY_EVENT_DATA eventData;
+		if (+e.Read(event, eventData) && event == GA::PLAY_EVENT::WIN) {
+			// only in here if event matches
+			*youWin = true;
+		}
+		});
+
+	youLost.Create([this](const GW::GEvent& e) {
+		GA::PLAY_EVENT event; GA::PLAY_EVENT_DATA eventData;
+		if (+e.Read(event, eventData) && event == GA::PLAY_EVENT::LOSE) {
+			// only in here if event matches
+			*youLose = true;
+		}
+		});
+
 	_eventPusher.Register(onExplode);
 	_eventPusher.Register(nextLevel);
 	_eventPusher.Register(resetLevel);
+	_eventPusher.Register(youWon);
+	_eventPusher.Register(youLose);
 	return true;
 }
 
