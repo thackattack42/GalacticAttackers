@@ -11,7 +11,7 @@
 #include "../../Source/HUD/Font.h"
 #include "../../Source/HUD/Sprite.h"
 // example space game (avoid name collisions)
-namespace ESG
+namespace GA
 {
 
 	struct SceneData
@@ -135,7 +135,7 @@ namespace ESG
 		std::vector<Sprite>	LoadHudFromXML(std::string filepath);
 		SPRITE_DATA UpdateSpriteConstantBufferData(const Sprite& s);
 		SPRITE_DATA UpdateTextConstantBufferData(const Text& s);
-		void ESG::D3DRendererLogic::UIDraw();
+		void GA::D3DRendererLogic::UIDraw();
 
 		// attach the required logic to the ECS 
 		bool Init(std::shared_ptr<flecs::world> _game,
@@ -182,7 +182,7 @@ namespace ESG
 		void Create2DVertexInputLayout(ID3D11Device* creator, Microsoft::WRL::ComPtr<ID3DBlob>& vsBlob);
 		
 		void SetUpPipeline(PipelineHandles handles);
-		void ESG::D3DRendererLogic::ReleasePipelineHandles(PipelineHandles toRelease);
+		void GA::D3DRendererLogic::ReleasePipelineHandles(PipelineHandles toRelease);
 		PipelineHandles GetCurrentPipelineHandles();
 		void LevelSwitch();
 		// Unloading funcs

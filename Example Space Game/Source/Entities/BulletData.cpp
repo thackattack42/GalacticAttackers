@@ -6,7 +6,7 @@
 #include "../Components/Gameplay.h"
 #include "../Components/Components.h"
 
-bool ESG::BulletData::Load(	std::shared_ptr<flecs::world> _game,
+bool GA::BulletData::Load(	std::shared_ptr<flecs::world> _game,
 							std::weak_ptr<const GameConfig> _gameConfig,
 							GW::AUDIO::GAudio _audioEngine)
 {
@@ -42,7 +42,22 @@ bool ESG::BulletData::Load(	std::shared_ptr<flecs::world> _game,
 		.set<Orientation>({ world })
 		.set<Acceleration>({ 0, 0 })
 		.set<Velocity>({ 0, speed })
-		.set<ModelTransform>({GW::MATH::GIdentityMatrixF})
+		.set<ModelTransform*>(_game->prefab("Crystal3").get_mut<ModelTransform>())
+		.set<GW::AUDIO::GSound>(shoot.Relinquish())
+		// .override<> ensures a component is unique to each entity created from a prefab 
+		.set_override<Damage>({ dmg })
+		//.set_override<ChargedShot>({ 2 })
+		.override<Position>()
+		.override<Bullet>() // Tag this prefab as a bullet (for queries/systems)
+		.override<Collidable>(); // can be collided with
+
+	auto lazerPrefab2 = _game->prefab("Crystal3.001")
+		// .set<> in a prefab means components are shared (instanced)
+		.set<Material>({ red, green, blue })
+		.set<Orientation>({ world })
+		.set<Acceleration>({ 0, 0 })
+		.set<Velocity>({ 0, speed })
+		.set<ModelTransform*>(_game->prefab("Crystal3.001").get_mut<ModelTransform>())
 		.set<GW::AUDIO::GSound>(shoot.Relinquish())
 		// .override<> ensures a component is unique to each entity created from a prefab 
 		.set_override<Damage>({ dmg })
@@ -57,12 +72,15 @@ bool ESG::BulletData::Load(	std::shared_ptr<flecs::world> _game,
 		.set<GW::AUDIO::GSound>(death.Relinquish());
 	// register this prefab by name so other systems can use it
 	RegisterPrefab("Lazer Bullet", lazerPrefab);
+	RegisterPrefab("Lazer Bullet2", lazerPrefab2);
 	RegisterPrefab("Death", deathPrefab);
+
+	flecs::entity arrayFabs[] = { lazerPrefab, lazerPrefab2 };
 
 	return true;
 }
 
-bool ESG::BulletData::Unload(std::shared_ptr<flecs::world> _game)
+bool GA::BulletData::Unload(std::shared_ptr<flecs::world> _game)
 {
 	// remove all bullets and their prefabs
 	_game->defer_begin(); // required when removing while iterating!

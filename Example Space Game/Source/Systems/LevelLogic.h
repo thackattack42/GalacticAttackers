@@ -9,7 +9,7 @@
 #include "../Entities/BulletData.h"
 
 // example space game (avoid name collisions)
-namespace ESG
+namespace GA
 {
 	class LevelLogic
 	{
@@ -26,6 +26,7 @@ namespace ESG
 		GW::AUDIO::GMusic currentTrack;
 		// Used to spawn enemies at a regular intervals on another thread
 		GW::SYSTEM::GDaemon timedEvents;
+		GW::SYSTEM::GDaemon timedEvents2;
 	public:
 		// attach the required logic to the ECS 
 		bool Init(	std::shared_ptr<flecs::world> _game,

@@ -5,10 +5,10 @@
 #include "../Components/Gameplay.h"
 #include "../Components/Components.h"
 
-using namespace ESG; // Example Space Game
+using namespace GA; // Example Space Game
 
 // Connects logic to traverse any players and allow a controller to manipulate them
-bool ESG::BulletLogic::Init(	std::shared_ptr<flecs::world> _game,
+bool GA::BulletLogic::Init(	std::shared_ptr<flecs::world> _game,
 							std::weak_ptr<const GameConfig> _gameConfig,
 							std::shared_ptr<Level_Data> _levelData)
 {
@@ -42,7 +42,7 @@ bool ESG::BulletLogic::Init(	std::shared_ptr<flecs::world> _game,
 			}
 			else {
 				// play hit sound
-				e.destruct();
+ 				e.destruct();
 				std::cout << "Hit Enemy Bullet Destroyed\n";
 			}
 		}
@@ -53,7 +53,7 @@ bool ESG::BulletLogic::Init(	std::shared_ptr<flecs::world> _game,
 }
 
 // Free any resources used to run this system
-bool ESG::BulletLogic::Shutdown()
+bool GA::BulletLogic::Shutdown()
 {
 	game->entity("Bullet System").destruct();
 	// invalidate the shared pointers
@@ -63,7 +63,7 @@ bool ESG::BulletLogic::Shutdown()
 }
 
 // Toggle if a system's Logic is actively running
-bool ESG::BulletLogic::Activate(bool runSystem)
+bool GA::BulletLogic::Activate(bool runSystem)
 {
 	if (runSystem) {
 		game->entity("Bullet System").enable();

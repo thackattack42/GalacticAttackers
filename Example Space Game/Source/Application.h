@@ -42,16 +42,16 @@ class Application
 	std::string level;
 	std::string models;
 	// ECS Entities and Prefabs that need to be loaded
-	ESG::BulletData weapons;
-	ESG::PlayerData players;
-	ESG::EnemyData enemies;
+	GA::BulletData weapons;
+	GA::PlayerData players;
+	GA::EnemyData enemies;
 	// specific ECS systems used to run the game
-	ESG::PlayerLogic playerSystem;
-	ESG::D3DRendererLogic d3dRenderingSystem;
-	ESG::LevelLogic levelSystem;
-	ESG::PhysicsLogic physicsSystem;
-	ESG::BulletLogic bulletSystem;
-	ESG::EnemyLogic enemySystem;
+	GA::PlayerLogic playerSystem;
+	GA::D3DRendererLogic d3dRenderingSystem;
+	GA::LevelLogic levelSystem;
+	GA::PhysicsLogic physicsSystem;
+	GA::BulletLogic bulletSystem;
+	GA::EnemyLogic enemySystem;
 	// EventGenerator for Game Events
 	GW::CORE::GEventGenerator eventPusher;
 

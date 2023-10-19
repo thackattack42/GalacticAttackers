@@ -7,7 +7,7 @@ namespace
 	std::map<std::string, flecs::entity> prefabMap;
 }
 // functions defined in this file have access to the data in the nameless namespace above
-namespace ESG
+namespace GA
 {
 	// interface implementations to access protected data set above
 	bool RegisterPrefab(const char* prefabName, const flecs::entity inPrefab)

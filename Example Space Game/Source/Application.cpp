@@ -8,7 +8,7 @@ using namespace GW;
 using namespace CORE;
 using namespace SYSTEM;
 using namespace GRAPHICS;
-using namespace ESG;
+using namespace GA;
 
 bool Application::Init()
 {
@@ -327,4 +327,6 @@ void Application::UpdateLevelData()
 		
 		
 	}
+
+	int offset = 0;
 }

@@ -3,7 +3,7 @@
 #define VISUALS_H
 
 // example space game (avoid name collisions)
-namespace ESG
+namespace GA
 {
 	struct Color { GW::MATH2D::GVECTOR3F value; };
 

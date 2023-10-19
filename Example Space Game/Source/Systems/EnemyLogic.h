@@ -9,7 +9,7 @@
 
 
 // example space game (avoid name collisions)
-namespace ESG
+namespace GA
 {
 	class EnemyLogic
 	{
@@ -20,6 +20,9 @@ namespace ESG
 		// handle to events
 		GW::CORE::GEventGenerator eventPusher;
 		std::shared_ptr<Level_Data> levelData;
+		bool shieldon1 = true;
+		bool shieldon2 = true;
+		bool shieldon3 = true;
 
 	public:
 		// attach the required logic to the ECS 
@@ -31,9 +34,11 @@ namespace ESG
 		// release any resources allocated by the system
 		bool Shutdown();
 		bool moveRight;
+		int timesMoved = 0;
+		float timer;
 
 	private:
-		bool FireLasersEnemy(flecs::world& stage, ESG::Position origin);
+		bool FireLasersEnemy(flecs::world& stage, GA::Position origin);
 
 	};
 
