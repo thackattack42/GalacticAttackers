@@ -1053,20 +1053,21 @@ void ESG::D3DRendererLogic::UIDraw()
 	static auto start = std::chrono::steady_clock::now();
 	double elapsedSec = std::chrono::duration_cast<std::chrono::seconds>(std::chrono::duration<double>(std::chrono::steady_clock::now() - start)).count();
 	double elapsedMin = std::chrono::duration_cast<std::chrono::minutes>(std::chrono::duration<double>(std::chrono::steady_clock::now() - start)).count();
-	if (int(elapsedSec) >= 60)
+	double elapsedcopy = elapsedSec;
+	if (int(elapsedcopy) >= 60)
 	{
-		elapsedSec -= 60 * int(elapsedSec/60);
+		elapsedcopy -= 60 * int(elapsedSec /60);
 	}
-	dynamicTextTime.SetText("0" + std::to_string(int(elapsedMin)) + ":" + "0" + std::to_string(int(elapsedSec)));
+	dynamicTextTime.SetText("0" + std::to_string(int(elapsedMin)) + ":" + "0" + std::to_string(int(elapsedcopy)));
 	if (elapsedSec >= 10 || elapsedMin >= 10)
 	{
-		if (elapsedSec >= 10 || elapsedMin >= 10)
+		if (elapsedcopy >= 10 || elapsedMin >= 10)
 		{
-			dynamicTextTime.SetText("0" + std::to_string(int(elapsedMin)) + ":" + std::to_string(int(elapsedSec)));
+			dynamicTextTime.SetText("0" + std::to_string(int(elapsedMin)) + ":" + std::to_string(int(elapsedcopy)));
 		}
 		if (elapsedMin >= 10)
 		{
-			dynamicTextTime.SetText(std::to_string(int(elapsedMin)) + ":0" + std::to_string(int(elapsedSec)));
+			dynamicTextTime.SetText(std::to_string(int(elapsedMin)) + ":0" + std::to_string(int(elapsedcopy)));
 		}
 	}
 	// update the dynamic text so we create the vertices
