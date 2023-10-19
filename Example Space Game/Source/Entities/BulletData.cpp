@@ -26,6 +26,8 @@ bool ESG::BulletData::Load(	std::shared_ptr<flecs::world> _game,
 	int pcount = (*readCfg).at("Lazers").at("projectiles").as<int>();
 	float frate = (*readCfg).at("Lazers").at("firerate").as<float>();
 	std::string fireFX = (*readCfg).at("Lazers").at("fireFX").as<std::string>();
+
+	std::string deathFX = (*readCfg).at("Lazers2").at("death").as<std::string>();
 	// default projectile scale
 	GW::MATH2D::GMATRIX2F world;
 	GW::MATH2D::GMatrix2D::Scale2F(GW::MATH2D::GIdentityMatrix2F, 
@@ -40,7 +42,6 @@ bool ESG::BulletData::Load(	std::shared_ptr<flecs::world> _game,
 		.set<Orientation>({ world })
 		.set<Acceleration>({ 0, 0 })
 		.set<Velocity>({ 0, speed })
-		.add<BulletTest>()
 		.set<ModelTransform>({GW::MATH::GIdentityMatrixF})
 		.set<GW::AUDIO::GSound>(shoot.Relinquish())
 		// .override<> ensures a component is unique to each entity created from a prefab 
@@ -50,24 +51,13 @@ bool ESG::BulletData::Load(	std::shared_ptr<flecs::world> _game,
 		.override<Bullet>() // Tag this prefab as a bullet (for queries/systems)
 		.override<Collidable>(); // can be collided with
 
-	auto lazerPrefab2 = _game->prefab("Crystal3.001")
-		// .set<> in a prefab means components are shared (instanced)
-		.set<Material>({ red, green, blue })
-		.set<Orientation>({ world })
-		.set<Acceleration>({ 0, 0 })
-		.set<Velocity>({ 0, speed })
-		.set<ModelTransform>({ GW::MATH::GIdentityMatrixF })
-		.set<GW::AUDIO::GSound>(shoot.Relinquish())
-		// .override<> ensures a component is unique to each entity created from a prefab 
-		.set_override<Damage>({ dmg })
-		//.set_override<ChargedShot>({ 2 })
-		.set<Position>({ 0,0 })
-		.override<Bullet>() // Tag this prefab as a bullet (for queries/systems)
-		.override<Collidable>(); // can be collided with
-
+	GW::AUDIO::GSound death;
+	death.Create(deathFX.c_str(), _audioEngine, 0.15f);
+	auto deathPrefab = _game->prefab("Crystal1")
+		.set<GW::AUDIO::GSound>(death.Relinquish());
 	// register this prefab by name so other systems can use it
 	RegisterPrefab("Lazer Bullet", lazerPrefab);
-	RegisterPrefab("Lazer Bullet2", lazerPrefab2);
+	RegisterPrefab("Death", deathPrefab);
 
 	return true;
 }
@@ -83,7 +73,6 @@ bool ESG::BulletData::Unload(std::shared_ptr<flecs::world> _game)
 
 	// unregister this prefab by name
 	UnregisterPrefab("Lazer Bullet");
-	UnregisterPrefab("Lazer Bullet2");
 
 	return true;
 }

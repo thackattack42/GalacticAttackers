@@ -22,7 +22,6 @@ bool ESG::EnemyLogic::Init(std::shared_ptr<flecs::world> _game,
 	eventPusher = _eventPusher;
 	levelData = _levelData;
 
-
 	// destroy any bullets that have the CollidedWith relationship
 	game->system<Enemy, Health, Position>("Enemy System")
 		.each([this](flecs::entity e, Enemy, Health& h, Position& p) {
@@ -35,28 +34,75 @@ bool ESG::EnemyLogic::Init(std::shared_ptr<flecs::world> _game,
 			explode.Write(ESG::PLAY_EVENT::ENEMY_DESTROYED, x);
 			eventPusher.Push(explode);
 		}
-
 		ModelTransform* edit = e.get_mut<ModelTransform>();
-		GW::MATH::GMatrix::TranslateGlobalF(edit->matrix, GW::MATH::GVECTORF{ p.value.x, -p.value.y, 0, 1}, edit->matrix);
-		levelData->levelTransforms[edit->rendererIndex] = edit->matrix;
-		
+		//moveRight = true;
+
+		if (moveRight)
+		{
+			GW::MATH::GMatrix::TranslateGlobalF(edit->matrix, GW::MATH::GVECTORF{ 0, 0, 1, 1 }, edit->matrix);
+			levelData->levelTransforms[edit->rendererIndex] = edit->matrix;
+			if (edit->matrix.row4.z >= 40)
+			{
+				moveRight = false;
+				GW::MATH::GMatrix::TranslateGlobalF(edit->matrix, GW::MATH::GVECTORF{ 0, -5, 0, 1 }, edit->matrix);
+				levelData->levelTransforms[edit->rendererIndex] = edit->matrix;
+			}
+		}
+		else if (!moveRight)
+		{
+			GW::MATH::GMatrix::TranslateGlobalF(edit->matrix, GW::MATH::GVECTORF{ 0, 0, -1, 1 }, edit->matrix);
+			levelData->levelTransforms[edit->rendererIndex] = edit->matrix;
+			if (edit->matrix.row4.z <= -40)
+			{
+				moveRight = true;
+				GW::MATH::GMatrix::TranslateGlobalF(edit->matrix, GW::MATH::GVECTORF{ 0, -5, 0, 1 }, edit->matrix);
+				levelData->levelTransforms[edit->rendererIndex] = edit->matrix;
+			}
+		}
+
 		//std::cout << "Moving " << edit->matrix.row4.x << " " << edit->matrix.row4.y << " " << edit->matrix.row4.z << std::endl;
 
 		if (edit->matrix.row4.y <= 30)
 		{
 			e.destruct();
-			std::cout << "Player Dies...You Lose";
-		}
-		p.value.x = 0;
-		p.value.y = 0;
-
-			/*for (int i = 0; i < 100; i++)
+			flecs::entity playerDeath;
+			RetreivePrefab("Death", playerDeath);
+			GW::AUDIO::GSound death = *playerDeath.get<GW::AUDIO::GSound>();
+			death.Play();
+			auto live = game->lookup("life 1");
+			if (live.is_valid())
 			{
-				if (i == 5)
+				live.destruct();
+			}
+			else {
+				auto live2 = game->lookup("life 2");
+				if (live2.is_valid())
 				{
-					FireLasersEnemy(e.world(), p);
+					live2.destruct();
+					
 				}
-			}*/
+				else
+				{
+					auto live3 = game->lookup("life 3");
+					if (live3.is_valid())
+					{
+						live3.destruct();
+						auto player = game->lookup("Player");
+						player.destruct();
+
+						ESG::PLAY_EVENT_DATA y;
+						GW::GEvent reset;
+						reset.Write(ESG::PLAY_EVENT::NEXT_LEVEL, y);
+						eventPusher.Push(reset);
+						std::cout << "Player Dies...You Lose";
+					}
+				}
+			}
+	
+		}
+		p.value = { 0, 0 };
+
+		//FireLasersEnemy(e.world(), p);
 		});
 
 	return true;
@@ -88,16 +134,15 @@ bool ESG::EnemyLogic::FireLasersEnemy(flecs::world& stage, Position origin)
 {
 	// Grab laser prefab
 	flecs::entity bullet;
-	bullet = game->lookup("Crystal3.001");
 	RetreivePrefab("Lazer Bullet", bullet);
 
 	// Laser start shoot position
-	auto laser = stage.entity().is_a(bullet)
+	origin.value.x -= 0.05f;
+	auto laserLeft = stage.entity().is_a(bullet)
 		.set<Position>(origin);
-	
-	ModelTransform* edit = bullet.get_mut<ModelTransform>();
-	GW::MATH::GMatrix::TranslateGlobalF(edit->matrix, GW::MATH::GVECTORF{ origin.value.x, -origin.value.y, 0, 1 }, edit->matrix);
-	levelData->levelTransforms[edit->rendererIndex] = edit->matrix;
+	origin.value.x += 0.1f;
+	auto laserRight = stage.entity().is_a(bullet)
+		.set<Position>(origin);
 
 	// Tank shot
 
