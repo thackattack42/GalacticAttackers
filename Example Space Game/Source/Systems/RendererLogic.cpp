@@ -21,7 +21,8 @@ void PrintLabeledDebugString(const char* label, const char* toPrint)
 bool GA::D3DRendererLogic::Init(	std::shared_ptr<flecs::world> _game, 
 								std::weak_ptr<const GameConfig> _gameConfig,
 								GW::GRAPHICS::GDirectX11Surface d3d11,
-								GW::SYSTEM::GWindow _window, std::shared_ptr<Level_Data> _levelData, std::shared_ptr<bool> _levelChange)
+								GW::SYSTEM::GWindow _window, std::shared_ptr<Level_Data> _levelData, std::shared_ptr<bool> _levelChange,
+								std::shared_ptr<bool> _youWin, std::shared_ptr<bool> _youLose)
 {
 // save a handle to the ECS & game settings
 game = _game;
@@ -30,6 +31,8 @@ direct11 = d3d11;
 window = _window;
 levelData = _levelData;
 levelChange = _levelChange;
+youWin = _youWin;
+youLose = _youLose;
 // Setup all vulkan resources
 if (LoadShaders3D() == false)
 return false;
@@ -215,28 +218,6 @@ void GA::D3DRendererLogic::InitializeGraphics()
 }
 bool GA::D3DRendererLogic::LoadUniforms()
 {
-//	VkDevice device = nullptr;
-//	VkPhysicalDevice physicalDevice = nullptr;
-//	vulkan.GetDevice((void**)&device);
-//	vulkan.GetPhysicalDevice((void**)&physicalDevice);
-//
-//	unsigned max_frames = 0;
-//	// to avoid per-frame resource sharing issues we give each "in-flight" frame its own buffer
-//	vulkan.GetSwapchainImageCount(max_frames);
-//	uniformHandle.resize(max_frames);
-//	uniformData.resize(max_frames);
-//	for (int i = 0; i < max_frames; ++i) {
-//	
-//		if (VK_SUCCESS != GvkHelper::create_buffer(physicalDevice, device,
-//			sizeof(INSTANCE_UNIFORMS), VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
-//			VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
-//			&uniformHandle[i], &uniformData[i]))
-//			return false;
-//			
-//		if (VK_SUCCESS != GvkHelper::write_to_buffer( device, uniformData[i], 
-//			&instanceData, sizeof(INSTANCE_UNIFORMS)))
-//			return false; 
-//	}
 //	// uniform buffers created
 	ID3D11Device* creator;
 	direct11.GetDevice((void**)&creator);
@@ -340,7 +321,7 @@ void GA::D3DRendererLogic::Create2DVertexBuffer(ID3D11Device* creator/*, const v
 	// vertex buffer creation
 	D3D11_SUBRESOURCE_DATA vbData = { verts, 0, 0 };
 	CD3D11_BUFFER_DESC vbDesc(sizeof(verts), D3D11_BIND_VERTEX_BUFFER);
-	creator->CreateBuffer(&vbDesc, &vbData, vertexBuffer2D.GetAddressOf());
+	creator->CreateBuffer(&vbDesc, &vbData, vertexBuffer2D.ReleaseAndGetAddressOf());
 }
 
 
@@ -354,7 +335,7 @@ void GA::D3DRendererLogic::Create2DIndexBuffer(ID3D11Device* creator/*, const vo
 	// index buffer creation
 	D3D11_SUBRESOURCE_DATA ibData = { indices, 0, 0 };
 	CD3D11_BUFFER_DESC ibDesc(sizeof(indices), D3D11_BIND_INDEX_BUFFER);
-	creator->CreateBuffer(&ibDesc, &ibData, indexBuffer2D.GetAddressOf());
+	creator->CreateBuffer(&ibDesc, &ibData, indexBuffer2D.ReleaseAndGetAddressOf());
 }
 
 
@@ -530,36 +511,6 @@ bool GA::D3DRendererLogic::LoadGeometry()
 	proxy.Create();
 	inputProxy.Create(window);
 
-	/*viewTranslation = { 55.0f,5.0f, 25.0f, 1.0f };*/
-	viewTranslation = { 140.0f, 5.0f, 0.0f, 1.0f };
-	//ViewMatrix
-	GW::MATH::GVECTORF viewCenter = { 0.0, 1.0f, 0.0f, 1.0f };
-	GW::MATH::GVECTORF viewUp = { 0.0f, 1.0f, 0.0f, 1.0f };
-	GW::MATH::GVECTORF vTranslate = { 0.0, -90.0f, 0.0f, 1.0f };
-	proxy.IdentityF(viewMatrix);
-	proxy.LookAtLHF(viewTranslation, viewCenter, viewUp, viewMatrix);
-	proxy.TranslateLocalF(viewMatrix, vTranslate, viewMatrix);
-
-	float ratio;
-	direct11.GetAspectRatio(ratio);
-	proxy.ProjectionDirectXLHF(G_DEGREE_TO_RADIAN(65.0f), ratio, 0.1f, 200.0f, projectionMatrix);
-
-	lightDir = { -1.0f, -1.0f, -2.0f, 1.0f };
-	lightColor = { 0.9f, 0.9f,1.0f, 1.0f };
-
-
-	scene.viewMatrix = viewMatrix;
-	scene.projectionMatrix = projectionMatrix;
-	scene.sunColor = lightColor;
-	scene.sunDirection = lightDir;
-	modelID.mat_id = levelData->levelMeshes[0].materialIndex;
-	modelID.mod_id = levelData->levelInstances[0].modelIndex;
-	modelID.numLights = levelData->levelLighting.size();
-
-	lightAmbient = { 0.25f, 0.25f, 0.35f, 1.0f };
-	scene.sunAmbient = lightAmbient;
-	scene.camerPos = viewTranslation;
-
 	Initialize3DVertexBuffer(creator);
 	Initialize3DIndexBuffer(creator);
 	InitializeConstantBuffer(creator);
@@ -579,13 +530,7 @@ bool GA::D3DRendererLogic::LoadGeometry()
 	{
 		lights.myLights[i] = levelData->levelLighting[i];
 	}
-	//std::vector<float> verts = {
-	//	-0.5f, -0.5f,
-	//	0, 0.5f,
-	//	0, -0.25f,
-	//	0.5f, -0.5f
-	//};
-	// Transfer triangle data to the vertex buffer. (staging buffer would be prefered here)
+
 	Initialize3DVertexBuffer(creator);
 	Initialize3DIndexBuffer(creator);
 
@@ -657,7 +602,7 @@ bool GA::D3DRendererLogic::LoadGeometry()
 	// DEFAULT usage lets us use UpdateSubResource
 	// DYNAMIC usage lets us use Map / Unmap
 	CD3D11_BUFFER_DESC cbDesc(sizeof(constantBufferData), D3D11_BIND_CONSTANT_BUFFER);
-	creator->CreateBuffer(&cbDesc, &cbData, constantBufferHUD.GetAddressOf());
+	creator->CreateBuffer(&cbDesc, &cbData, constantBufferHUD.ReleaseAndGetAddressOf());
 
 	// store the current width and height of the client's window
 	window.GetClientWidth(width);
@@ -686,7 +631,7 @@ bool GA::D3DRendererLogic::LoadGeometry()
 	const auto& staticVerts = staticTextHS.GetVertices();
 	D3D11_SUBRESOURCE_DATA svbData = { staticVerts.data(), 0, 0 };
 	CD3D11_BUFFER_DESC svbDesc(sizeof(TextVertex) * staticVerts.size(), D3D11_BIND_VERTEX_BUFFER);
-	creator->CreateBuffer(&svbDesc, &svbData, vertexBufferStaticTextHS.GetAddressOf());
+	creator->CreateBuffer(&svbDesc, &svbData, vertexBufferStaticTextHS.ReleaseAndGetAddressOf());
 
 	dynamicTextHS = Text();
 	dynamicTextHS.SetFont(&consolas32);
@@ -700,7 +645,7 @@ bool GA::D3DRendererLogic::LoadGeometry()
 
 	// vertex buffer creation for the staticText
 	CD3D11_BUFFER_DESC dvbDesc(sizeof(TextVertex) * 6 * 5000, D3D11_BIND_VERTEX_BUFFER, D3D11_USAGE_DYNAMIC, D3D11_CPU_ACCESS_WRITE);
-	creator->CreateBuffer(&dvbDesc, nullptr, vertexBufferDynamicTextHS.GetAddressOf());
+	creator->CreateBuffer(&dvbDesc, nullptr, vertexBufferDynamicTextHS.ReleaseAndGetAddressOf());
 
 	staticTextTime = Text();
 	staticTextTime.SetText("TIME:");
@@ -717,7 +662,7 @@ bool GA::D3DRendererLogic::LoadGeometry()
 	const auto& TstaticVerts = staticTextTime.GetVertices();
 	D3D11_SUBRESOURCE_DATA tsvbData = { TstaticVerts.data(), 0, 0 };
 	CD3D11_BUFFER_DESC tsvbDesc(sizeof(TextVertex) * TstaticVerts.size(), D3D11_BIND_VERTEX_BUFFER);
-	creator->CreateBuffer(&tsvbDesc, &tsvbData, vertexBufferStaticTextTime.GetAddressOf());
+	creator->CreateBuffer(&tsvbDesc, &tsvbData, vertexBufferStaticTextTime.ReleaseAndGetAddressOf());
 
 	dynamicTextTime = Text();
 	dynamicTextTime.SetFont(&consolas32);
@@ -731,7 +676,7 @@ bool GA::D3DRendererLogic::LoadGeometry()
 
 	// vertex buffer creation for the staticText
 	CD3D11_BUFFER_DESC tdvbDesc(sizeof(TextVertex) * 6 * 5000, D3D11_BIND_VERTEX_BUFFER, D3D11_USAGE_DYNAMIC, D3D11_CPU_ACCESS_WRITE);
-	creator->CreateBuffer(&tdvbDesc, nullptr, vertexBufferDynamicTextTime.GetAddressOf());
+	creator->CreateBuffer(&tdvbDesc, nullptr, vertexBufferDynamicTextTime.ReleaseAndGetAddressOf());
 
 	staticTextLives = Text();
 	staticTextLives.SetText("LIVES:");
@@ -748,7 +693,7 @@ bool GA::D3DRendererLogic::LoadGeometry()
 	const auto& LstaticVerts = staticTextLives.GetVertices();
 	D3D11_SUBRESOURCE_DATA lsvbData = { LstaticVerts.data(), 0, 0 };
 	CD3D11_BUFFER_DESC lsvbDesc(sizeof(TextVertex) * LstaticVerts.size(), D3D11_BIND_VERTEX_BUFFER);
-	creator->CreateBuffer(&lsvbDesc, &lsvbData, vertexBufferStaticTextLives.GetAddressOf());
+	creator->CreateBuffer(&lsvbDesc, &lsvbData, vertexBufferStaticTextLives.ReleaseAndGetAddressOf());
 
 	staticTextWin = Text();
 	staticTextWin.SetText("YOU WIN");
@@ -765,7 +710,7 @@ bool GA::D3DRendererLogic::LoadGeometry()
 	const auto& WstaticVerts = staticTextWin.GetVertices();
 	D3D11_SUBRESOURCE_DATA wsvbData = { WstaticVerts.data(), 0, 0 };
 	CD3D11_BUFFER_DESC wsvbDesc(sizeof(TextVertex)* WstaticVerts.size(), D3D11_BIND_VERTEX_BUFFER);
-	creator->CreateBuffer(&wsvbDesc, &wsvbData, vertexBufferStaticTextWin.GetAddressOf());
+	creator->CreateBuffer(&wsvbDesc, &wsvbData, vertexBufferStaticTextWin.ReleaseAndGetAddressOf());
 
 	staticTextLose = Text();
 	staticTextLose.SetText("YOU LOSE");
@@ -782,7 +727,7 @@ bool GA::D3DRendererLogic::LoadGeometry()
 	const auto& LSstaticVerts = staticTextLose.GetVertices();
 	D3D11_SUBRESOURCE_DATA lssvbData = { LSstaticVerts.data(), 0, 0 };
 	CD3D11_BUFFER_DESC lssvbDesc(sizeof(TextVertex)* LSstaticVerts.size(), D3D11_BIND_VERTEX_BUFFER);
-	creator->CreateBuffer(&lssvbDesc, &lssvbData, vertexBufferStaticTextLose.GetAddressOf());
+	creator->CreateBuffer(&lssvbDesc, &lssvbData, vertexBufferStaticTextLose.ReleaseAndGetAddressOf());
 
 	creator->Release();
 	return true;
@@ -890,26 +835,6 @@ bool GA::D3DRendererLogic::SetupDrawcalls() // I SCREWED THIS UP MAKES SO MUCH S
 		.each([this](flecs::entity e, Position& p, Orientation& o, Material& m) {
 		// copy all data to our instancing array
 
-		
-		ModelTransform* bullet = e.get_mut<ModelTransform>();
-
-		if (e.has<BulletTest>())
-		{
-
-			//GW::MATH::GMatrix::TranslateGlobalF(bullet->matrix, GW::MATH::GVECTORF{ 5, 5, 0, 1 }, bullet->matrix);
-			//levelData->levelTransforms[bullet->rendererIndex] = bullet->matrix;
-
-			/*GW::MATH::GMATRIXF bullet = GW::MATH::GIdentityMatrixF;
-			bullet.row4.x = p.value.x;
-			bullet.row4.y = p.value.y;
-
-			bullet.row1.x = o.value.row1.x;
-			bullet.row1.y = o.value.row1.y;
-			bullet.row2.x = o.value.row2.x;
-			bullet.row2.y = o.value.row2.y;
-			bulletMoves.push_back(bullet);*/
-
-
 			LevelSwitch();
 			//int i = draw_counter;
 			//instanceData.instance_transforms[i] = GW::MATH::GIdentityMatrixF;
@@ -930,7 +855,6 @@ bool GA::D3DRendererLogic::SetupDrawcalls() // I SCREWED THIS UP MAKES SO MUCH S
 			//// if v < 0 then 0, else 1, https://graphics.stanford.edu/~seander/bithacks.html
 			//int sign = 1 ^ ((unsigned int)v >> (sizeof(int) * CHAR_BIT - 1));
 			//draw_counter += sign;
-		}
 			});
 
 	// runs once per frame after updateDraw
@@ -1182,7 +1106,7 @@ void GA::D3DRendererLogic::UIDraw()
 	inputProxy.GetState(65, one);
 	inputProxy.GetState(66, two);
 
-	if (one > 0 || conditionWin)
+	if (*youWin)
 	{
 		conditionLose = false;
 		curHandles.context->IASetVertexBuffers(0, 1, vertexBufferStaticTextWin.GetAddressOf(), strides, offsets);
@@ -1198,7 +1122,7 @@ void GA::D3DRendererLogic::UIDraw()
 		curHandles.context->Draw(staticTextWin.GetVertices().size(), 0);
 		conditionWin = true;
 	}
-	if (two > 0 || conditionLose)
+	if (*youLose)
 	{
 		conditionWin = false;
 		curHandles.context->IASetVertexBuffers(0, 1, vertexBufferStaticTextLose.GetAddressOf(), strides, offsets);
@@ -1245,7 +1169,9 @@ bool GA::D3DRendererLogic::FreeResources()
 }
 void GA::D3DRendererLogic::LevelSwitch()
 {
-	if (*levelChange)
+	float one = 0.0f;
+	inputProxy.GetState(G_KEY_F1, one);
+	if (one != 0.0f)
 	{
 		IShellItem* pShellItem = nullptr;
 		COMDLG_FILTERSPEC ComDlgFS[1] = { {L"Text Files", L"*.txt"} };
