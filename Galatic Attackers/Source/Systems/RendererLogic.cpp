@@ -6,6 +6,8 @@
 #include "../Components/Components.h"
 #include <Shobjidl.h>
 #include <d3dcompiler.h>
+#include "../Components/Gameplay.h"
+#include "../Entities/Prefabs.h"
 #pragma comment(lib, "d3dcompiler.lib") 
 using namespace GA; // Example Space Game
 
@@ -21,7 +23,8 @@ void PrintLabeledDebugString(const char* label, const char* toPrint)
 bool GA::D3DRendererLogic::Init(	std::shared_ptr<flecs::world> _game, 
 								std::weak_ptr<const GameConfig> _gameConfig,
 								GW::GRAPHICS::GDirectX11Surface d3d11,
-								GW::SYSTEM::GWindow _window, std::shared_ptr<Level_Data> _levelData, std::shared_ptr<bool> _levelChange)
+								GW::SYSTEM::GWindow _window, std::shared_ptr<Level_Data> _levelData, std::shared_ptr<bool> _levelChange,
+								std::shared_ptr<bool> _youWin, std::shared_ptr<bool> _youLose, std::vector<flecs::entity> _entityVec)
 {
 // save a handle to the ECS & game settings
 game = _game;
@@ -30,6 +33,9 @@ direct11 = d3d11;
 window = _window;
 levelData = _levelData;
 levelChange = _levelChange;
+youWin = _youWin;
+youLose = _youLose;
+entityVec = _entityVec;
 // Setup all vulkan resources
 if (LoadShaders3D() == false)
 return false;
@@ -215,28 +221,6 @@ void GA::D3DRendererLogic::InitializeGraphics()
 }
 bool GA::D3DRendererLogic::LoadUniforms()
 {
-//	VkDevice device = nullptr;
-//	VkPhysicalDevice physicalDevice = nullptr;
-//	vulkan.GetDevice((void**)&device);
-//	vulkan.GetPhysicalDevice((void**)&physicalDevice);
-//
-//	unsigned max_frames = 0;
-//	// to avoid per-frame resource sharing issues we give each "in-flight" frame its own buffer
-//	vulkan.GetSwapchainImageCount(max_frames);
-//	uniformHandle.resize(max_frames);
-//	uniformData.resize(max_frames);
-//	for (int i = 0; i < max_frames; ++i) {
-//	
-//		if (VK_SUCCESS != GvkHelper::create_buffer(physicalDevice, device,
-//			sizeof(INSTANCE_UNIFORMS), VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
-//			VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
-//			&uniformHandle[i], &uniformData[i]))
-//			return false;
-//			
-//		if (VK_SUCCESS != GvkHelper::write_to_buffer( device, uniformData[i], 
-//			&instanceData, sizeof(INSTANCE_UNIFORMS)))
-//			return false; 
-//	}
 //	// uniform buffers created
 	ID3D11Device* creator;
 	direct11.GetDevice((void**)&creator);
@@ -340,7 +324,7 @@ void GA::D3DRendererLogic::Create2DVertexBuffer(ID3D11Device* creator/*, const v
 	// vertex buffer creation
 	D3D11_SUBRESOURCE_DATA vbData = { verts, 0, 0 };
 	CD3D11_BUFFER_DESC vbDesc(sizeof(verts), D3D11_BIND_VERTEX_BUFFER);
-	creator->CreateBuffer(&vbDesc, &vbData, vertexBuffer2D.GetAddressOf());
+	creator->CreateBuffer(&vbDesc, &vbData, vertexBuffer2D.ReleaseAndGetAddressOf());
 }
 
 
@@ -354,7 +338,7 @@ void GA::D3DRendererLogic::Create2DIndexBuffer(ID3D11Device* creator/*, const vo
 	// index buffer creation
 	D3D11_SUBRESOURCE_DATA ibData = { indices, 0, 0 };
 	CD3D11_BUFFER_DESC ibDesc(sizeof(indices), D3D11_BIND_INDEX_BUFFER);
-	creator->CreateBuffer(&ibDesc, &ibData, indexBuffer2D.GetAddressOf());
+	creator->CreateBuffer(&ibDesc, &ibData, indexBuffer2D.ReleaseAndGetAddressOf());
 }
 
 
@@ -530,36 +514,6 @@ bool GA::D3DRendererLogic::LoadGeometry()
 	proxy.Create();
 	inputProxy.Create(window);
 
-	/*viewTranslation = { 55.0f,5.0f, 25.0f, 1.0f };*/
-	viewTranslation = { 140.0f, 5.0f, 0.0f, 1.0f };
-	//ViewMatrix
-	GW::MATH::GVECTORF viewCenter = { 0.0, 1.0f, 0.0f, 1.0f };
-	GW::MATH::GVECTORF viewUp = { 0.0f, 1.0f, 0.0f, 1.0f };
-	GW::MATH::GVECTORF vTranslate = { 0.0, -90.0f, 0.0f, 1.0f };
-	proxy.IdentityF(viewMatrix);
-	proxy.LookAtLHF(viewTranslation, viewCenter, viewUp, viewMatrix);
-	proxy.TranslateLocalF(viewMatrix, vTranslate, viewMatrix);
-
-	float ratio;
-	direct11.GetAspectRatio(ratio);
-	proxy.ProjectionDirectXLHF(G_DEGREE_TO_RADIAN(65.0f), ratio, 0.1f, 200.0f, projectionMatrix);
-
-	lightDir = { -1.0f, -1.0f, -2.0f, 1.0f };
-	lightColor = { 0.9f, 0.9f,1.0f, 1.0f };
-
-
-	scene.viewMatrix = viewMatrix;
-	scene.projectionMatrix = projectionMatrix;
-	scene.sunColor = lightColor;
-	scene.sunDirection = lightDir;
-	modelID.mat_id = levelData->levelMeshes[0].materialIndex;
-	modelID.mod_id = levelData->levelInstances[0].modelIndex;
-	modelID.numLights = levelData->levelLighting.size();
-
-	lightAmbient = { 0.25f, 0.25f, 0.35f, 1.0f };
-	scene.sunAmbient = lightAmbient;
-	scene.camerPos = viewTranslation;
-
 	Initialize3DVertexBuffer(creator);
 	Initialize3DIndexBuffer(creator);
 	InitializeConstantBuffer(creator);
@@ -579,13 +533,7 @@ bool GA::D3DRendererLogic::LoadGeometry()
 	{
 		lights.myLights[i] = levelData->levelLighting[i];
 	}
-	//std::vector<float> verts = {
-	//	-0.5f, -0.5f,
-	//	0, 0.5f,
-	//	0, -0.25f,
-	//	0.5f, -0.5f
-	//};
-	// Transfer triangle data to the vertex buffer. (staging buffer would be prefered here)
+
 	Initialize3DVertexBuffer(creator);
 	Initialize3DIndexBuffer(creator);
 
@@ -657,7 +605,7 @@ bool GA::D3DRendererLogic::LoadGeometry()
 	// DEFAULT usage lets us use UpdateSubResource
 	// DYNAMIC usage lets us use Map / Unmap
 	CD3D11_BUFFER_DESC cbDesc(sizeof(constantBufferData), D3D11_BIND_CONSTANT_BUFFER);
-	creator->CreateBuffer(&cbDesc, &cbData, constantBufferHUD.GetAddressOf());
+	creator->CreateBuffer(&cbDesc, &cbData, constantBufferHUD.ReleaseAndGetAddressOf());
 
 	// store the current width and height of the client's window
 	window.GetClientWidth(width);
@@ -686,7 +634,7 @@ bool GA::D3DRendererLogic::LoadGeometry()
 	const auto& staticVerts = staticTextHS.GetVertices();
 	D3D11_SUBRESOURCE_DATA svbData = { staticVerts.data(), 0, 0 };
 	CD3D11_BUFFER_DESC svbDesc(sizeof(TextVertex) * staticVerts.size(), D3D11_BIND_VERTEX_BUFFER);
-	creator->CreateBuffer(&svbDesc, &svbData, vertexBufferStaticTextHS.GetAddressOf());
+	creator->CreateBuffer(&svbDesc, &svbData, vertexBufferStaticTextHS.ReleaseAndGetAddressOf());
 
 	dynamicTextHS = Text();
 	dynamicTextHS.SetFont(&consolas32);
@@ -700,7 +648,7 @@ bool GA::D3DRendererLogic::LoadGeometry()
 
 	// vertex buffer creation for the staticText
 	CD3D11_BUFFER_DESC dvbDesc(sizeof(TextVertex) * 6 * 5000, D3D11_BIND_VERTEX_BUFFER, D3D11_USAGE_DYNAMIC, D3D11_CPU_ACCESS_WRITE);
-	creator->CreateBuffer(&dvbDesc, nullptr, vertexBufferDynamicTextHS.GetAddressOf());
+	creator->CreateBuffer(&dvbDesc, nullptr, vertexBufferDynamicTextHS.ReleaseAndGetAddressOf());
 
 	staticTextTime = Text();
 	staticTextTime.SetText("TIME:");
@@ -717,7 +665,7 @@ bool GA::D3DRendererLogic::LoadGeometry()
 	const auto& TstaticVerts = staticTextTime.GetVertices();
 	D3D11_SUBRESOURCE_DATA tsvbData = { TstaticVerts.data(), 0, 0 };
 	CD3D11_BUFFER_DESC tsvbDesc(sizeof(TextVertex) * TstaticVerts.size(), D3D11_BIND_VERTEX_BUFFER);
-	creator->CreateBuffer(&tsvbDesc, &tsvbData, vertexBufferStaticTextTime.GetAddressOf());
+	creator->CreateBuffer(&tsvbDesc, &tsvbData, vertexBufferStaticTextTime.ReleaseAndGetAddressOf());
 
 	dynamicTextTime = Text();
 	dynamicTextTime.SetFont(&consolas32);
@@ -731,7 +679,7 @@ bool GA::D3DRendererLogic::LoadGeometry()
 
 	// vertex buffer creation for the staticText
 	CD3D11_BUFFER_DESC tdvbDesc(sizeof(TextVertex) * 6 * 5000, D3D11_BIND_VERTEX_BUFFER, D3D11_USAGE_DYNAMIC, D3D11_CPU_ACCESS_WRITE);
-	creator->CreateBuffer(&tdvbDesc, nullptr, vertexBufferDynamicTextTime.GetAddressOf());
+	creator->CreateBuffer(&tdvbDesc, nullptr, vertexBufferDynamicTextTime.ReleaseAndGetAddressOf());
 
 	staticTextLives = Text();
 	staticTextLives.SetText("LIVES:");
@@ -748,7 +696,7 @@ bool GA::D3DRendererLogic::LoadGeometry()
 	const auto& LstaticVerts = staticTextLives.GetVertices();
 	D3D11_SUBRESOURCE_DATA lsvbData = { LstaticVerts.data(), 0, 0 };
 	CD3D11_BUFFER_DESC lsvbDesc(sizeof(TextVertex) * LstaticVerts.size(), D3D11_BIND_VERTEX_BUFFER);
-	creator->CreateBuffer(&lsvbDesc, &lsvbData, vertexBufferStaticTextLives.GetAddressOf());
+	creator->CreateBuffer(&lsvbDesc, &lsvbData, vertexBufferStaticTextLives.ReleaseAndGetAddressOf());
 
 	staticTextWin = Text();
 	staticTextWin.SetText("YOU WIN");
@@ -765,7 +713,7 @@ bool GA::D3DRendererLogic::LoadGeometry()
 	const auto& WstaticVerts = staticTextWin.GetVertices();
 	D3D11_SUBRESOURCE_DATA wsvbData = { WstaticVerts.data(), 0, 0 };
 	CD3D11_BUFFER_DESC wsvbDesc(sizeof(TextVertex)* WstaticVerts.size(), D3D11_BIND_VERTEX_BUFFER);
-	creator->CreateBuffer(&wsvbDesc, &wsvbData, vertexBufferStaticTextWin.GetAddressOf());
+	creator->CreateBuffer(&wsvbDesc, &wsvbData, vertexBufferStaticTextWin.ReleaseAndGetAddressOf());
 
 	staticTextLose = Text();
 	staticTextLose.SetText("YOU LOSE");
@@ -782,7 +730,7 @@ bool GA::D3DRendererLogic::LoadGeometry()
 	const auto& LSstaticVerts = staticTextLose.GetVertices();
 	D3D11_SUBRESOURCE_DATA lssvbData = { LSstaticVerts.data(), 0, 0 };
 	CD3D11_BUFFER_DESC lssvbDesc(sizeof(TextVertex)* LSstaticVerts.size(), D3D11_BIND_VERTEX_BUFFER);
-	creator->CreateBuffer(&lssvbDesc, &lssvbData, vertexBufferStaticTextLose.GetAddressOf());
+	creator->CreateBuffer(&lssvbDesc, &lssvbData, vertexBufferStaticTextLose.ReleaseAndGetAddressOf());
 
 	creator->Release();
 	return true;
@@ -877,7 +825,11 @@ bool GA::D3DRendererLogic::SetupDrawcalls() // I SCREWED THIS UP MAKES SO MUCH S
 	startDraw = game->system<RenderingSystem>().kind(flecs::PreUpdate)
 		.each([this](flecs::entity e, RenderingSystem& s) {
 		// reset the draw counter only once per frame
-		draw_counter = 0;
+		if (createEnt)
+		{
+			UpdateLevelEnt();
+			createEnt = false;
+		}
 		//loop over levelData->levelTransforms
 		//copy over to mesh.WorldMatrix[i] = levelTransforms
 		for (int i = 0; i < levelData->levelTransforms.size(); ++i)
@@ -889,26 +841,6 @@ bool GA::D3DRendererLogic::SetupDrawcalls() // I SCREWED THIS UP MAKES SO MUCH S
 	updateDraw = game->system<Position, Orientation, Material>().kind(flecs::OnUpdate)
 		.each([this](flecs::entity e, Position& p, Orientation& o, Material& m) {
 		// copy all data to our instancing array
-
-		
-		ModelTransform* bullet = e.get_mut<ModelTransform>();
-
-		if (e.has<BulletTest>())
-		{
-
-			//GW::MATH::GMatrix::TranslateGlobalF(bullet->matrix, GW::MATH::GVECTORF{ 5, 5, 0, 1 }, bullet->matrix);
-			//levelData->levelTransforms[bullet->rendererIndex] = bullet->matrix;
-
-			/*GW::MATH::GMATRIXF bullet = GW::MATH::GIdentityMatrixF;
-			bullet.row4.x = p.value.x;
-			bullet.row4.y = p.value.y;
-
-			bullet.row1.x = o.value.row1.x;
-			bullet.row1.y = o.value.row1.y;
-			bullet.row2.x = o.value.row2.x;
-			bullet.row2.y = o.value.row2.y;
-			bulletMoves.push_back(bullet);*/
-
 
 			LevelSwitch();
 			//int i = draw_counter;
@@ -930,44 +862,12 @@ bool GA::D3DRendererLogic::SetupDrawcalls() // I SCREWED THIS UP MAKES SO MUCH S
 			//// if v < 0 then 0, else 1, https://graphics.stanford.edu/~seander/bithacks.html
 			//int sign = 1 ^ ((unsigned int)v >> (sizeof(int) * CHAR_BIT - 1));
 			//draw_counter += sign;
-		}
 			});
 
 	// runs once per frame after updateDraw
 	completeDraw = game->system<Instance>().kind(flecs::PostUpdate)
 		.each([this](flecs::entity e, Instance& s) {
-		// run the rendering code just once!
-		// Copy data to this frame's buffer
-		//VkDevice device = nullptr;
-		//vulkan.GetDevice((void**)&device);
-		//unsigned int activeBuffer;
-		//vulkan.GetSwapchainCurrentImage(activeBuffer);
-		//GvkHelper::write_to_buffer(device, 
-		//	uniformData[activeBuffer], &instanceData, sizeof(INSTANCE_UNIFORMS));
-		//// grab the current Vulkan commandBuffer
-		//unsigned int currentBuffer;
-		//vulkan.GetSwapchainCurrentImage(currentBuffer);
-		//VkCommandBuffer commandBuffer;
-		//vulkan.GetCommandBuffer(currentBuffer, (void**)&commandBuffer);
-		//// what is the current client area dimensions?
-		//unsigned int width, height;
-		//window.GetClientWidth(width);
-		//window.GetClientHeight(height);
-		//// setup the pipeline's dynamic settings
-		//VkViewport viewport = {
-		//	0, 0, static_cast<float>(width), static_cast<float>(height), 0, 1
-		//};
-		//VkRect2D scissor = { {0, 0}, {width, height} };
-		//vkCmdSetViewport(commandBuffer, 0, 1, &viewport);
-		//vkCmdSetScissor(commandBuffer, 0, 1, &scissor);
-		//vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline);
-		//// Set the descriptorSet that contains the uniform buffer allocated for this framebuffer 
-		//vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS,
-		//	pipelineLayout, 0, 1, &descriptorSet[currentBuffer], 0, nullptr);
-		//// now we can draw
-		//VkDeviceSize offsets[] = { 0 };
-		//vkCmdBindVertexBuffers(commandBuffer, 0, 1, &vertexHandle, offsets);
-		//vkCmdDraw(commandBuffer, 4, draw_counter, 0, 0); // draw'em all!
+
 		PipelineHandles curHandles = GetCurrentPipelineHandles();
 		SetUpPipeline(curHandles);
 		curHandles.context->UpdateSubresource(constantSceneBuffer.Get(), 0, nullptr, &scene, 0, 0);
@@ -975,24 +875,7 @@ bool GA::D3DRendererLogic::SetupDrawcalls() // I SCREWED THIS UP MAKES SO MUCH S
 		curHandles.context->UpdateSubresource(constantLightBuffer.Get(), 0, nullptr, &lights, 0, 0);
 
 		modelID.mod_id = e.get<Instance>()->transformStart;
-		/*if (e.has<BulletTest>())
-		{
-			for (int i = 0; i < (int)bulletMoves.size(); i++)
-			{
-				curHandles.context->UpdateSubresource(constantMeshBuffer.Get(), 0, nullptr, &mesh, 0, 0);
-				auto meshCount = e.get_mut<Object>()->meshStart;
-				modelID.mat_id = levelData->levelMeshes[meshCount].materialIndex + e.get_mut<Object>()->materialStart;
 
-				auto colorModel = e.get_mut<Material>()->diffuse.value;
-				modelID.color = GW::MATH::GVECTORF{ colorModel.x, colorModel.y, colorModel.z, 1 };
-				curHandles.context->UpdateSubresource(constantModelBuffer.Get(), 0, nullptr, &modelID, 0, 0);
-				curHandles.context->DrawIndexedInstanced(levelData->levelMeshes[2].drawInfo.indexCount,
-					draw_counter,
-					levelData->levelMeshes[2].drawInfo.indexOffset + e.get_mut<Object>()->indexStart
-					,e.get_mut<Object>()->vertexStart, 0);
-			}
-		}
-		else {*/
 		for (unsigned int j = 0; j < e.get<Object>()->meshCount; ++j)
 		{
 			auto meshCount = e.get<Object>()->meshStart + j;
@@ -1182,7 +1065,7 @@ void GA::D3DRendererLogic::UIDraw()
 	inputProxy.GetState(65, one);
 	inputProxy.GetState(66, two);
 
-	if (one > 0 || conditionWin)
+	if (*youWin)
 	{
 		conditionLose = false;
 		curHandles.context->IASetVertexBuffers(0, 1, vertexBufferStaticTextWin.GetAddressOf(), strides, offsets);
@@ -1198,7 +1081,7 @@ void GA::D3DRendererLogic::UIDraw()
 		curHandles.context->Draw(staticTextWin.GetVertices().size(), 0);
 		conditionWin = true;
 	}
-	if (two > 0 || conditionLose)
+	if (*youLose)
 	{
 		conditionWin = false;
 		curHandles.context->IASetVertexBuffers(0, 1, vertexBufferStaticTextLose.GetAddressOf(), strides, offsets);
@@ -1245,7 +1128,9 @@ bool GA::D3DRendererLogic::FreeResources()
 }
 void GA::D3DRendererLogic::LevelSwitch()
 {
-	if (*levelChange)
+	float one = 0.0f;
+	inputProxy.GetState(G_KEY_F1, one);
+	if (one != 0.0f)
 	{
 		IShellItem* pShellItem = nullptr;
 		COMDLG_FILTERSPEC ComDlgFS[1] = { {L"Text Files", L"*.txt"} };
@@ -1275,8 +1160,13 @@ void GA::D3DRendererLogic::LevelSwitch()
 							std::string base_file = fileName.substr(fileName.find_last_of("/\\") + 1);
 							std::string search = "../" + base_file;
 							GW::SYSTEM::GLog log;
-							
+							for (int i = 0; i < entityVec.size(); ++i)
+							{
+								entityVec[i].destruct();
+							}
+							entityVec.clear();
 							bool levelLoaded = levelData->LoadLevel(search.c_str(), "../Models", log);
+							createEnt = true;
 							if (LoadGeometry())
 							{
 								PipelineHandles handles = GetCurrentPipelineHandles();
@@ -1293,5 +1183,70 @@ void GA::D3DRendererLogic::LevelSwitch()
 			}
 			CoUninitialize();
 		}
+	}
+}
+void GA::D3DRendererLogic::UpdateLevelEnt()
+{
+	for (auto& i : levelData->blenderObjects) {
+		// create entity with same name as blender object
+		auto ent = game->entity(i.blendername);
+		ent.set<BlenderName>({ i.blendername });
+		ent.set<ModelBoundary>({
+			levelData->levelColliders[levelData->levelModels[i.modelIndex].colliderIndex] });
+
+		ent.set<ModelTransform>({
+			levelData->levelTransforms[i.transformIndex], i.transformIndex });
+		ent.set<Material>({ 1, 1, 1 });
+		ent.add<RenderingSystem>();
+		ent.set<Instance>({ levelData->levelInstances[i.modelIndex].transformStart,
+							levelData->levelInstances[i.modelIndex].transformCount });
+
+		ent.set<Object>({ levelData->levelModels[i.modelIndex].vertexCount,
+						levelData->levelModels[i.modelIndex].indexCount,
+						levelData->levelModels[i.modelIndex].materialCount,
+						levelData->levelModels[i.modelIndex].meshCount,
+						levelData->levelModels[i.modelIndex].vertexStart,
+						levelData->levelModels[i.modelIndex].indexStart,
+						levelData->levelModels[i.modelIndex].materialStart,
+						levelData->levelModels[i.modelIndex].meshStart });
+
+		ent.set<Mesh>({ levelData->levelMeshes[i.modelIndex].drawInfo.indexCount,
+						levelData->levelMeshes[i.modelIndex].drawInfo.indexOffset,
+						levelData->levelMeshes[i.modelIndex].materialIndex });
+
+		entityVec.push_back(ent);
+	}
+	CreatePlayer();
+}
+
+void GA::D3DRendererLogic::CreatePlayer()
+{
+	std::shared_ptr<const GameConfig> readCfg = gameConfig.lock();
+	// color
+	float red = (*readCfg).at("Player").at("red").as<float>();
+	float green = (*readCfg).at("Player").at("green").as<float>();
+	float blue = (*readCfg).at("Player").at("blue").as<float>();
+
+	float red1 = (*readCfg).at("Shield").at("red").as<float>();
+	float green1 = (*readCfg).at("Shield").at("green").as<float>();
+	float blue1 = (*readCfg).at("Shield").at("blue").as<float>();
+	// start position
+	float xstart = (*readCfg).at("Player").at("xstart").as<float>();
+	float ystart = (*readCfg).at("Player").at("ystart").as<float>();
+	float scale = (*readCfg).at("Player").at("scale").as<float>();
+
+	auto e = game->lookup("Player");
+	// if the entity is valid
+	if (e.is_valid()) {
+		e.add<Player>();
+		e.add<Collidable>();
+		e.set<Material>({ red, green, blue });
+		e.set<Position>({ xstart, ystart });
+		e.set<ControllerID>({ 0 });
+	}
+	auto a = game->lookup("shield");
+	if (a.is_valid()) {
+		a.add<Collidable>();
+		a.set<Material>({ red1, green1, blue1 });
 	}
 }

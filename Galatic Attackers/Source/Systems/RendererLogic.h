@@ -65,6 +65,9 @@ namespace GA
 		GW::SYSTEM::GWindow window;
 		GW::MATH::GMatrix proxy;
 		std::shared_ptr<bool> levelChange;
+		std::shared_ptr<bool> youWin;
+		std::shared_ptr<bool> youLose;
+		std::vector<flecs::entity> entityVec;
 		// Directx11 resources used for rendering
 		std::shared_ptr<Level_Data> levelData;
 		GW::GRAPHICS::GDirectX11Surface direct11;
@@ -129,6 +132,7 @@ namespace GA
 		GW::INPUT::GInput inputProxy;
 		bool conditionWin = false;
 		bool conditionLose = false;
+		bool createEnt = false;
 		// used to trigger clean up of vulkan resources
 		GW::CORE::GEventReceiver shutdown;
 	public:
@@ -141,7 +145,9 @@ namespace GA
 		bool Init(std::shared_ptr<flecs::world> _game,
 			std::weak_ptr<const GameConfig> _gameConfig,
 			GW::GRAPHICS::GDirectX11Surface _direct11,
-			GW::SYSTEM::GWindow _window, std::shared_ptr<Level_Data> _levelData, std::shared_ptr<bool> _levelChange);
+			GW::SYSTEM::GWindow _window, std::shared_ptr<Level_Data> _levelData, 
+			std::shared_ptr<bool> _levelChange, std::shared_ptr<bool> _youWin, std::shared_ptr<bool> _youLose,
+			std::vector<flecs::entity> _entityVec);
 		// control if the system is actively running
 		bool Activate(bool runSystem);
 		// release any resources allocated by the system
@@ -185,6 +191,10 @@ namespace GA
 		void GA::D3DRendererLogic::ReleasePipelineHandles(PipelineHandles toRelease);
 		PipelineHandles GetCurrentPipelineHandles();
 		void LevelSwitch();
+		void UpdateLevelEnt();
+		void CreatePlayer();
+		void CreateEnemies();
+		void CreateBullets();
 		// Unloading funcs
 		bool FreeResources();
 		// Utility funcs

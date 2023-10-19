@@ -41,12 +41,12 @@ bool GA::EnemyLogic::Init(std::shared_ptr<flecs::world> _game,
 			timer--;
 			if (timer <= 0)
 			{
-				GW::MATH::GMatrix::TranslateGlobalF(edit->matrix, GW::MATH::GVECTORF{ 0, 0, 0.026, 1 }, edit->matrix);
+				GW::MATH::GMatrix::TranslateGlobalF(edit->matrix, GW::MATH::GVECTORF{ 0, 0, .6, 1 }, edit->matrix);
 				levelData->levelTransforms[edit->rendererIndex] = edit->matrix;
 				timesMoved++;
 				timer = e.delta_time() * 1000;
 			}
-			if (timesMoved >= 1000)
+			if (timesMoved >= 100)
 			{
 				moveRight = false;
 				GW::MATH::GMatrix::TranslateGlobalF(edit->matrix, GW::MATH::GVECTORF{ 0, -3, 0, 1 }, edit->matrix);
@@ -58,7 +58,7 @@ bool GA::EnemyLogic::Init(std::shared_ptr<flecs::world> _game,
 			timer--;
 			if (timer <= 0)
 			{
-				GW::MATH::GMatrix::TranslateGlobalF(edit->matrix, GW::MATH::GVECTORF{ 0, 0, -0.026, 1 }, edit->matrix);
+				GW::MATH::GMatrix::TranslateGlobalF(edit->matrix, GW::MATH::GVECTORF{ 0, 0, -.6, 1 }, edit->matrix);
 				levelData->levelTransforms[edit->rendererIndex] = edit->matrix;
 				timesMoved--;
 				timer = e.delta_time() * 1000;
@@ -119,9 +119,9 @@ bool GA::EnemyLogic::Init(std::shared_ptr<flecs::world> _game,
 						player.destruct();
 
 						GA::PLAY_EVENT_DATA y;
-						GW::GEvent reset;
-						reset.Write(GA::PLAY_EVENT::NEXT_LEVEL, y);
-						eventPusher.Push(reset);
+						GW::GEvent youLose;
+						//youLose.Write(GA::PLAY_EVENT::LOSE, y);
+						eventPusher.Push(youLose);
 						std::cout << "Player Dies...You Lose";
 					}
 				}
