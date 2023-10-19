@@ -35,27 +35,38 @@ bool ESG::EnemyLogic::Init(std::shared_ptr<flecs::world> _game,
 			eventPusher.Push(explode);
 		}
 		ModelTransform* edit = e.get_mut<ModelTransform>();
-		//moveRight = true;
 
 		if (moveRight)
 		{
-			GW::MATH::GMatrix::TranslateGlobalF(edit->matrix, GW::MATH::GVECTORF{ 0, 0, 1, 1 }, edit->matrix);
-			levelData->levelTransforms[edit->rendererIndex] = edit->matrix;
-			if (edit->matrix.row4.z >= 40)
+			timer--;
+			if (timer <= 0)
+			{
+				GW::MATH::GMatrix::TranslateGlobalF(edit->matrix, GW::MATH::GVECTORF{ 0, 0, 0.026, 1 }, edit->matrix);
+				levelData->levelTransforms[edit->rendererIndex] = edit->matrix;
+				timesMoved++;
+				timer = e.delta_time() * 1000;
+			}
+			if (timesMoved >= 1000)
 			{
 				moveRight = false;
-				GW::MATH::GMatrix::TranslateGlobalF(edit->matrix, GW::MATH::GVECTORF{ 0, -5, 0, 1 }, edit->matrix);
+				GW::MATH::GMatrix::TranslateGlobalF(edit->matrix, GW::MATH::GVECTORF{ 0, -3, 0, 1 }, edit->matrix);
 				levelData->levelTransforms[edit->rendererIndex] = edit->matrix;
 			}
 		}
 		else if (!moveRight)
 		{
-			GW::MATH::GMatrix::TranslateGlobalF(edit->matrix, GW::MATH::GVECTORF{ 0, 0, -1, 1 }, edit->matrix);
-			levelData->levelTransforms[edit->rendererIndex] = edit->matrix;
-			if (edit->matrix.row4.z <= -40)
+			timer--;
+			if (timer <= 0)
+			{
+				GW::MATH::GMatrix::TranslateGlobalF(edit->matrix, GW::MATH::GVECTORF{ 0, 0, -0.026, 1 }, edit->matrix);
+				levelData->levelTransforms[edit->rendererIndex] = edit->matrix;
+				timesMoved--;
+				timer = e.delta_time() * 1000;
+			}
+			if (timesMoved <= 0)
 			{
 				moveRight = true;
-				GW::MATH::GMatrix::TranslateGlobalF(edit->matrix, GW::MATH::GVECTORF{ 0, -5, 0, 1 }, edit->matrix);
+				GW::MATH::GMatrix::TranslateGlobalF(edit->matrix, GW::MATH::GVECTORF{ 0, -3, 0, 1 }, edit->matrix);
 				levelData->levelTransforms[edit->rendererIndex] = edit->matrix;
 			}
 		}
@@ -79,7 +90,7 @@ bool ESG::EnemyLogic::Init(std::shared_ptr<flecs::world> _game,
 				if (live2.is_valid())
 				{
 					live2.destruct();
-					
+
 				}
 				else
 				{
@@ -98,12 +109,12 @@ bool ESG::EnemyLogic::Init(std::shared_ptr<flecs::world> _game,
 					}
 				}
 			}
-	
+
 		}
 		p.value = { 0, 0 };
 
 		//FireLasersEnemy(e.world(), p);
-		});
+			});
 
 	return true;
 }
