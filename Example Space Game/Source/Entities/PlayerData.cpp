@@ -14,6 +14,10 @@ bool ESG::PlayerData::Load(  std::shared_ptr<flecs::world> _game,
 	float red = (*readCfg).at("Player").at("red").as<float>();
 	float green = (*readCfg).at("Player").at("green").as<float>();
 	float blue = (*readCfg).at("Player").at("blue").as<float>();
+
+	float red1 = (*readCfg).at("Shield").at("red").as<float>();
+	float green1 = (*readCfg).at("Shield").at("green").as<float>();
+	float blue1 = (*readCfg).at("Shield").at("blue").as<float>();
 	// start position
 	float xstart = (*readCfg).at("Player").at("xstart").as<float>();
 	float ystart = (*readCfg).at("Player").at("ystart").as<float>();
@@ -38,6 +42,11 @@ bool ESG::PlayerData::Load(  std::shared_ptr<flecs::world> _game,
 		e.set<Material>({ red, green, blue });
 		e.set<Position>({ xstart, ystart });
 		e.set<ControllerID>({ 0 });
+	}
+	auto a = _game->lookup("shield");
+	if (a.is_valid()) {
+		a.add<Collidable>();
+		a.set<Material>({ red1, green1, blue1 });
 	}
 	return true;
 }
