@@ -22,6 +22,7 @@ bool ESG::EnemyLogic::Init(std::shared_ptr<flecs::world> _game,
 	eventPusher = _eventPusher;
 	levelData = _levelData;
 
+	game->add<Score>();
 	// destroy any bullets that have the CollidedWith relationship
 	game->system<Enemy, Health, Position>("Enemy System")
 		.each([this](flecs::entity e, Enemy, Health& h, Position& p) {
