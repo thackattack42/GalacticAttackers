@@ -19,7 +19,8 @@ bool ESG::PlayerLogic::Init(std::shared_ptr<flecs::world> _game,
 							GW::INPUT::GController _controllerInput,
 							GW::AUDIO::GAudio _audioEngine,
 							GW::CORE::GEventGenerator _eventPusher,
-							std::shared_ptr<Level_Data> _levelData)
+							std::shared_ptr<Level_Data> _levelData,
+							bool& _pause)
 {
 	// save a handle to the ECS & game settings
 	game = _game;
@@ -29,6 +30,7 @@ bool ESG::PlayerLogic::Init(std::shared_ptr<flecs::world> _game,
 	controllerInput =	_controllerInput;
 	audioEngine = _audioEngine;
 	levelData = _levelData;
+	pause = _pause;
 
 	// Init any helper systems required for this task
 	std::shared_ptr<const GameConfig> readCfg = gameConfig.lock();
@@ -142,7 +144,7 @@ bool ESG::PlayerLogic::ProcessInputEvents(flecs::world& stage)
 		// these will only happen when needed
 		if (+event.Read(keyboard, k_data)) {
 			if (keyboard == GBufferedInput::Events::KEYPRESSED) {
-				if (k_data.data == G_KEY_SPACE) {
+				if (k_data.data == G_KEY_SPACE && pause != true) {
 					fire = true;
 					//chargeStart = stage.time();
 				}

@@ -14,13 +14,15 @@ using namespace ESG; // Example Space Game
 bool ESG::EnemyLogic::Init(std::shared_ptr<flecs::world> _game,
 	std::weak_ptr<const GameConfig> _gameConfig,
 	GW::CORE::GEventGenerator _eventPusher,
-	std::shared_ptr<Level_Data> _levelData)
+	std::shared_ptr<Level_Data> _levelData,
+	bool& _pause)
 {
 	// save a handle to the ECS & game settings
 	game = _game;
 	gameConfig = _gameConfig;
 	eventPusher = _eventPusher;
 	levelData = _levelData;
+	pause = _pause;
 
 	// destroy any bullets that have the CollidedWith relationship
 	game->system<Enemy, Health, Position>("Enemy System")
@@ -35,25 +37,29 @@ bool ESG::EnemyLogic::Init(std::shared_ptr<flecs::world> _game,
 			eventPusher.Push(explode);
 		}
 
-		ModelTransform* edit = e.get_mut<ModelTransform>();
-		GW::MATH::GMatrix::TranslateGlobalF(edit->matrix, GW::MATH::GVECTORF{ p.value.x, -p.value.y, 0, 1}, edit->matrix);
-		levelData->levelTransforms[edit->rendererIndex] = edit->matrix;
-		
-		std::cout << "Moving " << edit->matrix.row4.x << " " << edit->matrix.row4.y << " " << edit->matrix.row4.z << std::endl;
-
-		if (edit->matrix.row4.y <= 30)
+		if (!pause)
 		{
-			e.destruct();
-			flecs::entity playerDeath;
-			RetreivePrefab("Death", playerDeath);
-			GW::AUDIO::GSound death = *playerDeath.get<GW::AUDIO::GSound>();
-			death.Play();
-			//GW::AUDIO::GSound death = = 
-			std::cout << "Player Dies...You Lose";
-		}
-		p.value.x = 0;
-		p.value.y = 0;
+			ModelTransform* edit = e.get_mut<ModelTransform>();
+			GW::MATH::GMatrix::TranslateGlobalF(edit->matrix, GW::MATH::GVECTORF{ p.value.x, -p.value.y, 0, 1 }, edit->matrix);
+			levelData->levelTransforms[edit->rendererIndex] = edit->matrix;
 
+
+			std::cout << "Moving " << edit->matrix.row4.x << " " << edit->matrix.row4.y << " " << edit->matrix.row4.z << std::endl;
+
+			if (edit->matrix.row4.y <= 30)
+			{
+				e.destruct();
+				flecs::entity playerDeath;
+				RetreivePrefab("Death", playerDeath);
+				GW::AUDIO::GSound death = *playerDeath.get<GW::AUDIO::GSound>();
+				death.Play();
+				pause = true;
+				//GW::AUDIO::GSound death = = 
+				std::cout << "Player Dies...You Lose";
+			}
+			p.value.x = 0;
+			p.value.y = 0;
+		}
 			
 			//FireLasersEnemy(e.world(), p);
 	});

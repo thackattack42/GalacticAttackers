@@ -53,7 +53,6 @@ bool Application::Init()
 			" Y " + std::to_string(t.matrix.row4.y) + " Z " + std::to_string(t.matrix.row4.z);
 		log.LogCategorized("GAMEPLAY", obj.c_str());
 		});*/
-
 	// init all other systems
 	if (InitWindow() == false) 
 		return false;
@@ -139,6 +138,14 @@ bool Application::Run()
 			view->Release();
 			depth->Release();
 			con->Release();
+			float input = 0;
+			immediateInput.GetState(G_KEY_ESCAPE, input);
+			if (input == 1)
+			{
+				pause = true;
+			}
+			else
+				pause = false;
 		}
 
 	}
@@ -239,17 +246,17 @@ bool Application::InitSystems()
 {
 	// connect systems to global ECS
 	if (playerSystem.Init(	game, gameConfig, immediateInput, bufferedInput, 
-							gamePads, audioEngine, eventPusher, levelData) == false)
+							gamePads, audioEngine, eventPusher, levelData, pause) == false)
 		return false;
 	if (levelSystem.Init(game, gameConfig, audioEngine) == false)
 		return false;
 	if (d3dRenderingSystem.Init(game, gameConfig, d3d11, window, levelData) == false)
 		return false;
-	if (physicsSystem.Init(game, gameConfig, levelData) == false)
+	if (physicsSystem.Init(game, gameConfig, levelData, pause) == false)
 		return false;
 	if (bulletSystem.Init(game, gameConfig, levelData) == false)
 		return false;
-	if (enemySystem.Init(game, gameConfig, eventPusher, levelData) == false)
+	if (enemySystem.Init(game, gameConfig, eventPusher, levelData, pause) == false)
 		return false;
 
 	return true;
