@@ -65,6 +65,8 @@ namespace GA
 		GW::SYSTEM::GWindow window;
 		GW::MATH::GMatrix proxy;
 		std::shared_ptr<bool> levelChange;
+		std::shared_ptr<bool> youWin;
+		std::shared_ptr<bool> youLose;
 		// Directx11 resources used for rendering
 		std::shared_ptr<Level_Data> levelData;
 		GW::GRAPHICS::GDirectX11Surface direct11;
@@ -141,7 +143,7 @@ namespace GA
 		bool Init(std::shared_ptr<flecs::world> _game,
 			std::weak_ptr<const GameConfig> _gameConfig,
 			GW::GRAPHICS::GDirectX11Surface _direct11,
-			GW::SYSTEM::GWindow _window, std::shared_ptr<Level_Data> _levelData, std::shared_ptr<bool> _levelChange);
+			GW::SYSTEM::GWindow _window, std::shared_ptr<Level_Data> _levelData, std::shared_ptr<bool> _levelChange, std::shared_ptr<bool> _youWin, std::shared_ptr<bool> _youLose);
 		// control if the system is actively running
 		bool Activate(bool runSystem);
 		// release any resources allocated by the system
