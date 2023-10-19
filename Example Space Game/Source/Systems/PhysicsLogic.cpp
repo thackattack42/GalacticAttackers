@@ -2,7 +2,7 @@
 #include "../Components/Physics.h"
 #include "../Components/Components.h"
 
-bool ESG::PhysicsLogic::Init(	std::shared_ptr<flecs::world> _game, 
+bool GA::PhysicsLogic::Init(	std::shared_ptr<flecs::world> _game, 
 								std::weak_ptr<const GameConfig> _gameConfig,
 								std::shared_ptr<Level_Data> _levelData)
 {
@@ -130,7 +130,7 @@ bool ESG::PhysicsLogic::Init(	std::shared_ptr<flecs::world> _game,
 	return true;
 }
 
-bool ESG::PhysicsLogic::Activate(bool runSystem)
+bool GA::PhysicsLogic::Activate(bool runSystem)
 {
 	if (runSystem) {
 		game->entity("Acceleration System").enable();
@@ -145,7 +145,7 @@ bool ESG::PhysicsLogic::Activate(bool runSystem)
 	return true;
 }
 
-bool ESG::PhysicsLogic::Shutdown()
+bool GA::PhysicsLogic::Shutdown()
 {
 	queryCache.destruct(); // fixes crash on shutdown
 	game->entity("Acceleration System").destruct();

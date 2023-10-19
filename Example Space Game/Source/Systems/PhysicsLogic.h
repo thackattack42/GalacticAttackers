@@ -7,7 +7,7 @@
 #include "../Components/Physics.h"
 
 // example space game (avoid name collisions)
-namespace ESG
+namespace GA
 {
 	class PhysicsLogic
 	{

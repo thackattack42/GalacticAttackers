@@ -4,10 +4,10 @@
 #include "../Components/Physics.h"
 #include "../Components/Gameplay.h"
 
-using namespace ESG; // Example Space Game
+using namespace GA; // Example Space Game
 
 // Connects logic to traverse any players and allow a controller to manipulate them
-bool ESG::ShieldLogic::Init(std::shared_ptr<flecs::world> _game,
+bool GA::ShieldLogic::Init(std::shared_ptr<flecs::world> _game,
 	std::weak_ptr<const GameConfig> _gameConfig)
 {
 	// save a handle to the ECS & game settings
@@ -49,7 +49,7 @@ bool ESG::ShieldLogic::Init(std::shared_ptr<flecs::world> _game,
 }
 
 // Free any resources used to run this system
-bool ESG::ShieldLogic::Shutdown()
+bool GA::ShieldLogic::Shutdown()
 {
 	game->entity("Shield System").destruct();
 	// invalidate the shared pointers
@@ -59,7 +59,7 @@ bool ESG::ShieldLogic::Shutdown()
 }
 
 // Toggle if a system's Logic is actively running
-bool ESG::ShieldLogic::Activate(bool runSystem)
+bool GA::ShieldLogic::Activate(bool runSystem)
 {
 	if (runSystem) {
 		game->entity("Shield System").enable();

@@ -8,10 +8,10 @@
 #include "../Components/Components.h"
 #include "../Entities/Prefabs.h"
 
-using namespace ESG; // Example Space Game
+using namespace GA; // Galactic Attackers
 
 // Connects logic to traverse any players and allow a controller to manipulate them
-bool ESG::EnemyLogic::Init(std::shared_ptr<flecs::world> _game,
+bool GA::EnemyLogic::Init(std::shared_ptr<flecs::world> _game,
 	std::weak_ptr<const GameConfig> _gameConfig,
 	GW::CORE::GEventGenerator _eventPusher,
 	std::shared_ptr<Level_Data> _levelData)
@@ -29,9 +29,9 @@ bool ESG::EnemyLogic::Init(std::shared_ptr<flecs::world> _game,
 		if (e.get<Health>()->value <= 0) {
 			// play explode sound
 			e.destruct();
-			ESG::PLAY_EVENT_DATA x;
+			GA::PLAY_EVENT_DATA x;
 			GW::GEvent explode;
-			explode.Write(ESG::PLAY_EVENT::ENEMY_DESTROYED, x);
+			explode.Write(GA::PLAY_EVENT::ENEMY_DESTROYED, x);
 			eventPusher.Push(explode);
 		}
 		ModelTransform* edit = e.get_mut<ModelTransform>();
@@ -118,9 +118,9 @@ bool ESG::EnemyLogic::Init(std::shared_ptr<flecs::world> _game,
 						auto player = game->lookup("Player");
 						player.destruct();
 
-						ESG::PLAY_EVENT_DATA y;
+						GA::PLAY_EVENT_DATA y;
 						GW::GEvent reset;
-						reset.Write(ESG::PLAY_EVENT::NEXT_LEVEL, y);
+						reset.Write(GA::PLAY_EVENT::NEXT_LEVEL, y);
 						eventPusher.Push(reset);
 						std::cout << "Player Dies...You Lose";
 					}
@@ -137,7 +137,7 @@ bool ESG::EnemyLogic::Init(std::shared_ptr<flecs::world> _game,
 }
 
 // Free any resources used to run this system
-bool ESG::EnemyLogic::Shutdown()
+bool GA::EnemyLogic::Shutdown()
 {
 	game->entity("Enemy System").destruct();
 	// invalidate the shared pointers
@@ -147,7 +147,7 @@ bool ESG::EnemyLogic::Shutdown()
 }
 
 // Toggle if a system's Logic is actively running
-bool ESG::EnemyLogic::Activate(bool runSystem)
+bool GA::EnemyLogic::Activate(bool runSystem)
 {
 	if (runSystem) {
 		game->entity("Enemy System").enable();
@@ -158,7 +158,7 @@ bool ESG::EnemyLogic::Activate(bool runSystem)
 	return false;
 }
 
-bool ESG::EnemyLogic::FireLasersEnemy(flecs::world& stage, Position origin)
+bool GA::EnemyLogic::FireLasersEnemy(flecs::world& stage, Position origin)
 {
 	// Grab laser prefab
 	flecs::entity bullet;

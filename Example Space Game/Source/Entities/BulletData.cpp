@@ -6,7 +6,7 @@
 #include "../Components/Gameplay.h"
 #include "../Components/Components.h"
 
-bool ESG::BulletData::Load(	std::shared_ptr<flecs::world> _game,
+bool GA::BulletData::Load(	std::shared_ptr<flecs::world> _game,
 							std::weak_ptr<const GameConfig> _gameConfig,
 							GW::AUDIO::GAudio _audioEngine)
 {
@@ -80,7 +80,7 @@ bool ESG::BulletData::Load(	std::shared_ptr<flecs::world> _game,
 	return true;
 }
 
-bool ESG::BulletData::Unload(std::shared_ptr<flecs::world> _game)
+bool GA::BulletData::Unload(std::shared_ptr<flecs::world> _game)
 {
 	// remove all bullets and their prefabs
 	_game->defer_begin(); // required when removing while iterating!

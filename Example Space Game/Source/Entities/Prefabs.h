@@ -3,7 +3,7 @@
 #define PREFABS_H
 
 // example space game (avoid name collisions)
-namespace ESG
+namespace GA
 {
 	bool RegisterPrefab(const char* prefabName, const flecs::entity inPrefab);
 	bool RetreivePrefab(const char* prefabName, flecs::entity &outPrefab);

@@ -7,7 +7,7 @@
 #include "../Entities/BulletData.h"
 
 // example space game (avoid name collisions)
-namespace ESG
+namespace GA
 {
 	class BulletLogic
 	{

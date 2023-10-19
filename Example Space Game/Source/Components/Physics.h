@@ -3,7 +3,7 @@
 #define PHYSICS_H
 
 // example space game (avoid name collisions)
-namespace ESG 
+namespace GA 
 {
 	// ECS component types should be *strongly* typed for proper queries
 	// typedef is tempting but it does not help templates/functions resolve type

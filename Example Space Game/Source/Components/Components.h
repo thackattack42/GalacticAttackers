@@ -3,7 +3,7 @@
 #define COMPONENTS_H
 
 // example space game (avoid name collisions)
-namespace ESG
+namespace GA
 {
 	struct BlenderName { std::string name; };
 	struct ModelBoundary { GW::MATH::GOBBF obb; };

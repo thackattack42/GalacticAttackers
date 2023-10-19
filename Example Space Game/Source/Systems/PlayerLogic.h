@@ -7,7 +7,7 @@
 #include "../Components/Physics.h"
 
 // example space game (avoid name collisions)
-namespace ESG 
+namespace GA 
 {
 	class PlayerLogic 
 	{
@@ -58,7 +58,7 @@ namespace ESG
 		static constexpr unsigned int Max_Frame_Events = 32;
 		// helper routines
 		bool ProcessInputEvents(flecs::world& stage);
-		bool FireLasers(flecs::world& stage, ESG::Position origin);
+		bool FireLasers(flecs::world& stage, GA::Position origin);
 	};
 
 };

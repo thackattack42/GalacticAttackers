@@ -2,7 +2,7 @@
 #define PLAYEVENTS_H
 
 // example space game (avoid name collisions)
-namespace ESG
+namespace GA
 {
 	enum PLAY_EVENT {
 		ENEMY_DESTROYED,

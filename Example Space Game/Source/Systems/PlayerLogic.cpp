@@ -7,12 +7,12 @@
 #include "../Entities/Prefabs.h"
 #include "../Events/Playevents.h"
 
-using namespace ESG; // Example Space Game
+using namespace GA; // Example Space Game
 using namespace GW::INPUT; // input libs
 using namespace GW::AUDIO; // audio libs
 
 // Connects logic to traverse any players and allow a controller to manipulate them
-bool ESG::PlayerLogic::Init(std::shared_ptr<flecs::world> _game, 
+bool GA::PlayerLogic::Init(std::shared_ptr<flecs::world> _game, 
 							std::weak_ptr<const GameConfig> _gameConfig, 
 							GW::INPUT::GInput _immediateInput, 
 							GW::INPUT::GBufferedInput _bufferedInput, 
@@ -107,8 +107,8 @@ bool ESG::PlayerLogic::Init(std::shared_ptr<flecs::world> _game,
 
 	// create the on explode handler
 	onExplode.Create([this](const GW::GEvent& e) {
-		ESG::PLAY_EVENT event; ESG::PLAY_EVENT_DATA eventData;
-		if (+e.Read(event, eventData) && event == ESG::PLAY_EVENT::ENEMY_DESTROYED) {
+		GA::PLAY_EVENT event; GA::PLAY_EVENT_DATA eventData;
+		if (+e.Read(event, eventData) && event == GA::PLAY_EVENT::ENEMY_DESTROYED) {
 			// only in here if event matches
 			std::cout << "Enemy Was Destroyed!\n";
 		}
@@ -116,8 +116,8 @@ bool ESG::PlayerLogic::Init(std::shared_ptr<flecs::world> _game,
 
 
 	nextLevel.Create([this](const GW::GEvent& e) {
-		ESG::PLAY_EVENT event; ESG::PLAY_EVENT_DATA eventData;
-		if (+e.Read(event, eventData) && event == ESG::PLAY_EVENT::NEXT_LEVEL) {
+		GA::PLAY_EVENT event; GA::PLAY_EVENT_DATA eventData;
+		if (+e.Read(event, eventData) && event == GA::PLAY_EVENT::NEXT_LEVEL) {
 			// only in here if event matches
 			GW::SYSTEM::GLog log;
 			++(*currentLevel);
@@ -126,8 +126,8 @@ bool ESG::PlayerLogic::Init(std::shared_ptr<flecs::world> _game,
 		});
 
 	resetLevel.Create([this](const GW::GEvent& e) {
-		ESG::PLAY_EVENT event; ESG::PLAY_EVENT_DATA eventData;
-		if (+e.Read(event, eventData) && event == ESG::PLAY_EVENT::RESET_LEVEL) {
+		GA::PLAY_EVENT event; GA::PLAY_EVENT_DATA eventData;
+		if (+e.Read(event, eventData) && event == GA::PLAY_EVENT::RESET_LEVEL) {
 			// only in here if event matches
 			GW::SYSTEM::GLog log;
 			(*currentLevel) = 1;
@@ -142,7 +142,7 @@ bool ESG::PlayerLogic::Init(std::shared_ptr<flecs::world> _game,
 }
 
 // Free any resources used to run this system
-bool ESG::PlayerLogic::Shutdown()
+bool GA::PlayerLogic::Shutdown()
 {
 	playerSystem.destruct();
 	game.reset();
@@ -152,7 +152,7 @@ bool ESG::PlayerLogic::Shutdown()
 }
 
 // Toggle if a system's Logic is actively running
-bool ESG::PlayerLogic::Activate(bool runSystem)
+bool GA::PlayerLogic::Activate(bool runSystem)
 {
 	if (playerSystem.is_alive()) {
 		(runSystem) ? 
@@ -163,7 +163,7 @@ bool ESG::PlayerLogic::Activate(bool runSystem)
 	return false;
 }
 
-bool ESG::PlayerLogic::ProcessInputEvents(flecs::world& stage)
+bool GA::PlayerLogic::ProcessInputEvents(flecs::world& stage)
 {
 	// pull any waiting events from the event cache and process them
 	GW::GEvent event;
@@ -210,7 +210,7 @@ bool ESG::PlayerLogic::ProcessInputEvents(flecs::world& stage)
 }
 
 // play sound and launch two laser rounds
-bool ESG::PlayerLogic::FireLasers(flecs::world& stage, Position origin)
+bool GA::PlayerLogic::FireLasers(flecs::world& stage, Position origin)
 {
 	// Grab the prefab for a laser round
 	flecs::entity bullet;

@@ -5,7 +5,7 @@
 #include "../Components/Components.h"
 #include "Prefabs.h"
 
-bool ESG::PlayerData::Load(  std::shared_ptr<flecs::world> _game, 
+bool GA::PlayerData::Load(  std::shared_ptr<flecs::world> _game, 
                             std::weak_ptr<const GameConfig> _gameConfig)
 {
 	// Grab init settings for players
@@ -51,7 +51,7 @@ bool ESG::PlayerData::Load(  std::shared_ptr<flecs::world> _game,
 	return true;
 }
 
-bool ESG::PlayerData::Unload(std::shared_ptr<flecs::world> _game)
+bool GA::PlayerData::Unload(std::shared_ptr<flecs::world> _game)
 {
 	// remove all players
 	_game->defer_begin(); // required when removing while iterating!
