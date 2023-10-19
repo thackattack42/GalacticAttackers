@@ -56,6 +56,7 @@ class Application
 	GW::CORE::GEventGenerator eventPusher;
 
 public:
+	bool pause = false;
 	bool Init();
 	bool Run();
 	bool Shutdown();
