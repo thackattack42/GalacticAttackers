@@ -19,7 +19,8 @@ bool ESG::PlayerLogic::Init(std::shared_ptr<flecs::world> _game,
 							GW::INPUT::GController _controllerInput,
 							GW::AUDIO::GAudio _audioEngine,
 							GW::CORE::GEventGenerator _eventPusher,
-							std::shared_ptr<Level_Data> _levelData)
+							std::shared_ptr<Level_Data> _levelData, std::shared_ptr<int> _currentLevel,
+							std::shared_ptr<bool> _levelChange)
 {
 	// save a handle to the ECS & game settings
 	game = _game;
@@ -29,7 +30,8 @@ bool ESG::PlayerLogic::Init(std::shared_ptr<flecs::world> _game,
 	controllerInput =	_controllerInput;
 	audioEngine = _audioEngine;
 	levelData = _levelData;
-
+	currentLevel = _currentLevel;
+	levelChange = _levelChange;
 	// Init any helper systems required for this task
 	std::shared_ptr<const GameConfig> readCfg = gameConfig.lock();
 	int width = (*readCfg).at("Window").at("width").as<int>();
@@ -97,13 +99,36 @@ bool ESG::PlayerLogic::Init(std::shared_ptr<flecs::world> _game,
 	// create the on explode handler
 	onExplode.Create([this](const GW::GEvent& e) {
 		ESG::PLAY_EVENT event; ESG::PLAY_EVENT_DATA eventData;
-		if (+e.Read(event, eventData)) {
+		if (+e.Read(event, eventData) && event == ESG::PLAY_EVENT::ENEMY_DESTROYED) {
 			// only in here if event matches
-			std::cout << "Enemy Was Destroyed! You Win!\n";
+			std::cout << "Enemy Was Destroyed!\n";
 		}
-	});
-	_eventPusher.Register(onExplode);
+		});
 
+
+	nextLevel.Create([this](const GW::GEvent& e) {
+		ESG::PLAY_EVENT event; ESG::PLAY_EVENT_DATA eventData;
+		if (+e.Read(event, eventData) && event == ESG::PLAY_EVENT::NEXT_LEVEL) {
+			// only in here if event matches
+			GW::SYSTEM::GLog log;
+			++(*currentLevel);
+			(*levelChange) = true;
+		}
+		});
+
+	resetLevel.Create([this](const GW::GEvent& e) {
+		ESG::PLAY_EVENT event; ESG::PLAY_EVENT_DATA eventData;
+		if (+e.Read(event, eventData) && event == ESG::PLAY_EVENT::RESET_LEVEL) {
+			// only in here if event matches
+			GW::SYSTEM::GLog log;
+			(*currentLevel) = 1;
+			(*levelChange) == true;
+		}
+		});
+
+	_eventPusher.Register(onExplode);
+	_eventPusher.Register(nextLevel);
+	_eventPusher.Register(resetLevel);
 	return true;
 }
 

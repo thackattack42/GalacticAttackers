@@ -3,11 +3,12 @@
 // program entry point
 int main()
 {
-	Application exampleSpaceGame;
-	if (exampleSpaceGame.Init()) {
-		if (exampleSpaceGame.Run()) {
-			return exampleSpaceGame.Shutdown() ? 0 : 1;
+	Application galacticAttackers;
+	if (galacticAttackers.Init()) {
+		if (galacticAttackers.Run()) {
+			return galacticAttackers.Shutdown() ? 0 : 1;
 		}
+		
 	}
 	return 1;
 }
