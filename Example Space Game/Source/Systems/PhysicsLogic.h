@@ -18,8 +18,6 @@ namespace ESG
 		std::shared_ptr<Level_Data> levelData;
 		// used to cache collision queries
 		flecs::query<Collidable, Position, Orientation> queryCache;
-
-		bool pause;
 		// defines what to be tested
 		static constexpr unsigned polysize = 4;
 		struct SHAPE {
@@ -32,8 +30,7 @@ namespace ESG
 		// attach the required logic to the ECS 
 		bool Init(	std::shared_ptr<flecs::world> _game,
 					std::weak_ptr<const GameConfig> _gameConfig,
-				std::shared_ptr<Level_Data> _levelData,
-				bool&);
+				std::shared_ptr<Level_Data> _levelData);
 		// control if the system is actively running
 		bool Activate(bool runSystem);
 		// release any resources allocated by the system

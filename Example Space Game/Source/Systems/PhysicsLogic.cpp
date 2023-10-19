@@ -4,21 +4,19 @@
 
 bool ESG::PhysicsLogic::Init(	std::shared_ptr<flecs::world> _game, 
 								std::weak_ptr<const GameConfig> _gameConfig,
-								std::shared_ptr<Level_Data> _levelData,
-								bool& _pause)
+								std::shared_ptr<Level_Data> _levelData)
 {
 	// save a handle to the ECS & game settings
 	game = _game;
 	gameConfig = _gameConfig;
 	levelData = _levelData;
-	pause = _pause;
 	// **** MOVEMENT ****
 	// update velocity by acceleration
 	game->system<Velocity, const Acceleration>("Acceleration System")
 		.each([](flecs::entity e, Velocity& v, const Acceleration &a) {
-			GW::MATH2D::GVECTOR2F accel;
-			GW::MATH2D::GVector2D::Scale2F(a.value, e.delta_time(), accel);
-			GW::MATH2D::GVector2D::Add2F(accel, v.value, v.value);
+		GW::MATH2D::GVECTOR2F accel;
+		GW::MATH2D::GVector2D::Scale2F(a.value, e.delta_time(), accel);
+		GW::MATH2D::GVector2D::Add2F(accel, v.value, v.value);
 	});
 	// update position by velocity
 	game->system<Position, const Velocity>("Translation System")

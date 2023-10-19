@@ -22,13 +22,11 @@ namespace ESG
 		GW::CORE::GEventGenerator eventPusher;
 		std::shared_ptr<Level_Data> levelData;
 
-		bool pause;
-
 	public:
 		// attach the required logic to the ECS 
 		bool Init(std::shared_ptr<flecs::world> _game,
 			std::weak_ptr<const GameConfig> _gameConfig,
-			GW::CORE::GEventGenerator _eventPusher, std::shared_ptr<Level_Data> _levelData, bool& pause);
+			GW::CORE::GEventGenerator _eventPusher, std::shared_ptr<Level_Data> _levelData);
 		// control if the system is actively running
 		bool Activate(bool runSystem);
 		// release any resources allocated by the system
