@@ -9,7 +9,7 @@
 
 
 // example space game (avoid name collisions)
-namespace ESG
+namespace GA
 {
 	class EnemyLogic
 	{
@@ -38,7 +38,7 @@ namespace ESG
 		float timer;
 
 	private:
-		bool FireLasersEnemy(flecs::world& stage, ESG::Position origin);
+		bool FireLasersEnemy(flecs::world& stage, GA::Position origin);
 
 	};
 

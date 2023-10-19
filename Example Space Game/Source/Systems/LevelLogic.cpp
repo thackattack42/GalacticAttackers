@@ -5,10 +5,10 @@
 #include "../Entities/Prefabs.h"
 #include "../Utils/Macros.h"
 
-using namespace ESG; // Example Space Game
+using namespace GA; // Example Space Game
 
 // Connects logic to traverse any players and allow a controller to manipulate them
-bool ESG::LevelLogic::Init(	std::shared_ptr<flecs::world> _game,
+bool GA::LevelLogic::Init(	std::shared_ptr<flecs::world> _game,
 							std::weak_ptr<const GameConfig> _gameConfig,
 							GW::AUDIO::GAudio _audioEngine)
 {
@@ -177,7 +177,7 @@ bool ESG::LevelLogic::Init(	std::shared_ptr<flecs::world> _game,
 }
 
 // Free any resources used to run this system
-bool ESG::LevelLogic::Shutdown()
+bool GA::LevelLogic::Shutdown()
 {
 	timedEvents = nullptr; // stop adding enemies
 	gameAsync.merge(); // get rid of any remaining commands
@@ -189,7 +189,7 @@ bool ESG::LevelLogic::Shutdown()
 }
 
 // Toggle if a system's Logic is actively running
-bool ESG::LevelLogic::Activate(bool runSystem)
+bool GA::LevelLogic::Activate(bool runSystem)
 {
 	if (runSystem) {
 		game->entity("Level System").enable();

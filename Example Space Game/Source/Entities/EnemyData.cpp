@@ -5,7 +5,7 @@
 #include "../Entities/Prefabs.h"
 #include "../Components/Gameplay.h"
 
-bool ESG::EnemyData::Load(	std::shared_ptr<flecs::world> _game,
+bool GA::EnemyData::Load(	std::shared_ptr<flecs::world> _game,
 							std::weak_ptr<const GameConfig> _gameConfig,
 							GW::AUDIO::GAudio _audioEngine)
 {
@@ -174,7 +174,7 @@ bool ESG::EnemyData::Load(	std::shared_ptr<flecs::world> _game,
 	return true;
 }
 
-bool ESG::EnemyData::Unload(std::shared_ptr<flecs::world> _game)
+bool GA::EnemyData::Unload(std::shared_ptr<flecs::world> _game)
 {
 	// remove all bullets and their prefabs
 	_game->defer_begin(); // required when removing while iterating!

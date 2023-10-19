@@ -7,7 +7,7 @@
 #include <Shobjidl.h>
 #include <d3dcompiler.h>
 #pragma comment(lib, "d3dcompiler.lib") 
-using namespace ESG; // Example Space Game
+using namespace GA; // Example Space Game
 
 void PrintLabeledDebugString(const char* label, const char* toPrint)
 {
@@ -18,7 +18,7 @@ void PrintLabeledDebugString(const char* label, const char* toPrint)
 #endif
 }
 
-bool ESG::D3DRendererLogic::Init(	std::shared_ptr<flecs::world> _game, 
+bool GA::D3DRendererLogic::Init(	std::shared_ptr<flecs::world> _game, 
 								std::weak_ptr<const GameConfig> _gameConfig,
 								GW::GRAPHICS::GDirectX11Surface d3d11,
 								GW::SYSTEM::GWindow _window, std::shared_ptr<Level_Data> _levelData, std::shared_ptr<bool> _levelChange)
@@ -50,7 +50,7 @@ InitializeGraphics();
 return true;
 }
 
-std::vector<Sprite>	ESG::D3DRendererLogic::LoadHudFromXML(std::string filepath)
+std::vector<Sprite>	GA::D3DRendererLogic::LoadHudFromXML(std::string filepath)
 {
 	std::vector<Sprite> result;
 
@@ -100,7 +100,7 @@ std::vector<Sprite>	ESG::D3DRendererLogic::LoadHudFromXML(std::string filepath)
 	return result;
 }
 
-SPRITE_DATA ESG::D3DRendererLogic::UpdateSpriteConstantBufferData(const Sprite& s)
+SPRITE_DATA GA::D3DRendererLogic::UpdateSpriteConstantBufferData(const Sprite& s)
 {
 	SPRITE_DATA temp = { 0 };
 	temp.pos_scale.x = s.GetPosition().x;
@@ -111,7 +111,7 @@ SPRITE_DATA ESG::D3DRendererLogic::UpdateSpriteConstantBufferData(const Sprite& 
 	temp.rotation_depth.y = s.GetDepth();
 	return temp;
 }
-SPRITE_DATA ESG::D3DRendererLogic::UpdateTextConstantBufferData(const Text& s)
+SPRITE_DATA GA::D3DRendererLogic::UpdateTextConstantBufferData(const Text& s)
 {
 	SPRITE_DATA temp = { 0 };
 	temp.pos_scale.x = s.GetPosition().x;
@@ -123,7 +123,7 @@ SPRITE_DATA ESG::D3DRendererLogic::UpdateTextConstantBufferData(const Text& s)
 	return temp;
 }
 
-bool ESG::D3DRendererLogic::Activate(bool runSystem)
+bool GA::D3DRendererLogic::Activate(bool runSystem)
 {
 	if (startDraw.is_alive() &&
 		updateDraw.is_alive() &&
@@ -143,7 +143,7 @@ bool ESG::D3DRendererLogic::Activate(bool runSystem)
 	return false;
 }
 
-bool ESG::D3DRendererLogic::Shutdown()
+bool GA::D3DRendererLogic::Shutdown()
 {
 	startDraw.destruct();
 	updateDraw.destruct();
@@ -151,7 +151,7 @@ bool ESG::D3DRendererLogic::Shutdown()
 	return true; // vulkan resource shutdown handled via GEvent in Init()
 }
 
-std::string ESG::D3DRendererLogic::ShaderAsString(const char* shaderFilePath)
+std::string GA::D3DRendererLogic::ShaderAsString(const char* shaderFilePath)
 {
 	std::string output;
 	unsigned int stringLength = 0;
@@ -166,7 +166,7 @@ std::string ESG::D3DRendererLogic::ShaderAsString(const char* shaderFilePath)
 	return output;
 }
 
-bool ESG::D3DRendererLogic::LoadShaders3D()
+bool GA::D3DRendererLogic::LoadShaders3D()
 {
 	std::shared_ptr<const GameConfig> readCfg = gameConfig.lock();
 	vertexShader3DSource = (*readCfg).at("Shaders").at("vertex3D").as<std::string>();
@@ -183,7 +183,7 @@ bool ESG::D3DRendererLogic::LoadShaders3D()
 	
 	return true;
 }
-bool ESG::D3DRendererLogic::LoadShaders2D()
+bool GA::D3DRendererLogic::LoadShaders2D()
 {
 	std::shared_ptr<const GameConfig> readCfg = gameConfig.lock();
 	vertexShader2DSource = (*readCfg).at("Shaders").at("vertex2D").as<std::string>();
@@ -201,7 +201,7 @@ bool ESG::D3DRendererLogic::LoadShaders2D()
 	return true;
 }
 
-void ESG::D3DRendererLogic::InitializeGraphics()
+void GA::D3DRendererLogic::InitializeGraphics()
 {
 	ID3D11Device* creator;
 	direct11.GetDevice((void**)&creator);
@@ -213,7 +213,7 @@ void ESG::D3DRendererLogic::InitializeGraphics()
 	// free temporary handle
 	creator->Release();
 }
-bool ESG::D3DRendererLogic::LoadUniforms()
+bool GA::D3DRendererLogic::LoadUniforms()
 {
 //	VkDevice device = nullptr;
 //	VkPhysicalDevice physicalDevice = nullptr;
@@ -273,26 +273,26 @@ bool ESG::D3DRendererLogic::LoadUniforms()
 	return true;
 }
 
-void  ESG::D3DRendererLogic::Initialize3DVertexBuffer(ID3D11Device* creator)
+void  GA::D3DRendererLogic::Initialize3DVertexBuffer(ID3D11Device* creator)
 {
 	Create3DVertexBuffer(creator, levelData->levelVertices.data(), sizeof(H2B::VERTEX) * levelData->levelVertices.size());
 }
 
-void  ESG::D3DRendererLogic::Initialize3DIndexBuffer(ID3D11Device* creator)
+void  GA::D3DRendererLogic::Initialize3DIndexBuffer(ID3D11Device* creator)
 {
 	Create3DIndexBuffer(creator, levelData->levelIndices.data(), sizeof(unsigned int) * levelData->levelIndices.size());
 }
-void  ESG::D3DRendererLogic::Initialize2DVertexBuffer(ID3D11Device* creator)
+void  GA::D3DRendererLogic::Initialize2DVertexBuffer(ID3D11Device* creator)
 {
 	Create2DVertexBuffer(creator/*, levelData->levelVertices.data(), sizeof(H2B::VERTEX) * levelData->levelVertices.size()*/);
 }
 
-void  ESG::D3DRendererLogic::Initialize2DIndexBuffer(ID3D11Device* creator)
+void  GA::D3DRendererLogic::Initialize2DIndexBuffer(ID3D11Device* creator)
 {
 	Create2DIndexBuffer(creator/*, levelData->levelIndices.data(), sizeof(unsigned int) * levelData->levelIndices.size()*/);
 }
 
-void  ESG::D3DRendererLogic::InitializeConstantBuffer(ID3D11Device* creator)
+void  GA::D3DRendererLogic::InitializeConstantBuffer(ID3D11Device* creator)
 {
 
 	D3D11_SUBRESOURCE_DATA cSceneData = { &scene, 0, 0 };
@@ -313,21 +313,21 @@ void  ESG::D3DRendererLogic::InitializeConstantBuffer(ID3D11Device* creator)
 
 }
 
-void ESG::D3DRendererLogic::Create3DVertexBuffer(ID3D11Device* creator, const void* data, unsigned int sizeInBytes)
+void GA::D3DRendererLogic::Create3DVertexBuffer(ID3D11Device* creator, const void* data, unsigned int sizeInBytes)
 {
 	D3D11_SUBRESOURCE_DATA bData = { data, 0, 0 };
 	CD3D11_BUFFER_DESC bDesc(sizeInBytes, D3D11_BIND_VERTEX_BUFFER);
 	creator->CreateBuffer(&bDesc, &bData, vertexBuffer3D.ReleaseAndGetAddressOf());
 }
 
-void  ESG::D3DRendererLogic::Create3DIndexBuffer(ID3D11Device* creator, const void* data, unsigned int sizeInBytes)
+void  GA::D3DRendererLogic::Create3DIndexBuffer(ID3D11Device* creator, const void* data, unsigned int sizeInBytes)
 {
 	D3D11_SUBRESOURCE_DATA iData = { data, 0, 0 };
 	CD3D11_BUFFER_DESC iDesc(sizeInBytes, D3D11_BIND_INDEX_BUFFER);
 	creator->CreateBuffer(&iDesc, &iData, indexBuffer3D.ReleaseAndGetAddressOf());
 }
 
-void ESG::D3DRendererLogic::Create2DVertexBuffer(ID3D11Device* creator/*, const void* data, unsigned int sizeInBytes*/)
+void GA::D3DRendererLogic::Create2DVertexBuffer(ID3D11Device* creator/*, const void* data, unsigned int sizeInBytes*/)
 {
 	float verts[] =
 	{
@@ -344,7 +344,7 @@ void ESG::D3DRendererLogic::Create2DVertexBuffer(ID3D11Device* creator/*, const 
 }
 
 
-void ESG::D3DRendererLogic::Create2DIndexBuffer(ID3D11Device* creator/*, const void* data, unsigned int sizeInBytes*/)
+void GA::D3DRendererLogic::Create2DIndexBuffer(ID3D11Device* creator/*, const void* data, unsigned int sizeInBytes*/)
 {
 	unsigned int indices[] =
 	{
@@ -358,7 +358,7 @@ void ESG::D3DRendererLogic::Create2DIndexBuffer(ID3D11Device* creator/*, const v
 }
 
 
-void ESG::D3DRendererLogic::InitializePipeline3D(ID3D11Device* creator)
+void GA::D3DRendererLogic::InitializePipeline3D(ID3D11Device* creator)
 {
 	//Initialixe pipeline
 	direct11.GetDevice((void**)&creator);
@@ -370,7 +370,7 @@ void ESG::D3DRendererLogic::InitializePipeline3D(ID3D11Device* creator)
 	Microsoft::WRL::ComPtr<ID3DBlob> psBlob = CompilePixelShader3D(creator, compilerFlags);
 	Create3DVertexInputLayout(creator, vsBlob);
 }
-void ESG::D3DRendererLogic::InitializePipeline2D(ID3D11Device* creator)
+void GA::D3DRendererLogic::InitializePipeline2D(ID3D11Device* creator)
 {
 	//Initialixe pipeline
 	direct11.GetDevice((void**)&creator);
@@ -383,7 +383,7 @@ void ESG::D3DRendererLogic::InitializePipeline2D(ID3D11Device* creator)
 	Create2DVertexInputLayout(creator, vsBlob);
 }
 
-Microsoft::WRL::ComPtr<ID3DBlob> ESG::D3DRendererLogic::CompilePixelShader3D(ID3D11Device* creator, UINT compilerFlags)
+Microsoft::WRL::ComPtr<ID3DBlob> GA::D3DRendererLogic::CompilePixelShader3D(ID3D11Device* creator, UINT compilerFlags)
 {
 
 	Microsoft::WRL::ComPtr<ID3DBlob> psBlob, errors;
@@ -407,7 +407,7 @@ Microsoft::WRL::ComPtr<ID3DBlob> ESG::D3DRendererLogic::CompilePixelShader3D(ID3
 
 	return psBlob;
 }
-Microsoft::WRL::ComPtr<ID3DBlob>  ESG::D3DRendererLogic::CompileVertexShader3D(ID3D11Device* creator, UINT compilerFlags)
+Microsoft::WRL::ComPtr<ID3DBlob>  GA::D3DRendererLogic::CompileVertexShader3D(ID3D11Device* creator, UINT compilerFlags)
 {
 	Microsoft::WRL::ComPtr<ID3DBlob> vsBlob, errors;
 
@@ -431,7 +431,7 @@ Microsoft::WRL::ComPtr<ID3DBlob>  ESG::D3DRendererLogic::CompileVertexShader3D(I
 	return vsBlob;
 }
 
-Microsoft::WRL::ComPtr<ID3DBlob> ESG::D3DRendererLogic::CompilePixelShader2D(ID3D11Device* creator, UINT compilerFlags)
+Microsoft::WRL::ComPtr<ID3DBlob> GA::D3DRendererLogic::CompilePixelShader2D(ID3D11Device* creator, UINT compilerFlags)
 {
 
 	Microsoft::WRL::ComPtr<ID3DBlob> psBlob, errors;
@@ -455,7 +455,7 @@ Microsoft::WRL::ComPtr<ID3DBlob> ESG::D3DRendererLogic::CompilePixelShader2D(ID3
 
 	return psBlob;
 }
-Microsoft::WRL::ComPtr<ID3DBlob>  ESG::D3DRendererLogic::CompileVertexShader2D(ID3D11Device* creator, UINT compilerFlags)
+Microsoft::WRL::ComPtr<ID3DBlob>  GA::D3DRendererLogic::CompileVertexShader2D(ID3D11Device* creator, UINT compilerFlags)
 {
 	Microsoft::WRL::ComPtr<ID3DBlob> vsBlob, errors;
 
@@ -479,7 +479,7 @@ Microsoft::WRL::ComPtr<ID3DBlob>  ESG::D3DRendererLogic::CompileVertexShader2D(I
 	return vsBlob;
 }
 
-void ESG::D3DRendererLogic::Create3DVertexInputLayout(ID3D11Device* creator, Microsoft::WRL::ComPtr<ID3DBlob>& vsBlob)
+void GA::D3DRendererLogic::Create3DVertexInputLayout(ID3D11Device* creator, Microsoft::WRL::ComPtr<ID3DBlob>& vsBlob)
 {
 	D3D11_INPUT_ELEMENT_DESC attributes[3];
 
@@ -511,7 +511,7 @@ void ESG::D3DRendererLogic::Create3DVertexInputLayout(ID3D11Device* creator, Mic
 		vsBlob->GetBufferPointer(), vsBlob->GetBufferSize(),
 		vertexFormat3D.GetAddressOf());
 }
-void ESG::D3DRendererLogic::Create2DVertexInputLayout(ID3D11Device* creator, Microsoft::WRL::ComPtr<ID3DBlob>& vsBlob)
+void GA::D3DRendererLogic::Create2DVertexInputLayout(ID3D11Device* creator, Microsoft::WRL::ComPtr<ID3DBlob>& vsBlob)
 {
 	D3D11_INPUT_ELEMENT_DESC format[] =
 	{
@@ -523,7 +523,7 @@ void ESG::D3DRendererLogic::Create2DVertexInputLayout(ID3D11Device* creator, Mic
 		vsBlob->GetBufferPointer(), vsBlob->GetBufferSize(),
 		vertexFormat2D.GetAddressOf());
 }
-bool ESG::D3DRendererLogic::LoadGeometry()
+bool GA::D3DRendererLogic::LoadGeometry()
 {
 	ID3D11Device* creator;
 	direct11.GetDevice((void**)&creator);
@@ -788,7 +788,7 @@ bool ESG::D3DRendererLogic::LoadGeometry()
 	return true;
 }
 
-ESG::D3DRendererLogic::PipelineHandles ESG::D3DRendererLogic::GetCurrentPipelineHandles()
+GA::D3DRendererLogic::PipelineHandles GA::D3DRendererLogic::GetCurrentPipelineHandles()
 {
 	PipelineHandles retval;
 	direct11.GetImmediateContext((void**)&retval.context);
@@ -797,7 +797,7 @@ ESG::D3DRendererLogic::PipelineHandles ESG::D3DRendererLogic::GetCurrentPipeline
 	return retval;
 }
 
-void ESG::D3DRendererLogic::SetUpPipeline(PipelineHandles handles)
+void GA::D3DRendererLogic::SetUpPipeline(PipelineHandles handles)
 {
 	//float blendFactor[] = {0.799f, 0.799f, 0.799f, 1.0f};
 	//Set Render Targets
@@ -855,14 +855,14 @@ void ESG::D3DRendererLogic::SetUpPipeline(PipelineHandles handles)
 	
 }
 
-void ESG::D3DRendererLogic::ReleasePipelineHandles(PipelineHandles toRelease)
+void GA::D3DRendererLogic::ReleasePipelineHandles(PipelineHandles toRelease)
 {
 	toRelease.depthStencil->Release();
 	toRelease.targetView->Release();
 	toRelease.context->Release();
 }
 
-bool ESG::D3DRendererLogic::SetupDrawcalls() // I SCREWED THIS UP MAKES SO MUCH SENSE NOW
+bool GA::D3DRendererLogic::SetupDrawcalls() // I SCREWED THIS UP MAKES SO MUCH SENSE NOW
 {
 	// create a unique entity for the renderer (just a Tag)
 	// this only exists to ensure we can create systems that will run only once per frame. 
@@ -1028,7 +1028,7 @@ bool ESG::D3DRendererLogic::SetupDrawcalls() // I SCREWED THIS UP MAKES SO MUCH 
 	return true;
 }
 
-void ESG::D3DRendererLogic::UIDraw()
+void GA::D3DRendererLogic::UIDraw()
 {
 	PipelineHandles curHandles = GetCurrentPipelineHandles();
 	SetUpPipeline(curHandles);
@@ -1189,7 +1189,7 @@ void ESG::D3DRendererLogic::UIDraw()
 
 }
 
-bool ESG::D3DRendererLogic::FreeResources()
+bool GA::D3DRendererLogic::FreeResources()
 {
 	//VkDevice device = nullptr;
 	//vulkan.GetDevice((void**)&device);
@@ -1215,7 +1215,7 @@ bool ESG::D3DRendererLogic::FreeResources()
 
 	return true;
 }
-void ESG::D3DRendererLogic::LevelSwitch()
+void GA::D3DRendererLogic::LevelSwitch()
 {
 	if (*levelChange)
 	{
