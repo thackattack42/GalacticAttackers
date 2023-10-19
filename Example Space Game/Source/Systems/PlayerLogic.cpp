@@ -215,7 +215,7 @@ bool ESG::PlayerLogic::FireLasers(flecs::world& stage, Position origin)
 	auto laserRight = stage.entity().is_a(bullet)
 		.set<Position>(origin);
 	laserRight.add<BulletTest>();
-	
+
 	//ModelTransform* edit = laserRight.get_mut<ModelTransform>();
 	//edit = original;
 	// if this shot is charged
