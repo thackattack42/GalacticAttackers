@@ -1010,11 +1010,6 @@ bool GA::D3DRendererLogic::SetupDrawcalls() // I SCREWED THIS UP MAKES SO MUCH S
 				0);
 
 		}
-		/*}*/
-
-
-
-
 		ReleasePipelineHandles(curHandles);
 		UIDraw();
 			});
@@ -1068,20 +1063,21 @@ void GA::D3DRendererLogic::UIDraw()
 	static auto start = std::chrono::steady_clock::now();
 	double elapsedSec = std::chrono::duration_cast<std::chrono::seconds>(std::chrono::duration<double>(std::chrono::steady_clock::now() - start)).count();
 	double elapsedMin = std::chrono::duration_cast<std::chrono::minutes>(std::chrono::duration<double>(std::chrono::steady_clock::now() - start)).count();
-	if (int(elapsedSec) >= 60)
+	double elapsedcopy = elapsedSec;
+	if (int(elapsedcopy) >= 60)
 	{
-		elapsedSec -= 60 * int(elapsedSec/60);
+		elapsedcopy -= 60 * int(elapsedSec /60);
 	}
-	dynamicTextTime.SetText("0" + std::to_string(int(elapsedMin)) + ":" + "0" + std::to_string(int(elapsedSec)));
+	dynamicTextTime.SetText("0" + std::to_string(int(elapsedMin)) + ":" + "0" + std::to_string(int(elapsedcopy)));
 	if (elapsedSec >= 10 || elapsedMin >= 10)
 	{
-		if (elapsedSec >= 10 || elapsedMin >= 10)
+		if (elapsedcopy >= 10 || elapsedMin >= 10)
 		{
-			dynamicTextTime.SetText("0" + std::to_string(int(elapsedMin)) + ":" + std::to_string(int(elapsedSec)));
+			dynamicTextTime.SetText("0" + std::to_string(int(elapsedMin)) + ":" + std::to_string(int(elapsedcopy)));
 		}
 		if (elapsedMin >= 10)
 		{
-			dynamicTextTime.SetText(std::to_string(int(elapsedMin)) + ":0" + std::to_string(int(elapsedSec)));
+			dynamicTextTime.SetText(std::to_string(int(elapsedMin)) + ":0" + std::to_string(int(elapsedcopy)));
 		}
 	}
 	// update the dynamic text so we create the vertices
@@ -1124,6 +1120,38 @@ void GA::D3DRendererLogic::UIDraw()
 	D3D11_MAPPED_SUBRESOURCE HSmsr = { 0 };
 	curHandles.context->Map(vertexBufferDynamicTextHS.Get(), 0, D3D11_MAP_WRITE_DISCARD, 0, &HSmsr);
 	memcpy(HSmsr.pData, HSverts.data(), sizeof(TextVertex) * HSverts.size());
+	curHandles.context->Unmap(vertexBufferDynamicTextHS.Get(), 0);
+
+	dynamicTextHS.SetText("00000000" + std::to_string(int(elapsedSec)));
+	if (elapsedSec >= 10)
+	{
+		if (elapsedSec >= 10)
+		{
+			dynamicTextHS.SetText("0000000" + std::to_string(int(elapsedSec)));
+		}
+		if (elapsedMin >= 100)
+		{
+			dynamicTextHS.SetText("000000" + std::to_string(int(elapsedSec)));
+		}
+		if (elapsedMin >= 1000)
+		{
+			dynamicTextHS.SetText("00000" + std::to_string(int(elapsedSec)));
+		}
+		if (elapsedMin >= 10000)
+		{
+			dynamicTextHS.SetText("0000" + std::to_string(int(elapsedSec)));
+		}
+		if (elapsedMin >= 100000)
+		{
+			dynamicTextHS.SetText("000" + std::to_string(int(elapsedSec)));
+		}
+	}
+	dynamicTextHS.Update(width, height);
+	// upload the new information to the vertex buffer using map / unmap
+	const auto& Hverts = dynamicTextHS.GetVertices();
+	D3D11_MAPPED_SUBRESOURCE Hmsr = { 0 };
+	curHandles.context->Map(vertexBufferDynamicTextHS.Get(), 0, D3D11_MAP_WRITE_DISCARD, 0, &Hmsr);
+	memcpy(Hmsr.pData, Hverts.data(), sizeof(TextVertex) * Hverts.size());
 	curHandles.context->Unmap(vertexBufferDynamicTextHS.Get(), 0);
 
 	curHandles.context->IASetVertexBuffers(0, 1, vertexBufferDynamicTextHS.GetAddressOf(), strides, offsets);
@@ -1259,7 +1287,6 @@ void GA::D3DRendererLogic::LevelSwitch()
 							CoTaskMemFree(filePath);
 							pShellItem->Release();
 						}
-
 					}
 				}
 				pFileOpen->Release();
