@@ -64,7 +64,7 @@ namespace ESG
 		// Used to query screen dimensions
 		GW::SYSTEM::GWindow window;
 		GW::MATH::GMatrix proxy;
-
+		std::shared_ptr<bool> levelChange;
 		// Directx11 resources used for rendering
 		std::shared_ptr<const Level_Data> levelData;
 		GW::GRAPHICS::GDirectX11Surface direct11;
@@ -141,7 +141,12 @@ namespace ESG
 		bool Init(	std::shared_ptr<flecs::world> _game,
 					std::weak_ptr<const GameConfig> _gameConfig,
 					GW::GRAPHICS::GDirectX11Surface _direct11,
+<<<<<<< HEAD
 					GW::SYSTEM::GWindow _window, std::shared_ptr<const Level_Data> _levelData);
+=======
+					GW::SYSTEM::GWindow _window, std::shared_ptr<Level_Data> _levelData,
+			std::shared_ptr<bool> _levelChange);
+>>>>>>> main
 		// control if the system is actively running
 		bool Activate(bool runSystem);
 		// release any resources allocated by the system
@@ -184,7 +189,7 @@ namespace ESG
 		void SetUpPipeline(PipelineHandles handles);
 		void ESG::D3DRendererLogic::ReleasePipelineHandles(PipelineHandles toRelease);
 		PipelineHandles GetCurrentPipelineHandles();
-
+		void LevelSwitch();
 		// Unloading funcs
 		bool FreeResources();
 		// Utility funcs

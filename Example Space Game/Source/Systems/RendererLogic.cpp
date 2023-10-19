@@ -4,6 +4,7 @@
 #include "../Components/Physics.h"
 #include <DDSTextureloader.h>
 #include "../Components/Components.h"
+#include <Shobjidl.h>
 #include <d3dcompiler.h>
 #pragma comment(lib, "d3dcompiler.lib") 
 using namespace ESG; // Example Space Game
@@ -20,7 +21,11 @@ void PrintLabeledDebugString(const char* label, const char* toPrint)
 bool ESG::D3DRendererLogic::Init(	std::shared_ptr<flecs::world> _game, 
 								std::weak_ptr<const GameConfig> _gameConfig,
 								GW::GRAPHICS::GDirectX11Surface d3d11,
+<<<<<<< HEAD
 								GW::SYSTEM::GWindow _window, std::shared_ptr<const Level_Data> _levelData)
+=======
+								GW::SYSTEM::GWindow _window, std::shared_ptr<Level_Data> _levelData, std::shared_ptr<bool> _levelChange)
+>>>>>>> main
 {
 	// save a handle to the ECS & game settings
 	game = _game;
@@ -28,6 +33,11 @@ bool ESG::D3DRendererLogic::Init(	std::shared_ptr<flecs::world> _game,
 	direct11 = d3d11;
 	window = _window;
 	levelData = _levelData;
+<<<<<<< HEAD
+=======
+	levelChange = _levelChange;
+	
+>>>>>>> main
 	// Setup all vulkan resources
 	if (LoadShaders3D() == false) 
 		return false;
@@ -238,7 +248,36 @@ bool ESG::D3DRendererLogic::LoadUniforms()
 //	// uniform buffers created
 	ID3D11Device* creator;
 	direct11.GetDevice((void**)&creator);
-	InitializeConstantBuffer(creator);
+	proxy.Create();
+
+	/*viewTranslation = { 55.0f,5.0f, 25.0f, 1.0f };*/
+	viewTranslation = { 140.0f, 5.0f, 0.0f, 1.0f };
+	//ViewMatrix
+	GW::MATH::GVECTORF viewCenter = { 0.0, 1.0f, 0.0f, 1.0f };
+	GW::MATH::GVECTORF viewUp = { 0.0f, 1.0f, 0.0f, 1.0f };
+	GW::MATH::GVECTORF vTranslate = { 0.0, -90.0f, 0.0f, 1.0f };
+	proxy.IdentityF(viewMatrix);
+	proxy.LookAtLHF(viewTranslation, viewCenter, viewUp, viewMatrix);
+	proxy.TranslateLocalF(viewMatrix, vTranslate, viewMatrix);
+
+	float ratio;
+	direct11.GetAspectRatio(ratio);
+	proxy.ProjectionDirectXLHF(G_DEGREE_TO_RADIAN(65.0f), ratio, 0.1f, 200.0f, projectionMatrix);
+
+	lightDir = { -1.0f, -1.0f, -2.0f, 1.0f };
+	lightColor = { 0.9f, 0.9f,1.0f, 1.0f };
+
+
+	scene.viewMatrix = viewMatrix;
+	scene.projectionMatrix = projectionMatrix;
+	scene.sunColor = lightColor;
+	scene.sunDirection = lightDir;
+	
+
+	lightAmbient = { 0.25f, 0.25f, 0.35f, 1.0f };
+	scene.sunAmbient = lightAmbient;
+	scene.camerPos = viewTranslation;
+
 	return true;
 }
 
@@ -496,6 +535,7 @@ bool ESG::D3DRendererLogic::LoadGeometry()
 {
 	ID3D11Device* creator;
 	direct11.GetDevice((void**)&creator);
+<<<<<<< HEAD
 	proxy.Create();
 	inputProxy.Create(window);
 
@@ -529,6 +569,11 @@ bool ESG::D3DRendererLogic::LoadGeometry()
 	scene.sunAmbient = lightAmbient;
 	scene.camerPos = viewTranslation;
 
+=======
+	InitializeVertexBuffer(creator);
+	InitializeIndexBuffer(creator);
+	InitializeConstantBuffer(creator);
+>>>>>>> main
 	for (int i = 0; i < levelData->levelMaterials.size(); ++i)
 	{
 		mesh.material[i] = levelData->levelMaterials[i].attrib;
@@ -538,11 +583,14 @@ bool ESG::D3DRendererLogic::LoadGeometry()
 	{
 		mesh.worldMatrix[i] = levelData->levelTransforms[i];
 	}
-
+	modelID.numLights = levelData->levelLighting.size();
+	modelID.mat_id = levelData->levelMeshes[0].materialIndex;
+	modelID.mod_id = levelData->levelInstances[0].modelIndex;
 	for (int i = 0; i < levelData->levelLighting.size(); ++i)
 	{
 		lights.myLights[i] = levelData->levelLighting[i];
 	}
+<<<<<<< HEAD
 	//std::vector<float> verts = {
 	//	-0.5f, -0.5f,
 	//	0, 0.5f,
@@ -748,6 +796,9 @@ bool ESG::D3DRendererLogic::LoadGeometry()
 	CD3D11_BUFFER_DESC lssvbDesc(sizeof(TextVertex)* LSstaticVerts.size(), D3D11_BIND_VERTEX_BUFFER);
 	creator->CreateBuffer(&lssvbDesc, &lssvbData, vertexBufferStaticTextLose.GetAddressOf());
 
+=======
+	creator->Release();
+>>>>>>> main
 	return true;
 }
 
@@ -840,7 +891,10 @@ bool ESG::D3DRendererLogic::SetupDrawcalls() // I SCREWED THIS UP MAKES SO MUCH 
 	startDraw = game->system<RenderingSystem>().kind(flecs::PreUpdate)
 		.each([this](flecs::entity e, RenderingSystem& s) {
 		// reset the draw counter only once per frame
+<<<<<<< HEAD
 		draw_counter = 0;
+=======
+>>>>>>> main
 		//loop over levelData->levelTransforms
 		//copy over to mesh.WorldMatrix[i] = levelTransforms
 		for (int i = 0; i < levelData->levelTransforms.size(); ++i)
@@ -852,6 +906,7 @@ bool ESG::D3DRendererLogic::SetupDrawcalls() // I SCREWED THIS UP MAKES SO MUCH 
 	updateDraw = game->system<Position, Orientation, Material>().kind(flecs::OnUpdate)
 		.each([this](flecs::entity e, Position& p, Orientation& o, Material& m) {
 		// copy all data to our instancing array
+<<<<<<< HEAD
 		if (e.has<BulletTest>())
 		{
 			GW::MATH::GMATRIXF bullet = GW::MATH::GIdentityMatrixF;
@@ -863,6 +918,9 @@ bool ESG::D3DRendererLogic::SetupDrawcalls() // I SCREWED THIS UP MAKES SO MUCH 
 			bullet.row2.x = o.value.row2.x;
 			bullet.row2.y = o.value.row2.y;
 			bulletMoves.push_back(bullet);
+=======
+		LevelSwitch();
+>>>>>>> main
 			//int i = draw_counter;
 			//instanceData.instance_transforms[i] = GW::MATH::GIdentityMatrixF;
 			//instanceData.instance_transforms[i].row4.x = p.value.x;
@@ -882,8 +940,12 @@ bool ESG::D3DRendererLogic::SetupDrawcalls() // I SCREWED THIS UP MAKES SO MUCH 
 			//// if v < 0 then 0, else 1, https://graphics.stanford.edu/~seander/bithacks.html
 			//int sign = 1 ^ ((unsigned int)v >> (sizeof(int) * CHAR_BIT - 1));
 			//draw_counter += sign;
+<<<<<<< HEAD
 		}
 			});
+=======
+	});
+>>>>>>> main
 	// runs once per frame after updateDraw
 	completeDraw = game->system<Instance>().kind(flecs::PostUpdate)
 		.each([this](flecs::entity e, Instance& s) {
@@ -1165,4 +1227,57 @@ bool ESG::D3DRendererLogic::FreeResources()
 	//vkDestroyPipeline(device, pipeline, nullptr);
 
 	return true;
+}
+void ESG::D3DRendererLogic::LevelSwitch()
+{
+	if (*levelChange)
+	{
+		IShellItem* pShellItem = nullptr;
+		COMDLG_FILTERSPEC ComDlgFS[1] = { {L"Text Files", L"*.txt"} };
+		//LPWSTR filePath;
+		HRESULT he = CoInitializeEx(NULL, COINIT_APARTMENTTHREADED | COINIT_DISABLE_OLE1DDE);
+		if (SUCCEEDED(he))
+		{
+			IFileDialog* pFileOpen = nullptr;
+			he = CoCreateInstance(CLSID_FileOpenDialog, NULL, CLSCTX_ALL, IID_IFileOpenDialog, (void**)(&pFileOpen));
+			if (SUCCEEDED(he))
+			{
+				pFileOpen->SetFileTypes(1, ComDlgFS);
+				pFileOpen->SetTitle(L"Level Selection");
+				he = pFileOpen->Show(0);
+				if (SUCCEEDED(he))
+				{
+					wchar_t* filePath;
+					he = pFileOpen->GetResult(&pShellItem);
+					if (SUCCEEDED(he))
+					{
+						pShellItem->GetDisplayName(SIGDN_FILESYSPATH, &filePath);
+						std::wstring file;
+						if (filePath != 0)
+						{
+							file = std::wstring(filePath);
+							std::string fileName(file.begin(), file.end());
+							std::string base_file = fileName.substr(fileName.find_last_of("/\\") + 1);
+							std::string search = "../" + base_file;
+							GW::SYSTEM::GLog log;
+							
+							bool levelLoaded = levelData->LoadLevel(search.c_str(), "../Models", log);
+							if (LoadGeometry())
+							{
+								PipelineHandles handles = GetCurrentPipelineHandles();
+								SetUpPipeline(handles);
+
+							}
+							(*levelChange) = false;
+							CoTaskMemFree(filePath);
+							pShellItem->Release();
+						}
+
+					}
+				}
+				pFileOpen->Release();
+			}
+			CoUninitialize();
+		}
+	}
 }
