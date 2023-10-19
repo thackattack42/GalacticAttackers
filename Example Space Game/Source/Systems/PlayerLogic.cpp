@@ -63,22 +63,24 @@ bool ESG::PlayerLogic::Init(std::shared_ptr<flecs::world> _game,
 			p[i].value.x = G_LARGER(p[i].value.x, -0.4f);
 			p[i].value.x = G_SMALLER(p[i].value.x, +0.4f);
 
-			// fire weapon if they are in a firing state
-			if (it.entity(i).has<Firing>()) {
-				Position offset = p[i];
-				offset.value.x = p[i].value.x;
-				offset.value.y = 0.05;
-				FireLasers(it.entity(i).world(), offset);
-				ModelTransform* bullet = it.entity(i).get_mut<ModelTransform>();
-				std::cout << "offset y: " << bullet->matrix.row4.y << '\n';
-
-				if (offset.value.y >= 50)
-				{
-					it.entity(i).remove<Firing>();
-					std::cout << "Bullet Moved \n";
-				}
-			}
 			ModelTransform* edit = it.entity(i).get_mut<ModelTransform>();
+		    ModelTransform* bullet = it.entity(i).get_mut<ModelTransform>();
+
+			// fire weapon if they are in a firing state
+				if (it.entity(i).has<Firing>()) {
+					bullet->matrix.row4.x = edit->matrix.row4.x;
+					Position offset = p[i];
+					offset.value.x = p[i].value.x;
+					offset.value.y = 0.05;
+					FireLasers(it.entity(i).world(), offset);
+					std::cout << "offset x: " << offset.value.y << '\n';
+
+					if (offset.value.y >= 50)
+					{
+						it.entity(i).remove<Firing>();
+						std::cout << "Bullet Moved \n";
+					}
+			}
 			if (edit->matrix.row4.z > -42 && edit->matrix.row4.z < +42)
 			{
 				GW::MATH::GMatrix::TranslateLocalF(edit->matrix, GW::MATH::GVECTORF{ -p[i].value.x, p[i].value.y, 0, 1 }, edit->matrix);
@@ -233,7 +235,9 @@ bool ESG::PlayerLogic::FireLasers(flecs::world& stage, Position origin)
 		{*/
 		GW::MATH::GMatrix::TranslateGlobalF(bulletT->matrix, GW::MATH::GVECTORF{ origin.value.x, 5, 0, 1 }, bulletT->matrix);
 		levelData->levelTransforms[bulletT->rendererIndex] = bulletT->matrix;
-		std::cout << "Bullet Matrix changes: " << "x: " << bulletT->matrix.row4.x << " y: " << bulletT->matrix.row4.y << " z: " << bulletT->matrix.row4.z << '\n';
+		origin.value.x = bulletT->matrix.row4.x;
+		origin.value.y = bulletT->matrix.row4.y;
+		std::cout << "Bullet Matrix changes: " << "x: " << bulletT->matrix.row4.x << " y: " << bulletT->matrix.row4.y << " orginY: " << origin.value.y << '\n';
 	//}
 	//else
 	//{
