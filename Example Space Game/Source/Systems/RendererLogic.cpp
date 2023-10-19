@@ -21,41 +21,33 @@ void PrintLabeledDebugString(const char* label, const char* toPrint)
 bool ESG::D3DRendererLogic::Init(	std::shared_ptr<flecs::world> _game, 
 								std::weak_ptr<const GameConfig> _gameConfig,
 								GW::GRAPHICS::GDirectX11Surface d3d11,
-<<<<<<< HEAD
-								GW::SYSTEM::GWindow _window, std::shared_ptr<const Level_Data> _levelData)
-=======
-								GW::SYSTEM::GWindow _window, std::shared_ptr<Level_Data> _levelData, std::shared_ptr<bool> _levelChange)
->>>>>>> main
+								GW::SYSTEM::GWindow _window, std::shared_ptr<const Level_Data> _levelData, std::shared_ptr<bool> _levelChange)
 {
-	// save a handle to the ECS & game settings
-	game = _game;
-	gameConfig = _gameConfig;
-	direct11 = d3d11;
-	window = _window;
-	levelData = _levelData;
-<<<<<<< HEAD
-=======
-	levelChange = _levelChange;
-	
->>>>>>> main
-	// Setup all vulkan resources
-	if (LoadShaders3D() == false) 
-		return false;
-	if (LoadShaders2D() == false)
-		return false;
-	if (LoadUniforms() == false)
-		return false;
-	if (LoadGeometry() == false)
-		return false;
-	//if (SetupPipeline() == false)
-	//	return false;
-	// Setup drawing engine
-	if (SetupDrawcalls() == false)
-		return false;
-	// GVulkanSurface will inform us when to release any allocated resources
-	InitializeGraphics();
+// save a handle to the ECS & game settings
+game = _game;
+gameConfig = _gameConfig;
+direct11 = d3d11;
+window = _window;
+levelData = _levelData;
+levelChange = _levelChange;
+// Setup all vulkan resources
+if (LoadShaders3D() == false)
+return false;
+if (LoadShaders2D() == false)
+return false;
+if (LoadUniforms() == false)
+return false;
+if (LoadGeometry() == false)
+return false;
+//if (SetupPipeline() == false)
+//	return false;
+// Setup drawing engine
+if (SetupDrawcalls() == false)
+return false;
+// GVulkanSurface will inform us when to release any allocated resources
+InitializeGraphics();
 
-	return true;
+return true;
 }
 
 std::vector<Sprite>	ESG::D3DRendererLogic::LoadHudFromXML(std::string filepath)
@@ -535,7 +527,6 @@ bool ESG::D3DRendererLogic::LoadGeometry()
 {
 	ID3D11Device* creator;
 	direct11.GetDevice((void**)&creator);
-<<<<<<< HEAD
 	proxy.Create();
 	inputProxy.Create(window);
 
@@ -569,11 +560,9 @@ bool ESG::D3DRendererLogic::LoadGeometry()
 	scene.sunAmbient = lightAmbient;
 	scene.camerPos = viewTranslation;
 
-=======
-	InitializeVertexBuffer(creator);
-	InitializeIndexBuffer(creator);
+	Initialize3DVertexBuffer(creator);
+	Initialize3DIndexBuffer(creator);
 	InitializeConstantBuffer(creator);
->>>>>>> main
 	for (int i = 0; i < levelData->levelMaterials.size(); ++i)
 	{
 		mesh.material[i] = levelData->levelMaterials[i].attrib;
@@ -590,7 +579,6 @@ bool ESG::D3DRendererLogic::LoadGeometry()
 	{
 		lights.myLights[i] = levelData->levelLighting[i];
 	}
-<<<<<<< HEAD
 	//std::vector<float> verts = {
 	//	-0.5f, -0.5f,
 	//	0, 0.5f,
@@ -796,9 +784,7 @@ bool ESG::D3DRendererLogic::LoadGeometry()
 	CD3D11_BUFFER_DESC lssvbDesc(sizeof(TextVertex)* LSstaticVerts.size(), D3D11_BIND_VERTEX_BUFFER);
 	creator->CreateBuffer(&lssvbDesc, &lssvbData, vertexBufferStaticTextLose.GetAddressOf());
 
-=======
 	creator->Release();
->>>>>>> main
 	return true;
 }
 
@@ -891,10 +877,7 @@ bool ESG::D3DRendererLogic::SetupDrawcalls() // I SCREWED THIS UP MAKES SO MUCH 
 	startDraw = game->system<RenderingSystem>().kind(flecs::PreUpdate)
 		.each([this](flecs::entity e, RenderingSystem& s) {
 		// reset the draw counter only once per frame
-<<<<<<< HEAD
 		draw_counter = 0;
-=======
->>>>>>> main
 		//loop over levelData->levelTransforms
 		//copy over to mesh.WorldMatrix[i] = levelTransforms
 		for (int i = 0; i < levelData->levelTransforms.size(); ++i)
@@ -906,7 +889,6 @@ bool ESG::D3DRendererLogic::SetupDrawcalls() // I SCREWED THIS UP MAKES SO MUCH 
 	updateDraw = game->system<Position, Orientation, Material>().kind(flecs::OnUpdate)
 		.each([this](flecs::entity e, Position& p, Orientation& o, Material& m) {
 		// copy all data to our instancing array
-<<<<<<< HEAD
 		if (e.has<BulletTest>())
 		{
 			GW::MATH::GMATRIXF bullet = GW::MATH::GIdentityMatrixF;
@@ -918,9 +900,7 @@ bool ESG::D3DRendererLogic::SetupDrawcalls() // I SCREWED THIS UP MAKES SO MUCH 
 			bullet.row2.x = o.value.row2.x;
 			bullet.row2.y = o.value.row2.y;
 			bulletMoves.push_back(bullet);
-=======
-		LevelSwitch();
->>>>>>> main
+			LevelSwitch();
 			//int i = draw_counter;
 			//instanceData.instance_transforms[i] = GW::MATH::GIdentityMatrixF;
 			//instanceData.instance_transforms[i].row4.x = p.value.x;
@@ -940,12 +920,9 @@ bool ESG::D3DRendererLogic::SetupDrawcalls() // I SCREWED THIS UP MAKES SO MUCH 
 			//// if v < 0 then 0, else 1, https://graphics.stanford.edu/~seander/bithacks.html
 			//int sign = 1 ^ ((unsigned int)v >> (sizeof(int) * CHAR_BIT - 1));
 			//draw_counter += sign;
-<<<<<<< HEAD
 		}
 			});
-=======
-	});
->>>>>>> main
+
 	// runs once per frame after updateDraw
 	completeDraw = game->system<Instance>().kind(flecs::PostUpdate)
 		.each([this](flecs::entity e, Instance& s) {
