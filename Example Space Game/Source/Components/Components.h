@@ -26,6 +26,7 @@ namespace GA
 	struct Enable{};
 	struct TimesMoved { int timesMoved = 0; };
 	struct Movement { bool moveRight = true; };
+	struct Location { float location = 0; };
 	//struct Material { float red, greem, blue; };
 }
 #endif
