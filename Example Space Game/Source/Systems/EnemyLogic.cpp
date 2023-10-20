@@ -34,11 +34,13 @@ bool GA::EnemyLogic::Init(std::shared_ptr<flecs::world> _game,
 			explode.Write(GA::PLAY_EVENT::ENEMY_DESTROYED, x);
 			eventPusher.Push(explode);
 		}
+		
 		ModelTransform* edit = e.get_mut<ModelTransform>();
 		TimesMoved* tm = e.get_mut<TimesMoved>();
 		Movement* move = e.get_mut<Movement>();
+		Location* loc = e.get_mut<Location>();
 		timer = 0;
-
+		loc->location = 60.0f;
 		if (move->moveRight)
 		{
 			timer--;
@@ -81,7 +83,7 @@ bool GA::EnemyLogic::Init(std::shared_ptr<flecs::world> _game,
 		//std::cout << "Moving " << edit->matrix.row4.x << " " << edit->matrix.row4.y << " " << edit->matrix.row4.z << std::endl;
 		if (shieldon1)
 		{
-			if (edit->matrix.row4.y <= 56)
+			if (edit->matrix.row4.y <= loc->location)
 			{
 				GW::MATH::GMatrix::TranslateGlobalF(edit->matrix, GW::MATH::GVECTORF{ 0, 500, 0, 1 }, edit->matrix);
 				levelData->levelTransforms[edit->rendererIndex] = edit->matrix;
@@ -93,8 +95,8 @@ bool GA::EnemyLogic::Init(std::shared_ptr<flecs::world> _game,
 					//a.set<Material>({ 0, 0, 0 });
 					a.destruct();
 				}
+				shieldon1 = false;
 			}
-			shieldon1 = false;
 		}
 
 		if (edit->matrix.row4.y <= 30)
