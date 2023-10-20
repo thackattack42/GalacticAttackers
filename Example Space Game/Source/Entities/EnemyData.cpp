@@ -4,6 +4,7 @@
 #include "../Components/Physics.h"
 #include "../Entities/Prefabs.h"
 #include "../Components/Gameplay.h"
+#include "../Components/Components.h"
 
 bool GA::EnemyData::Load(	std::shared_ptr<flecs::world> _game,
 							std::weak_ptr<const GameConfig> _gameConfig,
@@ -39,6 +40,7 @@ bool GA::EnemyData::Load(	std::shared_ptr<flecs::world> _game,
 		//.set(spaceship)
 			.set<Material>({ red, green, blue })
 			.set<Orientation>({ world })
+			.set<ModelBoundary*>(_game->prefab("Spaceship5").get_mut<ModelBoundary>())
 		// .override<> ensures a component is unique to each entity created from a prefab
 			.set_override<Health>({ health })
 			.override<Acceleration>()
@@ -47,6 +49,11 @@ bool GA::EnemyData::Load(	std::shared_ptr<flecs::world> _game,
 			.override<Enemy>() // Tag this prefab as an enemy (for queries/systems)
 			//.override<PrefabEnemy>() // Tag this prefab as an enemy (for queries/systems)
 			.override<Collidable>(); // can be collided with
+		if (enemyPrefab.has<Collidable>())
+		{
+			std::cout << "ship got bound: " << enemyPrefab.get_mut<ModelBoundary>() << '\n';
+			std::cout << "ship orig bound: " << _game->prefab("Spaceship5").get_mut<ModelBoundary>() << '\n';
+		}
 
 		auto enemyPrefab1 = _game->prefab("Spaceship5.001")
 			// .set<> in a prefab means components are shared (instanced)
