@@ -14,135 +14,142 @@ using namespace GA; // Galactic Attackers
 bool GA::EnemyLogic::Init(std::shared_ptr<flecs::world> _game,
 	std::weak_ptr<const GameConfig> _gameConfig,
 	GW::CORE::GEventGenerator _eventPusher,
-	std::shared_ptr<Level_Data> _levelData)
+	std::shared_ptr<Level_Data> _levelData,
+	std::shared_ptr<bool> _pause)
 {
 	// save a handle to the ECS & game settings
 	game = _game;
 	gameConfig = _gameConfig;
 	eventPusher = _eventPusher;
 	levelData = _levelData;
+	pause = _pause;
 
 	// destroy any bullets that have the CollidedWith relationship
 	game->system<Enemy, Health, Position>("Enemy System")
 		.each([this](flecs::entity e, Enemy, Health& h, Position& p) {
 		// if you have no health left be destroyed
-		if (e.get<Health>()->value <= 0) {
-			// play explode sound
-			e.destruct();
-			GA::PLAY_EVENT_DATA x;
-			GW::GEvent explode;
-			explode.Write(GA::PLAY_EVENT::ENEMY_DESTROYED, x);
-			eventPusher.Push(explode);
-		}
-		
-		ModelTransform* edit = e.get_mut<ModelTransform>();
-		TimesMoved* tm = e.get_mut<TimesMoved>();
-		Movement* move = e.get_mut<Movement>();
-		Location* loc = e.get_mut<Location>();
-		timer = 0;
-		loc->location = 60.0f;
-		if (move->moveRight)
+		if (!(*pause))
 		{
-			timer--;
-			if (timer <= 0)
-			{
-				GW::MATH::GMatrix::TranslateGlobalF(edit->matrix, GW::MATH::GVECTORF{ 0, 0, 0.2666, 1 }, edit->matrix);
-				levelData->levelTransforms[edit->rendererIndex] = edit->matrix;
-				tm->timesMoved++;
-				timer = e.delta_time() * 1000;
+			if (e.get<Health>()->value <= 0) {
+				// play explode sound
+				e.destruct();
+				GA::PLAY_EVENT_DATA x;
+				GW::GEvent explode;
+				explode.Write(GA::PLAY_EVENT::ENEMY_DESTROYED, x);
+				eventPusher.Push(explode);
+			}
 
-				if (tm->timesMoved >= 100)
+			ModelTransform* edit = e.get_mut<ModelTransform>();
+			TimesMoved* tm = e.get_mut<TimesMoved>();
+			Movement* move = e.get_mut<Movement>();
+			Location* loc = e.get_mut<Location>();
+			timer = 0;
+			loc->location = 60.0f;
+			if (move->moveRight)
+			{
+				timer--;
+				if (timer <= 0)
 				{
-					GW::MATH::GMatrix::TranslateGlobalF(edit->matrix, GW::MATH::GVECTORF{ 0, -3, 0, 1 }, edit->matrix);
+					GW::MATH::GMatrix::TranslateGlobalF(edit->matrix, GW::MATH::GVECTORF{ 0, 0, 0.2666, 1 }, edit->matrix);
 					levelData->levelTransforms[edit->rendererIndex] = edit->matrix;
-					move->moveRight = false;
+					tm->timesMoved++;
+					timer = e.delta_time() * 1000;
+
+					if (tm->timesMoved >= 100)
+					{
+						GW::MATH::GMatrix::TranslateGlobalF(edit->matrix, GW::MATH::GVECTORF{ 0, -3, 0, 1 }, edit->matrix);
+						levelData->levelTransforms[edit->rendererIndex] = edit->matrix;
+						move->moveRight = false;
+					}
+				}
+
+			}
+			else if (!move->moveRight)
+			{
+				timer--;
+				if (timer <= 0)
+				{
+					GW::MATH::GMatrix::TranslateGlobalF(edit->matrix, GW::MATH::GVECTORF{ 0, 0, -0.2666, 1 }, edit->matrix);
+					levelData->levelTransforms[edit->rendererIndex] = edit->matrix;
+					tm->timesMoved--;
+					timer = e.delta_time() * 1000;
+
+					if (tm->timesMoved <= 0)
+					{
+						GW::MATH::GMatrix::TranslateGlobalF(edit->matrix, GW::MATH::GVECTORF{ 0, -3, 0, 1 }, edit->matrix);
+						levelData->levelTransforms[edit->rendererIndex] = edit->matrix;
+						move->moveRight = true;
+					}
+				}
+
+			}
+
+			//std::cout << "Moving " << edit->matrix.row4.x << " " << edit->matrix.row4.y << " " << edit->matrix.row4.z << std::endl;
+			if (shieldon1)
+			{
+				if (edit->matrix.row4.y <= loc->location)
+				{
+					GW::MATH::GMatrix::TranslateGlobalF(edit->matrix, GW::MATH::GVECTORF{ 0, 500, 0, 1 }, edit->matrix);
+					levelData->levelTransforms[edit->rendererIndex] = edit->matrix;
+					//e.destruct();
+					//e.set<Health>({ 0 });
+					//e.set<Material>({ 0, 0, 0 });
+					auto a = game->lookup("shield");
+					if (a.is_valid()) {
+						//a.set<Material>({ 0, 0, 0 });
+						a.destruct();
+					}
+					shieldon1 = false;
 				}
 			}
-			
-		}
-		else if (!move->moveRight)
-		{
-			timer--;
-			if (timer <= 0)
-			{
-				GW::MATH::GMatrix::TranslateGlobalF(edit->matrix, GW::MATH::GVECTORF{ 0, 0, -0.2666, 1 }, edit->matrix);
-				levelData->levelTransforms[edit->rendererIndex] = edit->matrix;
-				tm->timesMoved--;
-				timer = e.delta_time() * 1000;
 
-				if (tm->timesMoved <= 0)
-				{
-					GW::MATH::GMatrix::TranslateGlobalF(edit->matrix, GW::MATH::GVECTORF{ 0, -3, 0, 1 }, edit->matrix);
-					levelData->levelTransforms[edit->rendererIndex] = edit->matrix;
-					move->moveRight = true;
-				}
-			}
-			
-		}
-
-		//std::cout << "Moving " << edit->matrix.row4.x << " " << edit->matrix.row4.y << " " << edit->matrix.row4.z << std::endl;
-		if (shieldon1)
-		{
-			if (edit->matrix.row4.y <= loc->location)
+			if (edit->matrix.row4.y <= 30)
 			{
 				GW::MATH::GMatrix::TranslateGlobalF(edit->matrix, GW::MATH::GVECTORF{ 0, 500, 0, 1 }, edit->matrix);
 				levelData->levelTransforms[edit->rendererIndex] = edit->matrix;
-				//e.destruct();
-				//e.set<Health>({ 0 });
-				//e.set<Material>({ 0, 0, 0 });
-				auto a = game->lookup("shield");
-				if (a.is_valid()) {
-					//a.set<Material>({ 0, 0, 0 });
-					a.destruct();
-				}
-				shieldon1 = false;
-			}
-		}
-
-		if (edit->matrix.row4.y <= 30)
-		{
-			e.destruct();
-			flecs::entity playerDeath;
-			RetreivePrefab("Death", playerDeath);
-			GW::AUDIO::GSound death = *playerDeath.get<GW::AUDIO::GSound>();
-			death.Play();
-			auto live = game->lookup("life 1");
-			if (live.is_valid())
-			{
-				live.destruct();
-			}
-			else {
-				auto live2 = game->lookup("life 2");
-				if (live2.is_valid())
+				flecs::entity playerDeath;
+				RetreivePrefab("Death", playerDeath);
+				GW::AUDIO::GSound death = *playerDeath.get<GW::AUDIO::GSound>();
+				death.Play();
+				auto live = game->lookup("life 1");
+				if (live.is_valid())
 				{
-					live2.destruct();
-
+					live.destruct();
 				}
-				else
-				{
-					auto live3 = game->lookup("life 3");
-					if (live3.is_valid())
+				else {
+					auto live2 = game->lookup("life 2");
+					if (live2.is_valid())
 					{
-						live3.destruct();
-						auto player = game->lookup("Player");
-						player.destruct();
+						live2.destruct();
 
-						GA::PLAY_EVENT_DATA y;
-						GW::GEvent youLose;
-						//youLose.Write(GA::PLAY_EVENT::LOSE, y);
-						eventPusher.Push(youLose);
-						std::cout << "Player Dies...You Lose";
+					}
+					else
+					{
+						auto live3 = game->lookup("life 3");
+						if (live3.is_valid())
+						{
+							live3.destruct();
+							auto player = game->lookup("Player");
+							player.destruct();
+
+							GA::PLAY_EVENT_DATA y;
+							GW::GEvent youLose;
+							//youLose.Write(GA::PLAY_EVENT::LOSE, y);
+							eventPusher.Push(youLose);
+							std::cout << "Player Dies...You Lose";
+						}
 					}
 				}
-			}
 
+			}
+			p.value = { 0, 0 };
 		}
-		p.value = { 0, 0 };
 
 		//FireLasersEnemy(e.world(), p);
 			});
 
 	return true;
+
 }
 
 // Free any resources used to run this system

@@ -20,7 +20,7 @@ bool GA::PlayerLogic::Init(std::shared_ptr<flecs::world> _game,
 							GW::AUDIO::GAudio _audioEngine,
 							GW::CORE::GEventGenerator _eventPusher,
 							std::shared_ptr<Level_Data> _levelData, std::shared_ptr<int> _currentLevel,
-							std::shared_ptr<bool> _levelChange, std::shared_ptr<bool> _youWin, std::shared_ptr<bool> _youLose)
+							std::shared_ptr<bool> _levelChange, std::shared_ptr<bool> _youWin, std::shared_ptr<bool> _youLose, std::shared_ptr<bool> _pause)
 {
 	// save a handle to the ECS & game settings
 	game = _game;
@@ -34,78 +34,83 @@ bool GA::PlayerLogic::Init(std::shared_ptr<flecs::world> _game,
 	levelChange = _levelChange;
 	youWin = _youWin;
 	youLose = _youLose;
+	pause = _pause;
+
 	// Init any helper systems required for this task
 	std::shared_ptr<const GameConfig> readCfg = gameConfig.lock();
 	int width = (*readCfg).at("Window").at("width").as<int>();
 	float speed = (*readCfg).at("Player").at("speed").as<float>();
 	chargeTime = (*readCfg).at("Player").at("chargeTime").as<float>();
+
 	// add logic for updating players
 	playerSystem = game->system<Player, Position, ControllerID>("Player System")
 		.iter([this, speed](flecs::iter it, Player*, Position* p, ControllerID* c) {
-
-		for (auto i : it) 
+		if (!(*pause))
 		{
-			// left-right movement
-			float xaxis = 0, input = 0;
-			// Use the controller/keyboard to move the player around the screen			
-			if (c[i].index == 0) { // enable keyboard controls for player 1
-				immediateInput.GetState(G_KEY_LEFT, input); xaxis -= input;
-				immediateInput.GetState(G_KEY_RIGHT, input); xaxis += input;
-			}
-			// grab left-thumb stick
-			controllerInput.GetState(c[i].index, G_LX_AXIS, input); xaxis += input;
-			controllerInput.GetState(c[i].index, G_DPAD_LEFT_BTN, input); xaxis -= input;
-			controllerInput.GetState(c[i].index, G_DPAD_RIGHT_BTN, input); xaxis += input;
-			xaxis = G_LARGER(xaxis, -1);// cap right motion
-			xaxis = G_SMALLER(xaxis, 1);// cap left motion
-
-			// apply movement
-			p[i].value.x += xaxis * it.delta_time() * speed;
-			// limit the player to stay within -1 to +1 NDC
-			p[i].value.x = G_LARGER(p[i].value.x, -0.4f);
-			p[i].value.x = G_SMALLER(p[i].value.x, +0.4f);
-
-			ModelTransform* edit = it.entity(i).get_mut<ModelTransform>();
-
-			if (edit->matrix.row4.z > -42 && edit->matrix.row4.z < +42)
+			for (auto i : it)
 			{
-				GW::MATH::GMatrix::TranslateLocalF(edit->matrix, GW::MATH::GVECTORF{ -p[i].value.x, p[i].value.y, 0, 1 }, edit->matrix); 
-				if (edit->matrix.row4.z < -40) 
-					edit->matrix.row4.z = -40; 
-				else if (edit->matrix.row4.z > 40) 
-					edit->matrix.row4.z = 40; 
+				// left-right movement
+				float xaxis = 0, input = 0;
+				// Use the controller/keyboard to move the player around the screen			
+				if (c[i].index == 0) { // enable keyboard controls for player 1
+					immediateInput.GetState(G_KEY_LEFT, input); xaxis -= input;
+					immediateInput.GetState(G_KEY_RIGHT, input); xaxis += input;
+				}
+				// grab left-thumb stick
+				controllerInput.GetState(c[i].index, G_LX_AXIS, input); xaxis += input;
+				controllerInput.GetState(c[i].index, G_DPAD_LEFT_BTN, input); xaxis -= input;
+				controllerInput.GetState(c[i].index, G_DPAD_RIGHT_BTN, input); xaxis += input;
+				xaxis = G_LARGER(xaxis, -1);// cap right motion
+				xaxis = G_SMALLER(xaxis, 1);// cap left motion
 
-				levelData->levelTransforms[edit->rendererIndex] = edit->matrix; 
-			}
+				// apply movement
+				p[i].value.x += xaxis * it.delta_time() * speed;
+				// limit the player to stay within -1 to +1 NDC
+				p[i].value.x = G_LARGER(p[i].value.x, -0.4f);
+				p[i].value.x = G_SMALLER(p[i].value.x, +0.4f);
 
-			flecs::entity bull;
-			RetreivePrefab("Lazer Bullet", bull);
-			ModelTransform* bullet = bull.get_mut<ModelTransform>();
-			bullet->matrix.row4.z = edit->matrix.row4.z;
+				ModelTransform* edit = it.entity(i).get_mut<ModelTransform>();
 
-			if (bull.has<BulletTest>())
-			{
-				// fire weapon if they are in a firing state
-				if (it.entity(i).has<Firing>()) {
-					Position offset = p[i];
-					offset.value.x = p[i].value.x;
-					offset.value.y = 0.05;
-					FireLasers(it.entity(i).world(), offset);
+				if (edit->matrix.row4.z > -42 && edit->matrix.row4.z < +42)
+				{
+					GW::MATH::GMatrix::TranslateLocalF(edit->matrix, GW::MATH::GVECTORF{ -p[i].value.x, p[i].value.y, 0, 1 }, edit->matrix);
+					if (edit->matrix.row4.z < -40)
+						edit->matrix.row4.z = -40;
+					else if (edit->matrix.row4.z > 40)
+						edit->matrix.row4.z = 40;
+
+					levelData->levelTransforms[edit->rendererIndex] = edit->matrix;
+				}
+
+				flecs::entity bull;
+				RetreivePrefab("Lazer Bullet", bull);
+				ModelTransform* bullet = bull.get_mut<ModelTransform>();
+				bullet->matrix.row4.z = edit->matrix.row4.z;
+
+				if (bull.has<BulletTest>())
+				{
+					// fire weapon if they are in a firing state
+					if (it.entity(i).has<Firing>()) {
+						Position offset = p[i];
+						offset.value.x = p[i].value.x;
+						offset.value.y = 0.05;
+						FireLasers(it.entity(i).world(), offset);
 
 
 
-					if (offset.value.y >= 50)
-					{
-						it.entity(i).remove<Firing>();
-						std::cout << "Bullet Moved \n";
+						if (offset.value.y >= 50)
+						{
+							it.entity(i).remove<Firing>();
+							std::cout << "Bullet Moved \n";
+						}
 					}
 				}
+				p[i].value.x = 0;
+				p[i].value.y = 0;
 			}
-			p[i].value.x = 0; 
-			p[i].value.y = 0;		
+			// process any cached button events after the loop (happens multiple times per frame)
+			ProcessInputEvents(it.world());
 		}
-		// process any cached button events after the loop (happens multiple times per frame)
-		ProcessInputEvents(it.world());
 	});
 
 	// Create an event cache for when the spacebar/'A' button is pressed
@@ -206,6 +211,10 @@ bool GA::PlayerLogic::ProcessInputEvents(flecs::world& stage)
 			if (keyboard == GBufferedInput::Events::KEYPRESSED) {
 				if (k_data.data == G_KEY_SPACE) {
 					fire = true;
+					flecs::entity bullet;
+					RetreivePrefab("Lazer Bullet", bullet);
+					GW::AUDIO::GSound shoot = *bullet.get<GW::AUDIO::GSound>();
+					shoot.Play();
 					//chargeStart = stage.time();
 				}
 				if (k_data.data == G_KEY_0)
@@ -312,8 +321,8 @@ bool GA::PlayerLogic::FireLasers(flecs::world& stage, Position origin)
 	//printf("%f %f \n", edit->matrix.row4.x, edit->matrix.row4.y);
 
 	// play the sound of the Lazer prefab
-	GW::AUDIO::GSound shoot = *bullet.get<GW::AUDIO::GSound>();
-	shoot.Play();
+	/*GW::AUDIO::GSound shoot = *bullet.get<GW::AUDIO::GSound>();
+	shoot.Play();*/
 	
 	return true;
 }
