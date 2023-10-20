@@ -129,7 +129,7 @@ bool GA::EnemyLogic::Init(std::shared_ptr<flecs::world> _game,
 
 						GA::PLAY_EVENT_DATA y;
 						GW::GEvent youLose;
-						//youLose.Write(GA::PLAY_EVENT::LOSE, y);
+						youLose.Write(GA::PLAY_EVENT::LOSE, y);
 						eventPusher.Push(youLose);
 						std::cout << "Player Dies...You Lose";
 					}
