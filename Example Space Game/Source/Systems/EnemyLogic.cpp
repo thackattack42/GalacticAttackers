@@ -35,40 +35,47 @@ bool GA::EnemyLogic::Init(std::shared_ptr<flecs::world> _game,
 			eventPusher.Push(explode);
 		}
 		ModelTransform* edit = e.get_mut<ModelTransform>();
+		TimesMoved* tm = e.get_mut<TimesMoved>();
+		Movement* move = e.get_mut<Movement>();
+		timer = 0;
 
-		if (moveRight)
+		if (move->moveRight)
 		{
 			timer--;
 			if (timer <= 0)
 			{
-				GW::MATH::GMatrix::TranslateGlobalF(edit->matrix, GW::MATH::GVECTORF{ 0, 0, .6, 1 }, edit->matrix);
+				GW::MATH::GMatrix::TranslateGlobalF(edit->matrix, GW::MATH::GVECTORF{ 0, 0, 0.2666, 1 }, edit->matrix);
 				levelData->levelTransforms[edit->rendererIndex] = edit->matrix;
-				timesMoved++;
+				tm->timesMoved++;
 				timer = e.delta_time() * 1000;
+
+				if (tm->timesMoved >= 100)
+				{
+					GW::MATH::GMatrix::TranslateGlobalF(edit->matrix, GW::MATH::GVECTORF{ 0, -3, 0, 1 }, edit->matrix);
+					levelData->levelTransforms[edit->rendererIndex] = edit->matrix;
+					move->moveRight = false;
+				}
 			}
-			if (timesMoved >= 100)
-			{
-				moveRight = false;
-				GW::MATH::GMatrix::TranslateGlobalF(edit->matrix, GW::MATH::GVECTORF{ 0, -3, 0, 1 }, edit->matrix);
-				levelData->levelTransforms[edit->rendererIndex] = edit->matrix;
-			}
+			
 		}
-		else if (!moveRight)
+		else if (!move->moveRight)
 		{
 			timer--;
 			if (timer <= 0)
 			{
-				GW::MATH::GMatrix::TranslateGlobalF(edit->matrix, GW::MATH::GVECTORF{ 0, 0, -.6, 1 }, edit->matrix);
+				GW::MATH::GMatrix::TranslateGlobalF(edit->matrix, GW::MATH::GVECTORF{ 0, 0, -0.2666, 1 }, edit->matrix);
 				levelData->levelTransforms[edit->rendererIndex] = edit->matrix;
-				timesMoved--;
+				tm->timesMoved--;
 				timer = e.delta_time() * 1000;
+
+				if (tm->timesMoved <= 0)
+				{
+					GW::MATH::GMatrix::TranslateGlobalF(edit->matrix, GW::MATH::GVECTORF{ 0, -3, 0, 1 }, edit->matrix);
+					levelData->levelTransforms[edit->rendererIndex] = edit->matrix;
+					move->moveRight = true;
+				}
 			}
-			if (timesMoved <= 0)
-			{
-				moveRight = true;
-				GW::MATH::GMatrix::TranslateGlobalF(edit->matrix, GW::MATH::GVECTORF{ 0, -3, 0, 1 }, edit->matrix);
-				levelData->levelTransforms[edit->rendererIndex] = edit->matrix;
-			}
+			
 		}
 
 		//std::cout << "Moving " << edit->matrix.row4.x << " " << edit->matrix.row4.y << " " << edit->matrix.row4.z << std::endl;

@@ -24,6 +24,8 @@ namespace GA
 	struct RenderingSystem {};
 	struct BulletTest {};
 	struct Enable{};
+	struct TimesMoved { int timesMoved = 0; };
+	struct Movement { bool moveRight = true; };
 	//struct Material { float red, greem, blue; };
 }
 #endif

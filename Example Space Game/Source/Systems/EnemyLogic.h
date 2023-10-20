@@ -34,7 +34,7 @@ namespace GA
 		// release any resources allocated by the system
 		bool Shutdown();
 		bool moveRight;
-		int timesMoved = 0;
+		//int timesMoved = 0;
 		float timer;
 
 	private:
