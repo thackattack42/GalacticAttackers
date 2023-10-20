@@ -82,7 +82,6 @@ bool GA::PlayerLogic::Init(std::shared_ptr<flecs::world> _game,
 			RetreivePrefab("Lazer Bullet", bull);
 			ModelTransform* bullet = bull.get_mut<ModelTransform>();
 			bullet->matrix.row4.z = edit->matrix.row4.z;
-			std::cout << "bulletZ: " << bullet->matrix.row4.z << " playerZ: " << edit->matrix.row4.z << '\n';
 
 			if (bull.has<BulletTest>())
 			{

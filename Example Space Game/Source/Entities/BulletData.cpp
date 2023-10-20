@@ -46,6 +46,7 @@ bool GA::BulletData::Load(	std::shared_ptr<flecs::world> _game,
 		.set<Velocity>({ 0, speed })
 		.set<ModelTransform*>(_game->prefab("Crystal3").get_mut<ModelTransform>())
 		.set<ModelBoundary*>(_game->prefab("Crystal3").get_mut<ModelBoundary>())
+		//.set<Collidable*>(_game->prefab("Crystal3").get_mut<Collidable>())
 		.set<GW::AUDIO::GSound>(shoot.Relinquish())
 		// .override<> ensures a component is unique to each entity created from a prefab 
 		.set_override<Damage>({ dmg })
@@ -54,6 +55,12 @@ bool GA::BulletData::Load(	std::shared_ptr<flecs::world> _game,
 		.override<Bullet>() // Tag this prefab as a bullet (for queries/systems)
 		.add<BulletTest>()
 		.override<Collidable>(); // can be collided with
+
+	if (lazerPrefab.has<Collidable>())
+	{
+		std::cout << "ship got bound: " << lazerPrefab.get_mut<ModelBoundary>() << '\n';
+		std::cout << "ship orig bound: " << _game->prefab("Crystal3").get_mut<ModelBoundary>() << '\n';
+	}
 
 	auto lazerPrefab2 = _game->prefab("Crystal3.001")
 		// .set<> in a prefab means components are shared (instanced)
