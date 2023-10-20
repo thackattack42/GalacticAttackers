@@ -90,10 +90,14 @@ bool GA::PhysicsLogic::Init(	std::shared_ptr<flecs::world> _game,
 		// collect any and all collidable objects
 		queryCache.each([this](flecs::entity e, Collidable& c, Position& p, Orientation& o, ModelBoundary& m) {
 			// create a 3x3 matrix for transformation
-			if (e.has<Collidable>())
-			{
-				std::cout << "entity has collidable: " << e.id() << '\n';
-			}
+			
+		
+				/*if (e.has<Collidable>())
+				{
+					std::cout << "entity has collidable: " << e.id() << '\n';
+				}*/
+			
+			
 			/*GW::MATH2D::GMATRIX3F matrix = {
 				o.value.row1.x, o.value.row1.y, 0,
 				o.value.row2.x, o.value.row2.y, 0,

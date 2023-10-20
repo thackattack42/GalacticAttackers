@@ -81,7 +81,6 @@ bool GA::PlayerLogic::Init(std::shared_ptr<flecs::world> _game,
 			flecs::entity bull;
 			RetreivePrefab("Lazer Bullet", bull);
 			ModelTransform* bullet = bull.get_mut<ModelTransform>();
-			bullet->matrix.row4.z = edit->matrix.row4.z;
 
 			if (bull.has<BulletTest>())
 			{
@@ -91,6 +90,7 @@ bool GA::PlayerLogic::Init(std::shared_ptr<flecs::world> _game,
 					offset.value.x = p[i].value.x;
 					offset.value.y = 0.05;
 					FireLasers(it.entity(i).world(), offset);
+					bullet->matrix.row4.x = edit->matrix.row4.z;
 
 
 
@@ -261,11 +261,15 @@ bool GA::PlayerLogic::FireLasers(flecs::world& stage, Position origin)
 		}
 		else
 		{*/
-		GW::MATH::GMatrix::TranslateGlobalF(bulletT->matrix, GW::MATH::GVECTORF{ origin.value.x, 5, 0, 1 }, bulletT->matrix);
+
+		
+
+		GW::MATH::GMatrix::TranslateGlobalF(bulletT->matrix, GW::MATH::GVECTORF{ origin.value.x, 1 * stage.delta_time(), 0, 1}, bulletT->matrix);
 		levelData->levelTransforms[bulletT->rendererIndex] = bulletT->matrix;
 		origin.value.x = bulletT->matrix.row4.x;
 		origin.value.y = bulletT->matrix.row4.y;
-		std::cout << "Bullet Matrix changes: " << "x: " << bulletT->matrix.row4.x << " y: " << bulletT->matrix.row4.y << " orginY: " << origin.value.y << '\n';
+		std::cout << "Bullet Matrix changes: " << "x: " << bulletT->matrix.row4.x << " y: " << bulletT->matrix.row4.y << " z: " << bulletT->matrix.row4.z << '\n'; 
+		
 	//}
 	//else
 	//{
