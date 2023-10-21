@@ -843,16 +843,7 @@ bool GA::D3DRendererLogic::SetupDrawcalls() // I SCREWED THIS UP MAKES SO MUCH S
 		.each([this](flecs::entity e, Position& p, Orientation& o, Material& m) {
 		// copy all data to our instancing array
 
-		float r = 0;
-		inputProxy.GetState(G_KEY_R, r);
-		if (r != 0.0f)
-		{
-			(*currentLevel) = 1;
-			(*levelChange) = true;
-			(*youLose) = false;
-		}
-			LevelSwitch();
-			ChooseLevel();
+		
 			});
 
 	// runs once per frame after updateDraw
@@ -886,6 +877,17 @@ bool GA::D3DRendererLogic::SetupDrawcalls() // I SCREWED THIS UP MAKES SO MUCH S
 		}
 		ReleasePipelineHandles(curHandles);
 		UIDraw();
+		LevelSwitch();
+		ChooseLevel();
+		float r = 0;
+		inputProxy.GetState(G_KEY_R, r);
+		if (r != 0.0f)
+		{
+			(*currentLevel) = 1;
+			(*levelChange) = true;
+			(*youLose) = false;
+		}
+		
 			});
 	// NOTE: I went with multi-system approach for the ease of passing lambdas with "this"
 	// There is a built-in solution for this problem referred to as a "custom runner":
@@ -1120,7 +1122,7 @@ bool GA::D3DRendererLogic::FreeResources()
 void GA::D3DRendererLogic::ChooseLevel()
 {
 	float one = 0.0f;
-	inputProxy.GetState(G_KEY_F1, one);
+	inputProxy.GetState(74, one);
 	if (one != 0.0f)
 	{
 		IShellItem* pShellItem = nullptr;
@@ -1276,4 +1278,14 @@ void GA::D3DRendererLogic::CreatePlayer()
 		a.add<Collidable>();
 		a.set<Material>({ red1, green1, blue1 });
 	}
+}
+
+void GA::D3DRendererLogic::CreateBullets()
+{
+	
+}
+
+void GA::D3DRendererLogic::CreateEnemies()
+{
+
 }
