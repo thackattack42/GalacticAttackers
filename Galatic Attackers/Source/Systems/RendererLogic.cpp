@@ -733,6 +733,23 @@ bool GA::D3DRendererLogic::LoadGeometry()
 	CD3D11_BUFFER_DESC lssvbDesc(sizeof(TextVertex)* LSstaticVerts.size(), D3D11_BIND_VERTEX_BUFFER);
 	creator->CreateBuffer(&lssvbDesc, &lssvbData, vertexBufferStaticTextLose.ReleaseAndGetAddressOf());
 
+	staticTextLoseR = Text();
+	staticTextLoseR.SetText("Press [R] to Restart");
+	staticTextLoseR.SetFont(&consolas32);
+	staticTextLoseR.SetPosition(0.0f, -0.1f);
+	staticTextLoseR.SetScale(1.0f, 1.0f);
+	staticTextLoseR.SetRotation(0.0f);
+	staticTextLoseR.SetDepth(0.0f);
+	// update will create the vertices so they will be ready to use
+	// for static text this only needs to be done one time
+	staticTextLoseR.Update(width, height);
+
+	// vertex buffer creation for the staticText
+	const auto& LRSstaticVerts = staticTextLoseR.GetVertices();
+	D3D11_SUBRESOURCE_DATA lrssvbData = { LRSstaticVerts.data(), 0, 0 };
+	CD3D11_BUFFER_DESC lrssvbDesc(sizeof(TextVertex)* LRSstaticVerts.size(), D3D11_BIND_VERTEX_BUFFER);
+	creator->CreateBuffer(&lrssvbDesc, &lrssvbData, vertexBufferStaticTextLoseR.ReleaseAndGetAddressOf());
+
 	creator->Release();
 	return true;
 }
@@ -1088,6 +1105,18 @@ void GA::D3DRendererLogic::UIDraw()
 		curHandles.context->UpdateSubresource(constantBufferHUD.Get(), 0, nullptr, &constantBufferData, 0, 0);
 		// draw the static text using the number of vertices
 		curHandles.context->Draw(staticTextLose.GetVertices().size(), 0);
+
+		curHandles.context->IASetVertexBuffers(0, 1, vertexBufferStaticTextLoseR.GetAddressOf(), strides, offsets);
+		// change the topology to a triangle list
+		curHandles.context->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+		// update the constant buffer data for the text
+		constantBufferData = UpdateTextConstantBufferData(staticTextLoseR);
+		// bind the texture used for rendering the font
+		curHandles.context->PSSetShaderResources(0, 1, shaderResourceView[TEXTURE_ID::FONT_CONSOLAS].GetAddressOf());
+		// update the constant buffer with the text's data
+		curHandles.context->UpdateSubresource(constantBufferHUD.Get(), 0, nullptr, &constantBufferData, 0, 0);
+		// draw the static text using the number of vertices
+		curHandles.context->Draw(staticTextLoseR.GetVertices().size(), 0);
 		conditionLose = true;
 	}
 

@@ -89,6 +89,7 @@ namespace GA
 		Microsoft::WRL::ComPtr<ID3D11Buffer>		vertexBufferStaticTextLives;
 		Microsoft::WRL::ComPtr<ID3D11Buffer>		vertexBufferStaticTextWin;
 		Microsoft::WRL::ComPtr<ID3D11Buffer>		vertexBufferStaticTextLose;
+		Microsoft::WRL::ComPtr<ID3D11Buffer>		vertexBufferStaticTextLoseR;
 
 
 		GW::MATH::GMATRIXF worldMatrix[500];
@@ -123,6 +124,7 @@ namespace GA
 		Text staticTextLives;
 		Text staticTextWin;
 		Text staticTextLose;
+		Text staticTextLoseR;
 		SPRITE_DATA	constantBufferData = { 0 };
 		Microsoft::WRL::ComPtr<ID3D11ShaderResourceView> shaderResourceView[TEXTURE_ID::COUNT];
 		Microsoft::WRL::ComPtr<ID3D11SamplerState>			samplerState;
