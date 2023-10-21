@@ -24,7 +24,7 @@ bool GA::D3DRendererLogic::Init(	std::shared_ptr<flecs::world> _game,
 								std::weak_ptr<const GameConfig> _gameConfig,
 								GW::GRAPHICS::GDirectX11Surface d3d11,
 								GW::SYSTEM::GWindow _window, std::shared_ptr<Level_Data> _levelData, std::shared_ptr<bool> _levelChange,
-								std::shared_ptr<bool> _youWin, std::shared_ptr<bool> _youLose, std::vector<flecs::entity> _entityVec)
+								std::shared_ptr<bool> _youWin, std::shared_ptr<bool> _youLose, std::vector<flecs::entity> _entityVec, std::shared_ptr<int> _currentLevel)
 {
 // save a handle to the ECS & game settings
 game = _game;
@@ -36,6 +36,7 @@ levelChange = _levelChange;
 youWin = _youWin;
 youLose = _youLose;
 entityVec = _entityVec;
+currentLevel = _currentLevel;
 // Setup all vulkan resources
 if (LoadShaders3D() == false)
 return false;
@@ -231,7 +232,7 @@ bool GA::D3DRendererLogic::LoadUniforms()
 	//ViewMatrix
 	GW::MATH::GVECTORF viewCenter = { 0.0, 1.0f, 0.0f, 1.0f };
 	GW::MATH::GVECTORF viewUp = { 0.0f, 1.0f, 0.0f, 1.0f };
-	GW::MATH::GVECTORF vTranslate = { 0.0, -90.0f, 0.0f, 1.0f };
+	GW::MATH::GVECTORF vTranslate = { 0.0, -90.0f, 0.0f, 1.0f }; ///450 z location shows start
 	proxy.IdentityF(viewMatrix);
 	proxy.LookAtLHF(viewTranslation, viewCenter, viewUp, viewMatrix);
 	proxy.TranslateLocalF(viewMatrix, vTranslate, viewMatrix);
@@ -859,26 +860,29 @@ bool GA::D3DRendererLogic::SetupDrawcalls() // I SCREWED THIS UP MAKES SO MUCH S
 		.each([this](flecs::entity e, Position& p, Orientation& o, Material& m) {
 		// copy all data to our instancing array
 
+		float r = 0;
+		inputProxy.GetState(G_KEY_R, r);
+		float t = 0;
+		inputProxy.GetState(G_KEY_T, t);
+		if (r != 0.0f)
+		{
+			(*currentLevel) = 1;
+			(*levelChange) = true;
+			(*youLose) = false;
+		}
+		if (t != 0.0f)
+		{
+			(*currentLevel)++;
+			if (*currentLevel > 3)
+			{
+				*currentLevel = 1;
+			}
+			(*levelChange) = true;
+			(*youLose) = false;
+			(*youWin) = false;
+			std::cout << *currentLevel << std::endl;
+		}
 			LevelSwitch();
-			//int i = draw_counter;
-			//instanceData.instance_transforms[i] = GW::MATH::GIdentityMatrixF;
-			//instanceData.instance_transforms[i].row4.x = p.value.x;
-			//instanceData.instance_transforms[i].row4.y = p.value.y;
-			//// transfer 2D orientation to 4x4
-			//instanceData.instance_transforms[i].row1.x = o.value.row1.x;
-			//instanceData.instance_transforms[i].row1.y = o.value.row1.y;
-			//instanceData.instance_transforms[i].row2.x = o.value.row2.x;
-			//instanceData.instance_transforms[i].row2.y = o.value.row2.y;
-			//// set color
-			//instanceData.instance_colors[i].x = m.diffuse.value.x;
-			//instanceData.instance_colors[i].y = m.diffuse.value.y;
-			//instanceData.instance_colors[i].z = m.diffuse.value.z;
-			//instanceData.instance_colors[i].w = 1; // opaque
-			//// increment the shared draw counter but don't go over (branchless) 
-			//int v = static_cast<int>(Instance_Max) - static_cast<int>(draw_counter + 2);
-			//// if v < 0 then 0, else 1, https://graphics.stanford.edu/~seander/bithacks.html
-			//int sign = 1 ^ ((unsigned int)v >> (sizeof(int) * CHAR_BIT - 1));
-			//draw_counter += sign;
 			});
 
 	// runs once per frame after updateDraw
@@ -1157,62 +1161,93 @@ bool GA::D3DRendererLogic::FreeResources()
 }
 void GA::D3DRendererLogic::LevelSwitch()
 {
-	float one = 0.0f;
-	inputProxy.GetState(G_KEY_F1, one);
-	if (one != 0.0f)
-	{
-		IShellItem* pShellItem = nullptr;
-		COMDLG_FILTERSPEC ComDlgFS[1] = { {L"Text Files", L"*.txt"} };
-		//LPWSTR filePath;
-		HRESULT he = CoInitializeEx(NULL, COINIT_APARTMENTTHREADED | COINIT_DISABLE_OLE1DDE);
-		if (SUCCEEDED(he))
-		{
-			IFileDialog* pFileOpen = nullptr;
-			he = CoCreateInstance(CLSID_FileOpenDialog, NULL, CLSCTX_ALL, IID_IFileOpenDialog, (void**)(&pFileOpen));
-			if (SUCCEEDED(he))
-			{
-				pFileOpen->SetFileTypes(1, ComDlgFS);
-				pFileOpen->SetTitle(L"Level Selection");
-				he = pFileOpen->Show(0);
-				if (SUCCEEDED(he))
-				{
-					wchar_t* filePath;
-					he = pFileOpen->GetResult(&pShellItem);
-					if (SUCCEEDED(he))
-					{
-						pShellItem->GetDisplayName(SIGDN_FILESYSPATH, &filePath);
-						std::wstring file;
-						if (filePath != 0)
-						{
-							file = std::wstring(filePath);
-							std::string fileName(file.begin(), file.end());
-							std::string base_file = fileName.substr(fileName.find_last_of("/\\") + 1);
-							std::string search = "../" + base_file;
-							GW::SYSTEM::GLog log;
-							for (int i = 0; i < entityVec.size(); ++i)
-							{
-								entityVec[i].destruct();
-							}
-							entityVec.clear();
-							bool levelLoaded = levelData->LoadLevel(search.c_str(), "../Models", log);
-							createEnt = true;
-							if (LoadGeometry())
-							{
-								PipelineHandles handles = GetCurrentPipelineHandles();
-								SetUpPipeline(handles);
 
-							}
-							(*levelChange) = false;
-							CoTaskMemFree(filePath);
-							pShellItem->Release();
-						}
-					}
-				}
-				pFileOpen->Release();
-			}
-			CoUninitialize();
+	if (*levelChange)
+	{
+		GW::SYSTEM::GLog log;
+		for (int i = 0; i < entityVec.size(); ++i)
+		{
+			entityVec[i].destruct();
 		}
+		entityVec.clear();
+		switch(*currentLevel)
+		{
+		case 1:
+			levelData->LoadLevel("../GameLevel_1.txt", "../Models", log);
+			break;
+		case 2:
+			 levelData->LoadLevel("../GameLevel_2.txt", "../Models", log);
+			break;
+		case 3:
+			levelData->LoadLevel("../GameLevel_3.txt", "../Models", log);
+			break;
+		}
+		
+		createEnt = true;
+		if (LoadGeometry())
+		{
+			PipelineHandles handles = GetCurrentPipelineHandles();
+			SetUpPipeline(handles);
+
+		}
+		(*levelChange) = false;
 	}
+	//float one = 0.0f;
+	//inputProxy.GetState(G_KEY_F1, one);
+	//if (one != 0.0f)
+	//{
+	//	IShellItem* pShellItem = nullptr;
+	//	COMDLG_FILTERSPEC ComDlgFS[1] = { {L"Text Files", L"*.txt"} };
+	//	//LPWSTR filePath;
+	//	HRESULT he = CoInitializeEx(NULL, COINIT_APARTMENTTHREADED | COINIT_DISABLE_OLE1DDE);
+	//	if (SUCCEEDED(he))
+	//	{
+	//		IFileDialog* pFileOpen = nullptr;
+	//		he = CoCreateInstance(CLSID_FileOpenDialog, NULL, CLSCTX_ALL, IID_IFileOpenDialog, (void**)(&pFileOpen));
+	//		if (SUCCEEDED(he))
+	//		{
+	//			pFileOpen->SetFileTypes(1, ComDlgFS);
+	//			pFileOpen->SetTitle(L"Level Selection");
+	//			he = pFileOpen->Show(0);
+	//			if (SUCCEEDED(he))
+	//			{
+	//				wchar_t* filePath;
+	//				he = pFileOpen->GetResult(&pShellItem);
+	//				if (SUCCEEDED(he))
+	//				{
+	//					pShellItem->GetDisplayName(SIGDN_FILESYSPATH, &filePath);
+	//					std::wstring file;
+	//					if (filePath != 0)
+	//					{
+	//						file = std::wstring(filePath);
+	//						std::string fileName(file.begin(), file.end());
+	//						std::string base_file = fileName.substr(fileName.find_last_of("/\\") + 1);
+	//						std::string search = "../" + base_file;
+	//						GW::SYSTEM::GLog log;
+	//						for (int i = 0; i < entityVec.size(); ++i)
+	//						{
+	//							entityVec[i].destruct();
+	//						}
+	//						entityVec.clear();
+	//						bool levelLoaded = levelData->LoadLevel(search.c_str(), "../Models", log);
+	//						createEnt = true;
+	//						if (LoadGeometry())
+	//						{
+	//							PipelineHandles handles = GetCurrentPipelineHandles();
+	//							SetUpPipeline(handles);
+
+	//						}
+	//						(*levelChange) = false;
+	//						CoTaskMemFree(filePath);
+	//						pShellItem->Release();
+	//					}
+	//				}
+	//			}
+	//			pFileOpen->Release();
+	//		}
+	//		CoUninitialize();
+	//	}
+	//}
 }
 void GA::D3DRendererLogic::UpdateLevelEnt()
 {

@@ -20,21 +20,20 @@ namespace GA
 		// handle to events
 		GW::CORE::GEventGenerator eventPusher;
 		std::shared_ptr<Level_Data> levelData;
+		std::shared_ptr<bool> pause;
 		bool shieldon1 = true;
-		bool shieldon2 = true;
-		bool shieldon3 = true;
 
 	public:
 		// attach the required logic to the ECS 
 		bool Init(std::shared_ptr<flecs::world> _game,
 			std::weak_ptr<const GameConfig> _gameConfig,
-			GW::CORE::GEventGenerator _eventPusher, std::shared_ptr<Level_Data> _levelData);
+			GW::CORE::GEventGenerator _eventPusher, std::shared_ptr<Level_Data> _levelData, std::shared_ptr<bool> _pause);
 		// control if the system is actively running
 		bool Activate(bool runSystem);
 		// release any resources allocated by the system
 		bool Shutdown();
 		bool moveRight;
-		int timesMoved = 0;
+		//int timesMoved = 0;
 		float timer;
 
 	private:

@@ -18,37 +18,43 @@ bool GA::BulletLogic::Init(	std::shared_ptr<flecs::world> _game,
 	levelData = _levelData;
 	// destroy any bullets that have the CollidedWith relationship
 	game->system<Bullet, Damage, Position>("Bullet System")
-		.each([this](flecs::entity e, Bullet, Damage &d, Position& p) {
+		.each([this](flecs::entity e, Bullet, Damage& d, Position& p) {
 		// damage anything we come into contact with
-		e.each<CollidedWith>([&e, d](flecs::entity hit) {
-			if (hit.has<Health>()) {
-				int current = hit.get<Health>()->value;
-				hit.set<Health>({ current - d.value });
-				// reduce the amount of hits but the charged shot
-				if (e.has<ChargedShot>() && hit.get<Health>()->value <= 0) 
-				{
-					int md_count = e.get<ChargedShot>()->max_destroy;
-					e.set<ChargedShot>({ md_count - 1 });
+
+		if (e.is_valid())
+		{
+			e.each<CollidedWith>([&e, d](flecs::entity hit) {
+				if (hit.has<Health>()) {
+					/*int current = hit.get<Health>()->value;
+					hit.set<Health>({ current - d.value });*/
+
+					hit.destruct();
+
+					// reduce the amount of hits but the charged shot
+					if (e.has<ChargedShot>() && hit.get<Health>()->value <= 0)
+					{
+						int md_count = e.get<ChargedShot>()->max_destroy;
+						e.set<ChargedShot>({ md_count - 1 });
+					}
 				}
-			}	
-		});
-		// if you have collidedWith realtionship then be destroyed
-		if (e.has<CollidedWith>(flecs::Wildcard)) {
-			
-			if (e.has<ChargedShot>()) {
-			
-				if(e.get<ChargedShot>()->max_destroy <= 0)
+				});
+			// if you have collidedWith realtionship then be destroyed
+			if (e.has<CollidedWith>(flecs::Wildcard)) {
+
+				if (e.has<ChargedShot>()) {
+
+					if (e.get<ChargedShot>()->max_destroy <= 0)
+						e.destruct();
+				}
+				else {
+					// play hit sound
 					e.destruct();
-			}
-			else {
-				// play hit sound
- 				e.destruct();
-				std::cout << "Hit Enemy Bullet Destroyed\n";
+					std::cout << "Hit Enemy Bullet Destroyed\n";
+				}
 			}
 		}
+		});
 
-	});
-	
 	return true;
 }
 

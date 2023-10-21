@@ -4,6 +4,7 @@
 #include "../Components/Physics.h"
 #include "../Entities/Prefabs.h"
 #include "../Components/Gameplay.h"
+#include "../Components/Components.h"
 
 bool GA::EnemyData::Load(	std::shared_ptr<flecs::world> _game,
 							std::weak_ptr<const GameConfig> _gameConfig,
@@ -39,6 +40,7 @@ bool GA::EnemyData::Load(	std::shared_ptr<flecs::world> _game,
 		//.set(spaceship)
 			.set<Material>({ red, green, blue })
 			.set<Orientation>({ world })
+			.set<ModelBoundary*>(_game->prefab("Spaceship5").get_mut<ModelBoundary>())
 		// .override<> ensures a component is unique to each entity created from a prefab
 			.set_override<Health>({ health })
 			.override<Acceleration>()
@@ -47,17 +49,22 @@ bool GA::EnemyData::Load(	std::shared_ptr<flecs::world> _game,
 			.override<Enemy>() // Tag this prefab as an enemy (for queries/systems)
 			//.override<PrefabEnemy>() // Tag this prefab as an enemy (for queries/systems)
 			.override<Collidable>(); // can be collided with
+		if (enemyPrefab.has<Collidable>())
+		{
+			std::cout << "ship got bound: " << enemyPrefab.get_mut<ModelBoundary>() << '\n';
+			std::cout << "ship orig bound: " << _game->prefab("Spaceship5").get_mut<ModelBoundary>() << '\n';
+		}
 
 		auto enemyPrefab1 = _game->prefab("Spaceship5.001")
 			// .set<> in a prefab means components are shared (instanced)
 			//.set(spaceship)
-			.set<Material>({ red, green, blue })
-			.set<Orientation>({ world })
+			//.set<Material>({ red, green, blue })
+			//.set<Orientation>({ world })
 			// .override<> ensures a component is unique to each entity created from a prefab
 			.set_override<Health>({ health })
-			.override<Acceleration>()
-			.override<Velocity>()
-			.override<Position>()
+			//.override<Acceleration>()
+			//.override<Velocity>()
+			//.override<Position>()
 			.override<Enemy>() // Tag this prefab as an enemy (for queries/systems)
 			//.override<PrefabEnemy>() // Tag this prefab as an enemy (for queries/systems)
 			.override<Collidable>(); // can be collided with
@@ -146,11 +153,11 @@ bool GA::EnemyData::Load(	std::shared_ptr<flecs::world> _game,
 			.override<Collidable>(); // can be collided with
 
 		auto enemyPrefab8 = _game->prefab("Spaceship5.008")
-			// .set<> in a prefab means components are shared (instanced)
+			 //.set<> in a prefab means components are shared (instanced)
 			//.set(spaceship)
 			.set<Material>({ red, green, blue })
 			.set<Orientation>({ world })
-			// .override<> ensures a component is unique to each entity created from a prefab
+			 //.override<> ensures a component is unique to each entity created from a prefab
 			.set_override<Health>({ health })
 			.override<Acceleration>()
 			.override<Velocity>()
@@ -158,6 +165,64 @@ bool GA::EnemyData::Load(	std::shared_ptr<flecs::world> _game,
 			.override<Enemy>() // Tag this prefab as an enemy (for queries/systems)
 			//.override<PrefabEnemy>() // Tag this prefab as an enemy (for queries/systems)
 			.override<Collidable>(); // can be collided with
+
+		auto a = _game->lookup("Spaceship5.008");
+		if (a.is_valid()) {
+			//a.add<Health>(health);
+			a.override<Enemy>();
+			a.set_override<Health>({ health });
+			a.add<Orientation>();
+			a.add<Position>();
+			a.add<Collidable>();
+		}
+		auto b = _game->lookup("Spaceship5.007");
+		if (b.is_valid()) {
+			b.add<Orientation>();
+			b.add<Position>();
+			b.add<Collidable>();
+		}
+		auto c = _game->lookup("Spaceship5.006");
+		if (c.is_valid()) {
+			c.add<Orientation>();
+			c.add<Position>();
+			c.add<Collidable>();
+		}
+		auto d = _game->lookup("Spaceship5.005");
+		if (d.is_valid()) {
+			d.add<Orientation>();
+			d.add<Position>();
+			d.add<Collidable>();
+		}
+		auto e = _game->lookup("Spaceship5.004");
+		if (e.is_valid()) {
+			e.add<Orientation>();
+			e.add<Position>();
+			e.add<Collidable>();
+		}
+		auto f = _game->lookup("Spaceship5.003");
+		if (f.is_valid()) {
+			f.add<Orientation>();
+			f.add<Position>();
+			f.add<Collidable>();
+		}
+		auto g = _game->lookup("Spaceship5.002");
+		if (g.is_valid()) {
+			g.add<Orientation>();
+			g.add<Position>();
+			g.add<Collidable>();
+		}
+		auto h = _game->lookup("Spaceship5.001");
+		if (h.is_valid()) {
+			h.add<Orientation>();
+			h.add<Position>();
+			h.add<Collidable>();
+		}
+		auto i = _game->lookup("Spaceship5");
+		if (i.is_valid()) {
+			i.add<Orientation>();
+			i.add<Position>();
+			i.add<Collidable>();
+		}
 		 
 
 	// register this prefab by name so other systems can use it

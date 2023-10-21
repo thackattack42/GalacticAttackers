@@ -5,6 +5,7 @@
 // Contains our global game settings
 #include "../GameConfig.h"
 #include "../Components/Physics.h"
+#include "../Components/Components.h"
 
 // example space game (avoid name collisions)
 namespace GA
@@ -17,11 +18,11 @@ namespace GA
 		std::weak_ptr<const GameConfig> gameConfig;
 		std::shared_ptr<Level_Data> levelData;
 		// used to cache collision queries
-		flecs::query<Collidable, Position, Orientation> queryCache;
+		flecs::query<Collidable, Position, Orientation, ModelBoundary> queryCache;
 		// defines what to be tested
 		static constexpr unsigned polysize = 4;
 		struct SHAPE {
-			GW::MATH2D::GVECTOR2F poly[polysize];
+			GW::MATH::GOBBF poly;
 			flecs::entity owner;
 		};
 		// vector used to save/cache all active collidables
