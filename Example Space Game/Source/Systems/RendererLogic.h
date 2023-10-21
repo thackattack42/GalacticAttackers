@@ -192,6 +192,7 @@ namespace GA
 		void GA::D3DRendererLogic::ReleasePipelineHandles(PipelineHandles toRelease);
 		PipelineHandles GetCurrentPipelineHandles();
 		void LevelSwitch();
+		void ChooseLevel();
 		void UpdateLevelEnt();
 		void CreatePlayer();
 		void CreateEnemies();
