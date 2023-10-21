@@ -733,10 +733,10 @@ bool GA::D3DRendererLogic::LoadGeometry()
 	creator->CreateBuffer(&lssvbDesc, &lssvbData, vertexBufferStaticTextLose.ReleaseAndGetAddressOf());
 
 	staticTextLoseR = Text();
-	staticTextLoseR.SetText("YOU LOSE");
+	staticTextLoseR.SetText("Press [R] to Restart");
 	staticTextLoseR.SetFont(&consolas32);
-	staticTextLoseR.SetPosition(0.0f, 0.0f);
-	staticTextLoseR.SetScale(2.0f, 2.0f);
+	staticTextLoseR.SetPosition(0.0f, -0.1f);
+	staticTextLoseR.SetScale(1.0f, 1.0f);
 	staticTextLoseR.SetRotation(0.0f);
 	staticTextLoseR.SetDepth(0.0f);
 	// update will create the vertices so they will be ready to use
