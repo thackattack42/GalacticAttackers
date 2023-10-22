@@ -1316,5 +1316,76 @@ void GA::D3DRendererLogic::CreateBullets()
 
 void GA::D3DRendererLogic::CreateEnemies()
 {
+	std::shared_ptr<const GameConfig> readCfg = gameConfig.lock();
+	float red = (*readCfg).at("Enemy1").at("red").as<float>();
+	float green = (*readCfg).at("Enemy1").at("green").as<float>();
+	float blue = (*readCfg).at("Enemy1").at("blue").as<float>();
+	// other attributes
+	int health = (*readCfg).at("Enemy1").at("health").as<int>();
 
+	auto a = game->lookup("Spaceship5.008");
+	if (a.is_valid()) {
+		a.override<Enemy>();
+		a.set_override<Health>({ health });
+		a.set<Material>({ red, green , blue });
+		a.add<Orientation>();
+		a.add<Position>();
+		a.add<Collidable>();
+	}
+	auto b = game->lookup("Spaceship5.007");
+	if (b.is_valid()) {
+		b.add<Orientation>();
+		b.set<Material>({ red, green , blue });
+		b.add<Position>();
+		b.add<Collidable>();
+	}
+	auto c = game->lookup("Spaceship5.006");
+	if (c.is_valid()) {
+		c.add<Orientation>();
+		c.set<Material>({ red, green , blue });
+		c.add<Position>();
+		c.add<Collidable>();
+	}
+	auto d = game->lookup("Spaceship5.005");
+	if (d.is_valid()) {
+		d.add<Orientation>();
+		d.set<Material>({ red, green , blue });
+		d.add<Position>();
+		d.add<Collidable>();
+	}
+	auto e = game->lookup("Spaceship5.004");
+	if (e.is_valid()) {
+		e.add<Orientation>();
+		e.add<Position>();
+		e.set<Material>({ red, green , blue });
+		e.add<Collidable>();
+	}
+	auto f = game->lookup("Spaceship5.003");
+	if (f.is_valid()) {
+		f.add<Orientation>();
+		f.add<Position>();
+		f.set<Material>({ red, green , blue });
+		f.add<Collidable>();
+	}
+	auto g = game->lookup("Spaceship5.002");
+	if (g.is_valid()) {
+		g.add<Orientation>();
+		g.add<Position>();
+		g.set<Material>({ red, green , blue });
+		g.add<Collidable>();
+	}
+	auto h = game->lookup("Spaceship5.001");
+	if (h.is_valid()) {
+		h.add<Orientation>();
+		h.add<Position>();
+		h.set<Material>({ red, green , blue });
+		h.add<Collidable>();
+	}
+	auto i = game->lookup("Spaceship5");
+	if (i.is_valid()) {
+		i.add<Orientation>();
+		i.add<Position>();
+		i.set<Material>({ red, green , blue });
+		i.add<Collidable>();
+	}
 }
