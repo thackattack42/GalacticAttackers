@@ -28,6 +28,7 @@ bool Application::Init()
 	*youLose = false;
 	*youWin = false;
 	*pause = false;
+	ispaused = false;
 	*(currentLevel) = 1;
 	//for changing level data				level positioning		level obj/mtl
 	//switch (currentLevel)
@@ -261,13 +262,15 @@ bool Application::GameLoop()
 	immediateInput.GetState(G_KEY_ENTER, in);
 	if (in == 1)
 	{
-		if (*pause)
+		if (*pause && ispaused == false)
 		{
 			*pause = false;
+			ispaused = true;
 		}
-		else //if(*pause == false)
+		else//if(*pause == false)
 		{
 			*pause = true;
+			ispaused = false;
 		}
 	}
 

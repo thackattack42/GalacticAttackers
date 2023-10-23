@@ -261,16 +261,22 @@ bool GA::PlayerLogic::FireLasers(flecs::world& stage, Position& origin)
 
 	/*ModelTransform* bulletT = bullet.get_mut<ModelTransform>();
 
-	GW::MATH::GMatrix::TranslateGlobalF(bulletT->matrix, GW::MATH::GVECTORF{ origin.value.x, origin.value.y, 0, 1 }, bulletT->matrix);
-	levelData->levelTransforms[bulletT->rendererIndex] = bulletT->matrix;
-	bullet.get_mut<ModelBoundary>()->obb.center.x = bulletT->matrix.row4.x;
-	bullet.get_mut<ModelBoundary>()->obb.center.y = bulletT->matrix.row4.y;*/
-	auto a = bullet.get_mut<ModelBoundary>()->obb;
-	//std::cout << "Bullet Matrix changes: " << "x: " << bulletT->matrix.row4.x << " y: " << bulletT->matrix.row4.y << " orginY: " << origin.value.y << '\n';
-//}
-//else
-//{
-//	bulletRay[2].add<BulletTest>();
+		/*if (bulletT->matrix.row4.y >= 200)
+		{
+			std::cout << "Bullet destruct \n";
+			return false;
+		}
+		else
+		{*/
+		//GW::MATH::GMatrix::TranslateGlobalF(bulletT->matrix, GW::MATH::GVECTORF{ origin.value.x, 5, 0, 1 }, bulletT->matrix);
+		/*levelData->levelTransforms[bulletT->rendererIndex] = bulletT->matrix;
+		origin.value.x = bulletT->matrix.row4.x;
+		origin.value.y = bulletT->matrix.row4.y;
+		std::cout << "Bullet Matrix changes: " << "x: " << bulletT->matrix.row4.x << " y: " << bulletT->matrix.row4.y << " orginY: " << origin.value.y << '\n';*/
+	//}
+	//else
+	//{
+	//	bulletRay[2].add<BulletTest>();
 
 //	ModelTransform* bulletT = bulletRay[2].get_mut<ModelTransform>();
 
