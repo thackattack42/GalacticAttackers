@@ -21,13 +21,16 @@ namespace GA
 		GW::CORE::GEventGenerator eventPusher;
 		std::shared_ptr<Level_Data> levelData;
 		std::shared_ptr<bool> pause;
+		std::vector<flecs::entity> entityVect;
+		std::shared_ptr<bool> youWin;
+		std::shared_ptr<int> enemyCount;
 		bool shieldon1 = true;
 
 	public:
 		// attach the required logic to the ECS 
 		bool Init(std::shared_ptr<flecs::world> _game,
 			std::weak_ptr<const GameConfig> _gameConfig,
-			GW::CORE::GEventGenerator _eventPusher, std::shared_ptr<Level_Data> _levelData, std::shared_ptr<bool> _pause);
+			GW::CORE::GEventGenerator _eventPusher, std::shared_ptr<Level_Data> _levelData, std::shared_ptr<bool> _pause, std::vector<flecs::entity> _entityVect, std::shared_ptr<bool> _youWin, std::shared_ptr<int> _enemyCount);
 		// control if the system is actively running
 		bool Activate(bool runSystem);
 		// release any resources allocated by the system
@@ -35,6 +38,7 @@ namespace GA
 		bool moveRight;
 		//int timesMoved = 0;
 		float timer;
+		
 
 	private:
 		bool FireLasersEnemy(flecs::world& stage, GA::Position origin);

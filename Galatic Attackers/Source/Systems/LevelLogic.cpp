@@ -2,6 +2,7 @@
 #include "LevelLogic.h"
 #include "../Components/Identification.h"
 #include "../Components/Physics.h"
+#include "../Components/Components.h"
 #include "../Entities/Prefabs.h"
 #include "../Utils/Macros.h"
 
@@ -10,12 +11,14 @@ using namespace GA; // Example Space Game
 // Connects logic to traverse any players and allow a controller to manipulate them
 bool GA::LevelLogic::Init(	std::shared_ptr<flecs::world> _game,
 							std::weak_ptr<const GameConfig> _gameConfig,
-							GW::AUDIO::GAudio _audioEngine)
+							GW::AUDIO::GAudio _audioEngine,
+							std::shared_ptr<Level_Data> _levelData)
 {
 	// save a handle to the ECS & game settings
 	game = _game;
 	gameConfig = _gameConfig;
 	audioEngine = _audioEngine;
+	levelData = _levelData;
 	// create an asynchronus version of the world
 	gameAsync = game->async_stage(); // just used for adding stuff, don't try to read data
 	gameLock.Create();
@@ -47,14 +50,14 @@ bool GA::LevelLogic::Init(	std::shared_ptr<flecs::world> _game,
 		flecs::entity et8;
 		flecs::entity et9;
 
-		if (RetreivePrefab("Enemy Type1", et1)) {
+		if (RetreivePrefab("Spaceship5", et1)) {
 			// you must ensure the async_stage is thread safe as it has no built-in synchronization
 			gameLock.LockSyncWrite();
 			// this method of using prefabs is pretty conveinent
 			gameAsync.entity().is_a(et1)
 				.set<Velocity>({ 0,0 })
 				.set<Acceleration>({ 0, accel })
-				.set<Position>({ Xstart, enemy1startY });
+				.set<Position>({ levelData->levelTransforms[et1.get<ModelTransform>()->rendererIndex].row4.x, levelData->levelTransforms[et1.get<ModelTransform>()->rendererIndex].row4.y });
 			///provide a set matrix     
 			// be sure to unlock when done so the main thread can safely merge the changes
 			gameLock.UnlockSyncWrite();

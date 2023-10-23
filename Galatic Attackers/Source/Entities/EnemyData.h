@@ -14,7 +14,8 @@ namespace GA
 		// Load required entities and/or prefabs into the ECS 
 		bool Load(	std::shared_ptr<flecs::world> _game,
 					std::weak_ptr<const GameConfig> _gameConfig,
-					GW::AUDIO::GAudio _audioEngine);
+					GW::AUDIO::GAudio _audioEngine,
+					std::shared_ptr<Level_Data> _levelData);
 		// Unload the entities/prefabs from the ECS
 		bool Unload(std::shared_ptr<flecs::world> _game);
 

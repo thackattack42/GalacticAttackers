@@ -1197,6 +1197,7 @@ void GA::D3DRendererLogic::ChooseLevel()
 							}
 							(*levelChange) = false;
 							(*youLose) = false;
+							(*youWin) = false;
 							CoTaskMemFree(filePath);
 							pShellItem->Release();
 						}
@@ -1240,6 +1241,7 @@ void GA::D3DRendererLogic::LevelSwitch()
 
 		}
 		(*levelChange) = false;
+		(*youWin) = false;
 	}
 	
 }

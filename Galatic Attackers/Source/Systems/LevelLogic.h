@@ -23,6 +23,7 @@ namespace GA
 		std::weak_ptr<const GameConfig> gameConfig;
 		// Level system will also load and switch music
 		GW::AUDIO::GAudio audioEngine;
+		std::shared_ptr<Level_Data> levelData;
 		GW::AUDIO::GMusic currentTrack;
 		// Used to spawn enemies at a regular intervals on another thread
 		GW::SYSTEM::GDaemon timedEvents;
@@ -31,7 +32,8 @@ namespace GA
 		// attach the required logic to the ECS 
 		bool Init(	std::shared_ptr<flecs::world> _game,
 					std::weak_ptr<const GameConfig> _gameConfig,
-					GW::AUDIO::GAudio _audioEngine);
+					GW::AUDIO::GAudio _audioEngine,
+					std::shared_ptr<Level_Data> _levelData);
 		// control if the system is actively running
 		bool Activate(bool runSystem);
 		// release any resources allocated by the system

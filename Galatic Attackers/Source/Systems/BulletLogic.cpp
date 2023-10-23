@@ -21,14 +21,19 @@ bool GA::BulletLogic::Init(	std::shared_ptr<flecs::world> _game,
 		.each([this](flecs::entity e, Bullet, Damage& d, Position& p) {
 		// damage anything we come into contact with
 
-		if (e.is_valid())
+		auto a = p.value;
 		{
-			e.each<CollidedWith>([&e, d](flecs::entity hit) {
-				if (hit.has<Health>()) {
-					/*int current = hit.get<Health>()->value;
-					hit.set<Health>({ current - d.value });*/
+			e.each<CollidedWith>([&e, d, p, this](flecs::entity hit) {
+				if (hit.has<Health>() && hit.has<Enemy>()) {
+					//levelData->levelTransforms[68];
+					auto a = hit.get<Position>()->value.y;
+					auto b = e.get<Position>()->value.y;
+					int current = hit.get<Health>()->value;
+					hit.set<Health>({ current - d.value });
+					e.destruct();
 
-					hit.destruct();
+					if (hit.get<Health>()->value <= 0)
+						hit.destruct();
 
 					// reduce the amount of hits but the charged shot
 					if (e.has<ChargedShot>() && hit.get<Health>()->value <= 0)

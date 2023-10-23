@@ -8,7 +8,8 @@
 
 bool GA::EnemyData::Load(	std::shared_ptr<flecs::world> _game,
 							std::weak_ptr<const GameConfig> _gameConfig,
-							GW::AUDIO::GAudio _audioEngine)
+							GW::AUDIO::GAudio _audioEngine,
+							std::shared_ptr<Level_Data> _levelData)
 {
 	// Grab init settings for players
 	std::shared_ptr<const GameConfig> readCfg = _gameConfig.lock();
@@ -309,48 +310,56 @@ bool GA::EnemyData::Load(	std::shared_ptr<flecs::world> _game,
 		}
 		auto b = _game->lookup("Spaceship5.007");
 		if (b.is_valid()) {
+			b.override<Enemy>();
 			b.add<Orientation>();
 			b.add<Position>();
 			b.add<Collidable>();
 		}
 		auto c = _game->lookup("Spaceship5.006");
 		if (c.is_valid()) {
+			c.override<Enemy>();
 			c.add<Orientation>();
 			c.add<Position>();
 			c.add<Collidable>();
 		}
 		auto d = _game->lookup("Spaceship5.005");
 		if (d.is_valid()) {
+			d.override<Enemy>();
 			d.add<Orientation>();
 			d.add<Position>();
 			d.add<Collidable>();
 		}
 		auto e = _game->lookup("Spaceship5.004");
 		if (e.is_valid()) {
+			e.override<Enemy>();
 			e.add<Orientation>();
 			e.add<Position>();
 			e.add<Collidable>();
 		}
 		auto f = _game->lookup("Spaceship5.003");
 		if (f.is_valid()) {
+			f.override<Enemy>();
 			f.add<Orientation>();
 			f.add<Position>();
 			f.add<Collidable>();
 		}
 		auto g = _game->lookup("Spaceship5.002");
 		if (g.is_valid()) {
+			g.override<Enemy>();
 			g.add<Orientation>();
 			g.add<Position>();
 			g.add<Collidable>();
 		}
 		auto h = _game->lookup("Spaceship5.001");
 		if (h.is_valid()) {
+			h.override<Enemy>();
 			h.add<Orientation>();
 			h.add<Position>();
 			h.add<Collidable>();
 		}
 		auto i = _game->lookup("Spaceship5");
 		if (i.is_valid()) {
+			i.override<Enemy>();
 			i.add<Orientation>();
 			i.add<Position>();
 			i.add<Collidable>();
@@ -358,7 +367,7 @@ bool GA::EnemyData::Load(	std::shared_ptr<flecs::world> _game,
 		 
 
 	// register this prefab by name so other systems can use it
-	RegisterPrefab("Enemy Type1", enemyPrefab);
+	RegisterPrefab("Spaceship5", enemyPrefab);
 	RegisterPrefab("Enemy Type2", enemyPrefab1);
 	RegisterPrefab("Enemy Type3", enemyPrefab2);
 	RegisterPrefab("Enemy Type4", enemyPrefab3);
