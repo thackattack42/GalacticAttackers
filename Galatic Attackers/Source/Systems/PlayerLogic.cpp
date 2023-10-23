@@ -12,22 +12,23 @@ using namespace GW::INPUT; // input libs
 using namespace GW::AUDIO; // audio libs
 
 // Connects logic to traverse any players and allow a controller to manipulate them
-bool GA::PlayerLogic::Init(std::shared_ptr<flecs::world> _game, 
-							std::weak_ptr<const GameConfig> _gameConfig, 
-							GW::INPUT::GInput _immediateInput, 
-							GW::INPUT::GBufferedInput _bufferedInput, 
-							GW::INPUT::GController _controllerInput,
-							GW::AUDIO::GAudio _audioEngine,
-							GW::CORE::GEventGenerator _eventPusher,
-							std::shared_ptr<Level_Data> _levelData, std::shared_ptr<int> _currentLevel,
-							std::shared_ptr<bool> _levelChange, std::shared_ptr<bool> _youWin, std::shared_ptr<bool> _youLose, std::shared_ptr<bool> _pause)
+bool GA::PlayerLogic::Init(std::shared_ptr<flecs::world> _game,
+	std::weak_ptr<const GameConfig> _gameConfig,
+	GW::INPUT::GInput _immediateInput,
+	GW::INPUT::GBufferedInput _bufferedInput,
+	GW::INPUT::GController _controllerInput,
+	GW::AUDIO::GAudio _audioEngine,
+	GW::CORE::GEventGenerator _eventPusher,
+	std::shared_ptr<Level_Data> _levelData, std::shared_ptr<int> _currentLevel,
+	std::shared_ptr<bool> _levelChange, std::shared_ptr<bool> _youWin, std::shared_ptr<bool> _youLose, std::shared_ptr<bool> _pause,
+	std::shared_ptr<int> _enemyCount)
 {
 	// save a handle to the ECS & game settings
 	game = _game;
 	gameConfig = _gameConfig;
 	immediateInput = _immediateInput;
 	bufferedInput = _bufferedInput;
-	controllerInput =	_controllerInput;
+	controllerInput = _controllerInput;
 	audioEngine = _audioEngine;
 	levelData = _levelData;
 	currentLevel = _currentLevel;
@@ -35,6 +36,7 @@ bool GA::PlayerLogic::Init(std::shared_ptr<flecs::world> _game,
 	youWin = _youWin;
 	youLose = _youLose;
 	pause = _pause;
+	enemyCount = _enemyCount;
 
 	// Init any helper systems required for this task
 	std::shared_ptr<const GameConfig> readCfg = gameConfig.lock();
@@ -82,40 +84,37 @@ bool GA::PlayerLogic::Init(std::shared_ptr<flecs::world> _game,
 					levelData->levelTransforms[edit->rendererIndex] = edit->matrix;
 				}
 
-				flecs::entity bull;
-				RetreivePrefab("Lazer Bullet", bull);
-				ModelTransform* bullet = bull.get_mut<ModelTransform>();
-				bullet->matrix.row4.z = edit->matrix.row4.z;
+				//flecs::entity bull;
+				//RetreivePrefab("Lazer Bullet", bull);
+				//ModelTransform* bullet = bull.get_mut<ModelTransform>();
+				//bullet->matrix.row4.z = edit->matrix.row4.z;
 
-				if (bull.has<BulletTest>())
-				{
-					// fire weapon if they are in a firing state
-					if (it.entity(i).has<Firing>()) {
-						Position offset = p[i];
-						offset.value.x = p[i].value.x;
-						offset.value.y = 0.05;
-						FireLasers(it.entity(i).world(), offset);
-
-
-
-						if (offset.value.y >= 50)
-						{
-							it.entity(i).remove<Firing>();
-							std::cout << "Bullet Moved \n";
-						}
-					}
+				//if (bull.has<BulletTest>())
+				//{
+				//	// fire weapon if they are in a firing state
+				if (it.entity(i).has<Firing>()) {
+					Position offset = p[i];
+					//offset.value.x = p[i].value.x;
+					offset.value.y = 0.05;
+					FireLasers(it.entity(i).world(), offset);
+					//if (offset.value.y >= 50)
+					it.entity(i).remove<Firing>();
 				}
-				p[i].value.x = 0;
-				p[i].value.y = 0;
+				//}
+
+				if ((*enemyCount) <= 0)
+				{
+					(*youWin) = true;
+				}
 			}
 			// process any cached button events after the loop (happens multiple times per frame)
 			ProcessInputEvents(it.world());
 		}
-	});
+			});
 
 	// Create an event cache for when the spacebar/'A' button is pressed
 	pressEvents.Create(Max_Frame_Events); // even 32 is probably overkill for one frame
-		
+
 	// register for keyboard and controller events
 	bufferedInput.Register(pressEvents);
 	controllerInput.Register(pressEvents);
@@ -188,8 +187,8 @@ bool GA::PlayerLogic::Shutdown()
 bool GA::PlayerLogic::Activate(bool runSystem)
 {
 	if (playerSystem.is_alive()) {
-		(runSystem) ? 
-			playerSystem.enable() 
+		(runSystem) ?
+			playerSystem.enable()
 			: playerSystem.disable();
 		return true;
 	}
@@ -247,21 +246,20 @@ bool GA::PlayerLogic::ProcessInputEvents(flecs::world& stage)
 }
 
 // play sound and launch two laser rounds
-bool GA::PlayerLogic::FireLasers(flecs::world& stage, Position origin)
+bool GA::PlayerLogic::FireLasers(flecs::world& stage, Position& origin)
 {
 	// Grab the prefab for a laser round
 	flecs::entity bullet;
-	flecs::entity bullet2;
+	//flecs::entity bullet2;
 	RetreivePrefab("Lazer Bullet", bullet);
-	RetreivePrefab("Lazer Bullet2", bullet2);
+	//RetreivePrefab("Lazer Bullet2", bullet2);
 
-	flecs::entity bulletRay[] = { bullet, bullet2 };
+	//flecs::entity bulletRay[] = { bullet, bullet2 };
 
-	//if (bulletRay[1].is_valid())
-	//{
-		bullet.add<BulletTest>();
+	auto laserLeft = stage.entity().is_a(bullet)
+		.set<Position>(origin);
 
-		ModelTransform* bulletT = bullet.get_mut<ModelTransform>();
+	/*ModelTransform* bulletT = bullet.get_mut<ModelTransform>();
 
 		/*if (bulletT->matrix.row4.y >= 200)
 		{
@@ -270,59 +268,59 @@ bool GA::PlayerLogic::FireLasers(flecs::world& stage, Position origin)
 		}
 		else
 		{*/
-		GW::MATH::GMatrix::TranslateGlobalF(bulletT->matrix, GW::MATH::GVECTORF{ origin.value.x, 5, 0, 1 }, bulletT->matrix);
-		levelData->levelTransforms[bulletT->rendererIndex] = bulletT->matrix;
+		//GW::MATH::GMatrix::TranslateGlobalF(bulletT->matrix, GW::MATH::GVECTORF{ origin.value.x, 5, 0, 1 }, bulletT->matrix);
+		/*levelData->levelTransforms[bulletT->rendererIndex] = bulletT->matrix;
 		origin.value.x = bulletT->matrix.row4.x;
 		origin.value.y = bulletT->matrix.row4.y;
-		std::cout << "Bullet Matrix changes: " << "x: " << bulletT->matrix.row4.x << " y: " << bulletT->matrix.row4.y << " orginY: " << origin.value.y << '\n';
+		std::cout << "Bullet Matrix changes: " << "x: " << bulletT->matrix.row4.x << " y: " << bulletT->matrix.row4.y << " orginY: " << origin.value.y << '\n';*/
 	//}
 	//else
 	//{
 	//	bulletRay[2].add<BulletTest>();
 
-	//	ModelTransform* bulletT = bulletRay[2].get_mut<ModelTransform>();
+//	ModelTransform* bulletT = bulletRay[2].get_mut<ModelTransform>();
 
-	//	/*if (bulletT->matrix.row4.y >= 200)
-	//	{
-	//		std::cout << "Bullet destruct \n";
-	//		return false;
-	//	}
-	//	else
-	//	{*/
-	//	GW::MATH::GMatrix::TranslateGlobalF(bulletT->matrix, GW::MATH::GVECTORF{ origin.value.x, 5, 0, 1 }, bulletT->matrix);
-	//	levelData->levelTransforms[bulletT->rendererIndex] = bulletT->matrix;
-	//	std::cout << "Bullet Matrix changes: " << "x: " << bulletT->matrix.row4.x << " y: " << bulletT->matrix.row4.y << " z: " << bulletT->matrix.row4.z << '\n';
-	//}
-	//}
+//	/*if (bulletT->matrix.row4.y >= 200)
+//	{
+//		std::cout << "Bullet destruct \n";
+//		return false;
+//	}
+//	else
+//	{*/
+//	GW::MATH::GMatrix::TranslateGlobalF(bulletT->matrix, GW::MATH::GVECTORF{ origin.value.x, 5, 0, 1 }, bulletT->matrix);
+//	levelData->levelTransforms[bulletT->rendererIndex] = bulletT->matrix;
+//	std::cout << "Bullet Matrix changes: " << "x: " << bulletT->matrix.row4.x << " y: " << bulletT->matrix.row4.y << " z: " << bulletT->matrix.row4.z << '\n';
+//}
+//}
 
-	//origin.value.x -= 0.05f;
-	//auto laserLeft = stage.entity().is_a(bullet)
-	//	.set<Position>(origin);
-	/*origin.value.x += 0.1f;*/
-	/*auto laserRight = stage.entity().is_a(bullet)
-		.set<Position>(origin);
-	laserRight.add<BulletTest>();*/
+//origin.value.x -= 0.05f;
+//auto laserLeft = stage.entity().is_a(bullet)
+//	.set<Position>(origin);
+/*origin.value.x += 0.1f;*/
+/*auto laserRight = stage.entity().is_a(bullet)
+	.set<Position>(origin);
+laserRight.add<BulletTest>();*/
 
-	//ModelTransform* edit = laserRight.get_mut<ModelTransform>();
-	//edit = original;
-	// if this shot is charged
-	//if (chargeEnd - chargeStart >= chargeTime) {
-	//	chargeEnd = chargeStart;
-	//	/*laserLeft.set<ChargedShot>({ 2 })
-	//		.set<Material>({1,0,0});*/
-	//	laserRight.set<ChargedShot>({ 2 })
-	//		.set<Material>({ 1,0,0 });
-	//}
-	
-	//origin.value.y += 1.0f;
+//ModelTransform* edit = laserRight.get_mut<ModelTransform>();
+//edit = original;
+// if this shot is charged
+//if (chargeEnd - chargeStart >= chargeTime) {
+//	chargeEnd = chargeStart;
+//	/*laserLeft.set<ChargedShot>({ 2 })
+//		.set<Material>({1,0,0});*/
+//	laserRight.set<ChargedShot>({ 2 })
+//		.set<Material>({ 1,0,0 });
+//}
 
-	//GW::MATH::GMatrix::TranslateGlobalF(edit->matrix, GW::MATH::GVECTORF{ origin.value.x, origin.value.y, 0, 1 }, edit->matrix);
-	//levelData->levelTransforms[edit->rendererIndex] = edit->matrix;
-	//printf("%f %f \n", edit->matrix.row4.x, edit->matrix.row4.y);
+//origin.value.y += 1.0f;
 
-	// play the sound of the Lazer prefab
-	/*GW::AUDIO::GSound shoot = *bullet.get<GW::AUDIO::GSound>();
-	shoot.Play();*/
-	
+//GW::MATH::GMatrix::TranslateGlobalF(edit->matrix, GW::MATH::GVECTORF{ origin.value.x, origin.value.y, 0, 1 }, edit->matrix);
+//levelData->levelTransforms[edit->rendererIndex] = edit->matrix;
+//printf("%f %f \n", edit->matrix.row4.x, edit->matrix.row4.y);
+
+// play the sound of the Lazer prefab
+/*GW::AUDIO::GSound shoot = *bullet.get<GW::AUDIO::GSound>();
+shoot.Play();*/
+
 	return true;
 }

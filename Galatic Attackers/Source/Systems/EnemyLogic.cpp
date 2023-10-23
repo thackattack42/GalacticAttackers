@@ -15,7 +15,10 @@ bool GA::EnemyLogic::Init(std::shared_ptr<flecs::world> _game,
 	std::weak_ptr<const GameConfig> _gameConfig,
 	GW::CORE::GEventGenerator _eventPusher,
 	std::shared_ptr<Level_Data> _levelData,
-	std::shared_ptr<bool> _pause)
+	std::shared_ptr<bool> _pause,
+	std::vector<flecs::entity> _entityVect,
+	std::shared_ptr<bool> _youWin,
+	std::shared_ptr<int> _enemyCount)
 {
 	// save a handle to the ECS & game settings
 	game = _game;
@@ -23,6 +26,10 @@ bool GA::EnemyLogic::Init(std::shared_ptr<flecs::world> _game,
 	eventPusher = _eventPusher;
 	levelData = _levelData;
 	pause = _pause;
+	entityVect = _entityVect;
+	youWin = _youWin;
+	enemyCount = _enemyCount;
+	(*enemyCount) = 9;
 
 	// destroy any bullets that have the CollidedWith relationship
 	game->system<Enemy, Health, Position>("Enemy System")
@@ -32,11 +39,12 @@ bool GA::EnemyLogic::Init(std::shared_ptr<flecs::world> _game,
 		{
 			if (e.get<Health>()->value <= 0) {
 				// play explode sound
-				e.destruct();
 				GA::PLAY_EVENT_DATA x;
 				GW::GEvent explode;
 				explode.Write(GA::PLAY_EVENT::ENEMY_DESTROYED, x);
 				eventPusher.Push(explode);
+				e.destruct();
+				(*enemyCount)--;
 			}
 
 			ModelTransform* edit = e.get_mut<ModelTransform>();
@@ -50,15 +58,21 @@ bool GA::EnemyLogic::Init(std::shared_ptr<flecs::world> _game,
 				timer--;
 				if (timer <= 0)
 				{
-					GW::MATH::GMatrix::TranslateGlobalF(edit->matrix, GW::MATH::GVECTORF{ 0, 0, 0.2666, 1 }, edit->matrix);
+					GW::MATH::GMatrix::TranslateGlobalF(edit->matrix, GW::MATH::GVECTORF{ 0, 0, 0.02666, 1 }, edit->matrix);
 					levelData->levelTransforms[edit->rendererIndex] = edit->matrix;
+					e.get_mut<ModelBoundary>()->obb.center.x = edit->matrix.row4.x;
+					e.get_mut<ModelBoundary>()->obb.center.y = edit->matrix.row4.y;
+
 					tm->timesMoved++;
 					timer = e.delta_time() * 1000;
 
-					if (tm->timesMoved >= 100)
+					if (tm->timesMoved >= 1000)
 					{
 						GW::MATH::GMatrix::TranslateGlobalF(edit->matrix, GW::MATH::GVECTORF{ 0, -3, 0, 1 }, edit->matrix);
 						levelData->levelTransforms[edit->rendererIndex] = edit->matrix;
+						e.get_mut<ModelBoundary>()->obb.center.x = edit->matrix.row4.x;
+						e.get_mut<ModelBoundary>()->obb.center.y = edit->matrix.row4.y;
+
 						move->moveRight = false;
 					}
 				}
@@ -69,8 +83,11 @@ bool GA::EnemyLogic::Init(std::shared_ptr<flecs::world> _game,
 				timer--;
 				if (timer <= 0)
 				{
-					GW::MATH::GMatrix::TranslateGlobalF(edit->matrix, GW::MATH::GVECTORF{ 0, 0, -0.2666, 1 }, edit->matrix);
+					GW::MATH::GMatrix::TranslateGlobalF(edit->matrix, GW::MATH::GVECTORF{ 0, 0, -0.02666, 1 }, edit->matrix);
 					levelData->levelTransforms[edit->rendererIndex] = edit->matrix;
+					e.get_mut<ModelBoundary>()->obb.center.x = edit->matrix.row4.x;
+					e.get_mut<ModelBoundary>()->obb.center.y = edit->matrix.row4.y;
+
 					tm->timesMoved--;
 					timer = e.delta_time() * 1000;
 
@@ -78,6 +95,9 @@ bool GA::EnemyLogic::Init(std::shared_ptr<flecs::world> _game,
 					{
 						GW::MATH::GMatrix::TranslateGlobalF(edit->matrix, GW::MATH::GVECTORF{ 0, -3, 0, 1 }, edit->matrix);
 						levelData->levelTransforms[edit->rendererIndex] = edit->matrix;
+						e.get_mut<ModelBoundary>()->obb.center.x = edit->matrix.row4.x;
+						e.get_mut<ModelBoundary>()->obb.center.y = edit->matrix.row4.y;
+
 						move->moveRight = true;
 					}
 				}

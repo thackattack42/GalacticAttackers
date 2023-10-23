@@ -41,6 +41,7 @@ namespace GA
 		std::shared_ptr<bool> youWin;
 		std::shared_ptr<bool> youLose;
 		std::shared_ptr<bool> pause;
+		std::shared_ptr<int> enemyCount;
 	public:
 		// attach the required logic to the ECS 
 		bool Init(	std::shared_ptr<flecs::world> _game,
@@ -52,7 +53,8 @@ namespace GA
 					GW::CORE::GEventGenerator _eventPusher,
 					std::shared_ptr<Level_Data> _levelData,
 					std::shared_ptr<int> _currentLevel,
-			std::shared_ptr<bool> _levelChange, std::shared_ptr<bool> _youWin, std::shared_ptr<bool> _youLose, std::shared_ptr<bool> _pause);
+					std::shared_ptr<bool> _levelChange, std::shared_ptr<bool> _youWin, std::shared_ptr<bool> _youLose, std::shared_ptr<bool> _pause,
+					std::shared_ptr<int> _enemyCount);
 		// control if the system is actively running
 		bool Activate(bool runSystem);
 		// release any resources allocated by the system
@@ -62,7 +64,7 @@ namespace GA
 		static constexpr unsigned int Max_Frame_Events = 32;
 		// helper routines
 		bool ProcessInputEvents(flecs::world& stage);
-		bool FireLasers(flecs::world& stage, GA::Position origin);
+		bool FireLasers(flecs::world& stage, GA::Position& origin);
 	};
 
 };

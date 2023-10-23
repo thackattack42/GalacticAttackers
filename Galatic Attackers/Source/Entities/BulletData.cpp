@@ -38,14 +38,14 @@ bool GA::BulletData::Load(	std::shared_ptr<flecs::world> _game,
 	GW::AUDIO::GSound shoot;
 	shoot.Create(fireFX.c_str(), _audioEngine, 0.15f); // we need a global music & sfx volumes
 	// add prefab to ECS
-	auto lazerPrefab = _game->prefab("Crystal3")
+	auto lazerPrefab = _game->prefab("Lazer Bullet")
 		// .set<> in a prefab means components are shared (instanced)
 		.set<Material>({ red, green, blue })
 		.set<Orientation>({ world })
 		.set<Acceleration>({ 0, 0 })
 		.set<Velocity>({ 0, speed })
-		.set<ModelTransform*>(_game->prefab("Crystal3").get_mut<ModelTransform>())
-		.set<ModelBoundary*>(_game->prefab("Crystal3").get_mut<ModelBoundary>())
+		.set_override<ModelTransform>(*_game->lookup("Crystal3").get_mut<ModelTransform>())
+		.set_override<ModelBoundary>(*_game->lookup("Crystal3").get_mut<ModelBoundary>())
 		//.set<Collidable*>(_game->prefab("Crystal3").get_mut<Collidable>())
 		.set<GW::AUDIO::GSound>(shoot.Relinquish())
 		// .override<> ensures a component is unique to each entity created from a prefab 
@@ -62,13 +62,13 @@ bool GA::BulletData::Load(	std::shared_ptr<flecs::world> _game,
 		std::cout << "ship orig bound: " << _game->prefab("Crystal3").get_mut<ModelBoundary>() << '\n';
 	}
 
-	auto lazerPrefab2 = _game->prefab("Crystal3.001")
+	auto lazerPrefab2 = _game->prefab("Lazer Bullet2")
 		// .set<> in a prefab means components are shared (instanced)
 		.set<Material>({ red, green, blue })
 		.set<Orientation>({ world })
 		.set<Acceleration>({ 0, 0 })
 		.set<Velocity>({ 0, speed })
-		.set<ModelTransform*>(_game->prefab("Crystal3.001").get_mut<ModelTransform>())
+		.set<ModelTransform*>(_game->lookup("Crystal3.001").get_mut<ModelTransform>())
 		.set<GW::AUDIO::GSound>(shoot.Relinquish())
 		// .override<> ensures a component is unique to each entity created from a prefab 
 		.set_override<Damage>({ dmg })

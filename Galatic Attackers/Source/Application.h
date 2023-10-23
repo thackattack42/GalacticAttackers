@@ -38,10 +38,12 @@ class Application
 	std::shared_ptr<GameConfig> gameConfig; // .ini file game settings
 	std::shared_ptr<Level_Data> levelData;
 	std::shared_ptr<int> currentLevel;
+	std::shared_ptr<int> enemyCount;
 	std::shared_ptr<bool> levelChange;
 	std::shared_ptr<bool> youWin;
 	std::shared_ptr<bool> youLose;
 	std::shared_ptr<bool> pause;
+	bool ispaused;
 	std::vector<flecs::entity> entityVec;
 	std::string level;
 	std::string models;

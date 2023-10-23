@@ -1,6 +1,7 @@
 #include "PhysicsLogic.h"
 #include "../Components/Physics.h"
 #include "../Components/Components.h"
+#include "../Components/Identification.h"
 #include "../Entities/Prefabs.h"
 
 bool GA::PhysicsLogic::Init(	std::shared_ptr<flecs::world> _game, 
@@ -22,23 +23,23 @@ bool GA::PhysicsLogic::Init(	std::shared_ptr<flecs::world> _game,
 	
 	// update position by velocity
 	game->system<Position, const Velocity>("Translation System")
-		.each([](flecs::entity e, Position& p, const Velocity &v) {
+		.each([this](flecs::entity e, Position& p, const Velocity &v) {
 		GW::MATH2D::GVECTOR2F speed;
 		GW::MATH2D::GVector2D::Scale2F(v.value, e.delta_time(), speed);
 		// adding is simple but doesn't account for orientation
 		GW::MATH2D::GVector2D::Add2F(speed, p.value, p.value);
-		
- 		if (e.has<BulletTest>())
+
+
+		if(e.has<Bullet>())
 		{
-		//	//ModelTransform* edit = e.get_mut<ModelTransform>();
-		//	GW::MATH::GMatrix::TranslateGlobalF(e.get_mut<ModelTransform>()->matrix, GW::MATH::GVECTORF { -p.value.x, p.value.y, 0, 0 }, e.get_mut<ModelTransform>()->matrix);
-		//	//levelData->levelTransforms[edit->rendererIndex] = edit->matrix;
-		//	//GW::MATH::GMatrix::TranslateGlobalF(e.get_mut<ModelTransform>()->matrix, GW::MATH::GVECTORF { 0, 0, 0, 1 }, e.get_mut<ModelTransform>()->matrix);
-		//	GW::MATH::GMATRIXF temp = e.get<ModelTransform>()->matrix;
-		//	//std::cout << "Moving " << p.value.x << " " << p.value.y << std::endl;
-		//	std::cout << "Moving " << temp.row4.x << " " << temp.row4.y << " " << temp.row4.z << std::endl;
+			auto a = p.value;
+			ModelTransform* bulletT = e.get_mut<ModelTransform>();
+			GW::MATH::GMatrix::TranslateGlobalF(bulletT->matrix, GW::MATH::GVECTORF{ p.value.x, p.value.y, 0, 1 }, bulletT->matrix);
+			levelData->levelTransforms[bulletT->rendererIndex] = bulletT->matrix;
+
+			e.get_mut<ModelBoundary>()->obb.center.x = bulletT->matrix.row4.x;
+			e.get_mut<ModelBoundary>()->obb.center.y = bulletT->matrix.row4.y;
 		}
-		//std::cout << "Moving\n";
 	});
 
 	// **** CLEANUP ****
@@ -46,7 +47,7 @@ bool GA::PhysicsLogic::Init(	std::shared_ptr<flecs::world> _game,
 	game->system<const Position>("Cleanup System")
 		.each([](flecs::entity e, const Position& p) {
 		if (p.value.x > 10.5f || p.value.x < -10.5f ||
-			p.value.y > 10.0f || p.value.y < -10.5f) {
+			p.value.y > 200.0f || p.value.y < -0.0f) {
 				e.destruct();
 
 				//std::cout << "Cleanup";
@@ -61,16 +62,16 @@ bool GA::PhysicsLogic::Init(	std::shared_ptr<flecs::world> _game,
 				std::cout << "Cleanup clean";
 			}
 		}*/
-		if(e.has<BulletTest>())
-		{
-			GW::MATH::GMATRIXF temp = e.get<ModelTransform>()->matrix;
-			if (temp.row4.x > 10.5f || temp.row4.x < -10.5f ||
-				temp.row4.y > 10.0f || temp.row4.y < -10.5f) {
-				e.destruct();
+		//if(e.has<BulletTest>())
+		//{
+		//	GW::MATH::GMATRIXF temp = e.get<ModelTransform>()->matrix;
+		//	if (temp.row4.x > 10.5f || temp.row4.x < -10.5f ||
+		//		temp.row4.y > 10.0f || temp.row4.y < -10.5f) {
+		//		e.destruct();
 
-				//std::cout << "Cleanup";
-			}
-		}
+		//		//std::cout << "Cleanup";
+		//	}
+		//}
 	});
 
 	// **** COLLISIONS ****
@@ -90,14 +91,10 @@ bool GA::PhysicsLogic::Init(	std::shared_ptr<flecs::world> _game,
 		// collect any and all collidable objects
 		queryCache.each([this](flecs::entity e, Collidable& c, Position& p, Orientation& o, ModelBoundary& m) {
 			// create a 3x3 matrix for transformation
-			
-		
-				/*if (e.has<Collidable>())
-				{
-					std::cout << "entity has collidable: " << e.id() << '\n';
-				}*/
-			
-			
+			if (e.has<Collidable>())
+			{
+				//std::cout << "entity has collidable: " << e.id() << '\n';
+			}
 			/*GW::MATH2D::GMATRIX3F matrix = {
 				o.value.row1.x, o.value.row1.y, 0,
 				o.value.row2.x, o.value.row2.y, 0,

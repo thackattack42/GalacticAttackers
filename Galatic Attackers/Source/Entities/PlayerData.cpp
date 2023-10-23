@@ -45,7 +45,7 @@ bool GA::PlayerData::Load(  std::shared_ptr<flecs::world> _game,
 	}
 	auto a = _game->lookup("shield");
 	if (a.is_valid()) {
-		a.add<Collidable>();
+		//a.add<Collidable>();
 		a.set<Material>({ red1, green1, blue1 });
 	}
 	return true;
