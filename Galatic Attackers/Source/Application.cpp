@@ -20,6 +20,7 @@ bool Application::Init()
 	game = std::make_shared<flecs::world>(); 
 	levelData = std::make_shared<Level_Data>();
 	currentLevel = std::make_shared<int>();
+	enemyCount = std::make_shared<int>();
 	levelChange = std::make_shared<bool>();
 	youLose = std::make_shared<bool>();
 	youWin = std::make_shared<bool>();
@@ -222,7 +223,7 @@ bool Application::InitEntities()
 	if (players.Load(game, gameConfig) == false)
 		return false;
 	// Load the enemy entities
-	if (enemies.Load(game, gameConfig, audioEngine) == false)
+	if (enemies.Load(game, gameConfig, audioEngine, levelData) == false)
 		return false;
 
 	return true;
@@ -232,9 +233,9 @@ bool Application::InitSystems()
 {
 	// connect systems to global ECS
 	if (playerSystem.Init(	game, gameConfig, immediateInput, bufferedInput, 
-							gamePads, audioEngine, eventPusher, levelData, currentLevel, levelChange, youWin,youLose, pause) == false)
+							gamePads, audioEngine, eventPusher, levelData, currentLevel, levelChange, youWin,youLose, pause, enemyCount) == false)
 		return false;
-	if (levelSystem.Init(game, gameConfig, audioEngine) == false)
+	if (levelSystem.Init(game, gameConfig, audioEngine, levelData) == false)
 		return false;
 	if (d3dRenderingSystem.Init(game, gameConfig, d3d11, window, levelData, levelChange, youWin, youLose, entityVec, currentLevel) == false)
 		return false;
@@ -242,7 +243,7 @@ bool Application::InitSystems()
 		return false;
 	if (bulletSystem.Init(game, gameConfig, levelData) == false)
 		return false;
-	if (enemySystem.Init(game, gameConfig, eventPusher, levelData, pause) == false)
+	if (enemySystem.Init(game, gameConfig, eventPusher, levelData, pause, entityVec, youWin, enemyCount) == false)
 		return false;
 
 	return true;
@@ -308,8 +309,7 @@ void Application::UpdateLevelData()
 		// create entity with same name as blender object
 		auto ent = game->entity(i.blendername);
 		ent.set<BlenderName>({ i.blendername });
-		ent.set<ModelBoundary>({
-			levelData->levelColliders[levelData->levelModels[i.modelIndex].colliderIndex] });
+		ent.set<ModelBoundary>({ levelData->levelColliders[levelData->levelModels[i.modelIndex].colliderIndex].center, GW::MATH::GVECTORF{ 15.0f, 6.0f, 1.0f, 1 }, levelData->levelColliders[levelData->levelModels[i.modelIndex].colliderIndex].rotation });
 
 		ent.set<ModelTransform>({
 			levelData->levelTransforms[i.transformIndex], i.transformIndex });
