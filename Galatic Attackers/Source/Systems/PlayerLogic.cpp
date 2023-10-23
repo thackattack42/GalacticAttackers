@@ -274,7 +274,7 @@ bool GA::PlayerLogic::FireLasers(flecs::world& stage, Position origin)
 		levelData->levelTransforms[bulletT->rendererIndex] = bulletT->matrix;
 		origin.value.x = bulletT->matrix.row4.x;
 		origin.value.y = bulletT->matrix.row4.y;
-		std::cout << "Bullet Matrix changes: " << "x: " << bulletT->matrix.row4.x << " y: " << bulletT->matrix.row4.y << " orginY: " << origin.value.y << '\n';
+		//std::cout << "Bullet Matrix changes: " << "x: " << bulletT->matrix.row4.x << " y: " << bulletT->matrix.row4.y << " orginY: " << origin.value.y << '\n';
 	//}
 	//else
 	//{
