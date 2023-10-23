@@ -58,13 +58,13 @@ bool GA::EnemyData::Load(	std::shared_ptr<flecs::world> _game,
 		auto enemyPrefab1 = _game->prefab("Spaceship5.001")
 			// .set<> in a prefab means components are shared (instanced)
 			//.set(spaceship)
-			.set<Material>({ red, green, blue })
-			.set<Orientation>({ world })
+			//.set<Material>({ red, green, blue })
+			//.set<Orientation>({ world })
 			// .override<> ensures a component is unique to each entity created from a prefab
 			.set_override<Health>({ health })
-			.override<Acceleration>()
-			.override<Velocity>()
-			.override<Position>()
+			//.override<Acceleration>()
+			//.override<Velocity>()
+			//.override<Position>()
 			.override<Enemy>() // Tag this prefab as an enemy (for queries/systems)
 			//.override<PrefabEnemy>() // Tag this prefab as an enemy (for queries/systems)
 			.override<Collidable>(); // can be collided with
@@ -153,11 +153,11 @@ bool GA::EnemyData::Load(	std::shared_ptr<flecs::world> _game,
 			.override<Collidable>(); // can be collided with
 
 		auto enemyPrefab8 = _game->prefab("Spaceship5.008")
-			// .set<> in a prefab means components are shared (instanced)
+			 //.set<> in a prefab means components are shared (instanced)
 			//.set(spaceship)
 			.set<Material>({ red, green, blue })
 			.set<Orientation>({ world })
-			// .override<> ensures a component is unique to each entity created from a prefab
+			 //.override<> ensures a component is unique to each entity created from a prefab
 			.set_override<Health>({ health })
 			.override<Acceleration>()
 			.override<Velocity>()
@@ -168,6 +168,9 @@ bool GA::EnemyData::Load(	std::shared_ptr<flecs::world> _game,
 
 		auto a = _game->lookup("Spaceship5.008");
 		if (a.is_valid()) {
+			//a.add<Health>(health);
+			a.override<Enemy>();
+			a.set_override<Health>({ health });
 			a.add<Orientation>();
 			a.add<Position>();
 			a.add<Collidable>();

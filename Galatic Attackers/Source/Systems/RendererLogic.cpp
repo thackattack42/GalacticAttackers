@@ -24,7 +24,7 @@ bool GA::D3DRendererLogic::Init(	std::shared_ptr<flecs::world> _game,
 								std::weak_ptr<const GameConfig> _gameConfig,
 								GW::GRAPHICS::GDirectX11Surface d3d11,
 								GW::SYSTEM::GWindow _window, std::shared_ptr<Level_Data> _levelData, std::shared_ptr<bool> _levelChange,
-								std::shared_ptr<bool> _youWin, std::shared_ptr<bool> _youLose, std::vector<flecs::entity> _entityVec)
+								std::shared_ptr<bool> _youWin, std::shared_ptr<bool> _youLose, std::vector<flecs::entity> _entityVec, std::shared_ptr<int> _currentLevel)
 {
 // save a handle to the ECS & game settings
 game = _game;
@@ -36,6 +36,7 @@ levelChange = _levelChange;
 youWin = _youWin;
 youLose = _youLose;
 entityVec = _entityVec;
+currentLevel = _currentLevel;
 // Setup all vulkan resources
 if (LoadShaders3D() == false)
 return false;
@@ -231,7 +232,7 @@ bool GA::D3DRendererLogic::LoadUniforms()
 	//ViewMatrix
 	GW::MATH::GVECTORF viewCenter = { 0.0, 1.0f, 0.0f, 1.0f };
 	GW::MATH::GVECTORF viewUp = { 0.0f, 1.0f, 0.0f, 1.0f };
-	GW::MATH::GVECTORF vTranslate = { 0.0, -90.0f, 0.0f, 1.0f };
+	GW::MATH::GVECTORF vTranslate = { 0.0, -90.0f, 0.0f, 1.0f }; ///450 z location shows start
 	proxy.IdentityF(viewMatrix);
 	proxy.LookAtLHF(viewTranslation, viewCenter, viewUp, viewMatrix);
 	proxy.TranslateLocalF(viewMatrix, vTranslate, viewMatrix);
@@ -732,6 +733,23 @@ bool GA::D3DRendererLogic::LoadGeometry()
 	CD3D11_BUFFER_DESC lssvbDesc(sizeof(TextVertex)* LSstaticVerts.size(), D3D11_BIND_VERTEX_BUFFER);
 	creator->CreateBuffer(&lssvbDesc, &lssvbData, vertexBufferStaticTextLose.ReleaseAndGetAddressOf());
 
+	staticTextLoseR = Text();
+	staticTextLoseR.SetText("Press [R] to Restart");
+	staticTextLoseR.SetFont(&consolas32);
+	staticTextLoseR.SetPosition(0.0f, -0.1f);
+	staticTextLoseR.SetScale(1.0f, 1.0f);
+	staticTextLoseR.SetRotation(0.0f);
+	staticTextLoseR.SetDepth(0.0f);
+	// update will create the vertices so they will be ready to use
+	// for static text this only needs to be done one time
+	staticTextLoseR.Update(width, height);
+
+	// vertex buffer creation for the staticText
+	const auto& LRSstaticVerts = staticTextLoseR.GetVertices();
+	D3D11_SUBRESOURCE_DATA lrssvbData = { LRSstaticVerts.data(), 0, 0 };
+	CD3D11_BUFFER_DESC lrssvbDesc(sizeof(TextVertex)* LRSstaticVerts.size(), D3D11_BIND_VERTEX_BUFFER);
+	creator->CreateBuffer(&lrssvbDesc, &lrssvbData, vertexBufferStaticTextLoseR.ReleaseAndGetAddressOf());
+
 	creator->Release();
 	return true;
 }
@@ -842,26 +860,7 @@ bool GA::D3DRendererLogic::SetupDrawcalls() // I SCREWED THIS UP MAKES SO MUCH S
 		.each([this](flecs::entity e, Position& p, Orientation& o, Material& m) {
 		// copy all data to our instancing array
 
-			LevelSwitch();
-			//int i = draw_counter;
-			//instanceData.instance_transforms[i] = GW::MATH::GIdentityMatrixF;
-			//instanceData.instance_transforms[i].row4.x = p.value.x;
-			//instanceData.instance_transforms[i].row4.y = p.value.y;
-			//// transfer 2D orientation to 4x4
-			//instanceData.instance_transforms[i].row1.x = o.value.row1.x;
-			//instanceData.instance_transforms[i].row1.y = o.value.row1.y;
-			//instanceData.instance_transforms[i].row2.x = o.value.row2.x;
-			//instanceData.instance_transforms[i].row2.y = o.value.row2.y;
-			//// set color
-			//instanceData.instance_colors[i].x = m.diffuse.value.x;
-			//instanceData.instance_colors[i].y = m.diffuse.value.y;
-			//instanceData.instance_colors[i].z = m.diffuse.value.z;
-			//instanceData.instance_colors[i].w = 1; // opaque
-			//// increment the shared draw counter but don't go over (branchless) 
-			//int v = static_cast<int>(Instance_Max) - static_cast<int>(draw_counter + 2);
-			//// if v < 0 then 0, else 1, https://graphics.stanford.edu/~seander/bithacks.html
-			//int sign = 1 ^ ((unsigned int)v >> (sizeof(int) * CHAR_BIT - 1));
-			//draw_counter += sign;
+		
 			});
 
 	// runs once per frame after updateDraw
@@ -895,6 +894,17 @@ bool GA::D3DRendererLogic::SetupDrawcalls() // I SCREWED THIS UP MAKES SO MUCH S
 		}
 		ReleasePipelineHandles(curHandles);
 		UIDraw();
+		LevelSwitch();
+		ChooseLevel();
+		float r = 0;
+		inputProxy.GetState(G_KEY_R, r);
+		if (r != 0.0f)
+		{
+			(*currentLevel) = 1;
+			(*levelChange) = true;
+			(*youLose) = false;
+		}
+		
 			});
 	// NOTE: I went with multi-system approach for the ease of passing lambdas with "this"
 	// There is a built-in solution for this problem referred to as a "custom runner":
@@ -1095,6 +1105,18 @@ void GA::D3DRendererLogic::UIDraw()
 		curHandles.context->UpdateSubresource(constantBufferHUD.Get(), 0, nullptr, &constantBufferData, 0, 0);
 		// draw the static text using the number of vertices
 		curHandles.context->Draw(staticTextLose.GetVertices().size(), 0);
+
+		curHandles.context->IASetVertexBuffers(0, 1, vertexBufferStaticTextLoseR.GetAddressOf(), strides, offsets);
+		// change the topology to a triangle list
+		curHandles.context->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+		// update the constant buffer data for the text
+		constantBufferData = UpdateTextConstantBufferData(staticTextLoseR);
+		// bind the texture used for rendering the font
+		curHandles.context->PSSetShaderResources(0, 1, shaderResourceView[TEXTURE_ID::FONT_CONSOLAS].GetAddressOf());
+		// update the constant buffer with the text's data
+		curHandles.context->UpdateSubresource(constantBufferHUD.Get(), 0, nullptr, &constantBufferData, 0, 0);
+		// draw the static text using the number of vertices
+		curHandles.context->Draw(staticTextLoseR.GetVertices().size(), 0);
 		conditionLose = true;
 	}
 
@@ -1126,10 +1148,10 @@ bool GA::D3DRendererLogic::FreeResources()
 
 	return true;
 }
-void GA::D3DRendererLogic::LevelSwitch()
+void GA::D3DRendererLogic::ChooseLevel()
 {
 	float one = 0.0f;
-	inputProxy.GetState(G_KEY_F1, one);
+	inputProxy.GetState(74, one);
 	if (one != 0.0f)
 	{
 		IShellItem* pShellItem = nullptr;
@@ -1174,6 +1196,7 @@ void GA::D3DRendererLogic::LevelSwitch()
 
 							}
 							(*levelChange) = false;
+							(*youLose) = false;
 							CoTaskMemFree(filePath);
 							pShellItem->Release();
 						}
@@ -1184,6 +1207,41 @@ void GA::D3DRendererLogic::LevelSwitch()
 			CoUninitialize();
 		}
 	}
+}
+void GA::D3DRendererLogic::LevelSwitch()
+{
+
+	if (*levelChange)
+	{
+		GW::SYSTEM::GLog log;
+		for (int i = 0; i < entityVec.size(); ++i)
+		{
+			entityVec[i].destruct();
+		}
+		entityVec.clear();
+		switch(*currentLevel)
+		{
+		case 1:
+			levelData->LoadLevel("../GameLevel_1.txt", "../Models", log);
+			break;
+		case 2:
+			 levelData->LoadLevel("../GameLevel_2.txt", "../Models", log);
+			break;
+		case 3:
+			levelData->LoadLevel("../GameLevel_3.txt", "../Models", log);
+			break;
+		}
+		
+		createEnt = true;
+		if (LoadGeometry())
+		{
+			PipelineHandles handles = GetCurrentPipelineHandles();
+			SetUpPipeline(handles);
+
+		}
+		(*levelChange) = false;
+	}
+	
 }
 void GA::D3DRendererLogic::UpdateLevelEnt()
 {
@@ -1249,4 +1307,14 @@ void GA::D3DRendererLogic::CreatePlayer()
 		a.add<Collidable>();
 		a.set<Material>({ red1, green1, blue1 });
 	}
+}
+
+void GA::D3DRendererLogic::CreateBullets()
+{
+	
+}
+
+void GA::D3DRendererLogic::CreateEnemies()
+{
+
 }

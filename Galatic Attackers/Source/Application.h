@@ -41,6 +41,7 @@ class Application
 	std::shared_ptr<bool> levelChange;
 	std::shared_ptr<bool> youWin;
 	std::shared_ptr<bool> youLose;
+	std::shared_ptr<bool> pause;
 	std::vector<flecs::entity> entityVec;
 	std::string level;
 	std::string models;
