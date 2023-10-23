@@ -206,19 +206,6 @@ bool Application::InitAudio()
 
 bool Application::InitGraphics()
 {
-//#ifndef NDEBUG
-//	const char* debugLayers[] = {
-//		"VK_LAYER_KHRONOS_validation", // standard validation layer
-//		//"VK_LAYER_RENDERDOC_Capture" // add this if you have installed RenderDoc
-//	};
-//	if (+vulkan.Create(window, GW::GRAPHICS::DEPTH_BUFFER_SUPPORT,
-//		sizeof(debugLayers) / sizeof(debugLayers[0]),
-//		debugLayers, 0, nullptr, 0, nullptr, false))
-//		return true;
-//#else
-//	if (+vulkan.Create(window, GW::GRAPHICS::DEPTH_BUFFER_SUPPORT))
-//		return true;
-//#endif
 
 	if (+d3d11.Create(window, GW::GRAPHICS::DEPTH_BUFFER_SUPPORT))
 		return true;
@@ -249,7 +236,7 @@ bool Application::InitSystems()
 		return false;
 	if (levelSystem.Init(game, gameConfig, audioEngine) == false)
 		return false;
-	if (d3dRenderingSystem.Init(game, gameConfig, d3d11, window, levelData, levelChange, youWin, youLose, entityVec) == false)
+	if (d3dRenderingSystem.Init(game, gameConfig, d3d11, window, levelData, levelChange, youWin, youLose, entityVec, currentLevel) == false)
 		return false;
 	if (physicsSystem.Init(game, gameConfig, levelData) == false)
 		return false;

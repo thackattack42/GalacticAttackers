@@ -67,6 +67,7 @@ namespace GA
 		std::shared_ptr<bool> levelChange;
 		std::shared_ptr<bool> youWin;
 		std::shared_ptr<bool> youLose;
+		std::shared_ptr<int> currentLevel;
 		std::vector<flecs::entity> entityVec;
 		// Directx11 resources used for rendering
 		std::shared_ptr<Level_Data> levelData;
@@ -88,6 +89,7 @@ namespace GA
 		Microsoft::WRL::ComPtr<ID3D11Buffer>		vertexBufferStaticTextLives;
 		Microsoft::WRL::ComPtr<ID3D11Buffer>		vertexBufferStaticTextWin;
 		Microsoft::WRL::ComPtr<ID3D11Buffer>		vertexBufferStaticTextLose;
+		Microsoft::WRL::ComPtr<ID3D11Buffer>		vertexBufferStaticTextLoseR;
 
 
 		GW::MATH::GMATRIXF worldMatrix[500];
@@ -122,6 +124,7 @@ namespace GA
 		Text staticTextLives;
 		Text staticTextWin;
 		Text staticTextLose;
+		Text staticTextLoseR;
 		SPRITE_DATA	constantBufferData = { 0 };
 		Microsoft::WRL::ComPtr<ID3D11ShaderResourceView> shaderResourceView[TEXTURE_ID::COUNT];
 		Microsoft::WRL::ComPtr<ID3D11SamplerState>			samplerState;
@@ -147,7 +150,7 @@ namespace GA
 			GW::GRAPHICS::GDirectX11Surface _direct11,
 			GW::SYSTEM::GWindow _window, std::shared_ptr<Level_Data> _levelData, 
 			std::shared_ptr<bool> _levelChange, std::shared_ptr<bool> _youWin, std::shared_ptr<bool> _youLose,
-			std::vector<flecs::entity> _entityVec);
+			std::vector<flecs::entity> _entityVec, std::shared_ptr<int> _currentLevel);
 		// control if the system is actively running
 		bool Activate(bool runSystem);
 		// release any resources allocated by the system
@@ -191,6 +194,7 @@ namespace GA
 		void GA::D3DRendererLogic::ReleasePipelineHandles(PipelineHandles toRelease);
 		PipelineHandles GetCurrentPipelineHandles();
 		void LevelSwitch();
+		void ChooseLevel();
 		void UpdateLevelEnt();
 		void CreatePlayer();
 		void CreateEnemies();
