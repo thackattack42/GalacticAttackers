@@ -1,9 +1,9 @@
-#include <random>
-#include "BulletLogic.h"
+#include "../Components/Components.h"
+#include "../Components/Gameplay.h"
 #include "../Components/Identification.h"
 #include "../Components/Physics.h"
-#include "../Components/Gameplay.h"
-#include "../Components/Components.h"
+#include "BulletLogic.h"
+#include <random>
 
 using namespace GA; // Example Space Game
 
@@ -21,19 +21,30 @@ bool GA::BulletLogic::Init(	std::shared_ptr<flecs::world> _game,
 		.each([this](flecs::entity e, Bullet, Damage& d, Position& p) {
 		// damage anything we come into contact with
 
-		auto a = p.value;
+		auto pos = p.value;
 		{
 			e.each<CollidedWith>([&e, d, p, this](flecs::entity hit) {
 				if (hit.has<Health>() && hit.has<Enemy>()) {
 					//levelData->levelTransforms[68];
-					auto a = hit.get<Position>()->value.y;
-					auto b = e.get<Position>()->value.y;
-					int current = hit.get<Health>()->value;
-					hit.set<Health>({ current - d.value });
+					auto enemy = hit.get<Position>()->value.y;
+					auto bullet = e.get<Position>()->value.y;
+					int currentHealth = hit.get<Health>()->value;
+					hit.set<Health>({ currentHealth - d.value });
+					ModelTransform* bulletT = e.get_mut<ModelTransform>();
+					levelData->levelTransforms[bulletT->rendererIndex] = bulletT->matrix;
+					bulletT->matrix.row4.x = 0;
+					bulletT->matrix.row4.y = 0;
 					e.destruct();
+					
 
 					if (hit.get<Health>()->value <= 0)
+					{
+						ModelTransform* enemyT = hit.get_mut<ModelTransform>();
+						levelData->levelTransforms[enemyT->rendererIndex] = enemyT->matrix;
+						enemyT->matrix.row4.x = 200;
+						enemyT->matrix.row4.y = 200;
 						hit.destruct();
+					}
 
 					// reduce the amount of hits but the charged shot
 					if (e.has<ChargedShot>() && hit.get<Health>()->value <= 0)

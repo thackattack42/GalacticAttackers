@@ -53,11 +53,13 @@ bool GA::PlayerLogic::Init(std::shared_ptr<flecs::world> _game,
 			{
 				// left-right movement
 				float xaxis = 0, input = 0;
+
 				// Use the controller/keyboard to move the player around the screen			
 				if (c[i].index == 0) { // enable keyboard controls for player 1
 					immediateInput.GetState(G_KEY_LEFT, input); xaxis -= input;
 					immediateInput.GetState(G_KEY_RIGHT, input); xaxis += input;
 				}
+
 				// grab left-thumb stick
 				controllerInput.GetState(c[i].index, G_LX_AXIS, input); xaxis += input;
 				controllerInput.GetState(c[i].index, G_DPAD_LEFT_BTN, input); xaxis -= input;
@@ -66,22 +68,26 @@ bool GA::PlayerLogic::Init(std::shared_ptr<flecs::world> _game,
 				xaxis = G_SMALLER(xaxis, 1);// cap left motion
 
 				// apply movement
-				p[i].value.x += xaxis * it.delta_time() * speed;
-				// limit the player to stay within -1 to +1 NDC
-				p[i].value.x = G_LARGER(p[i].value.x, -0.4f);
-				p[i].value.x = G_SMALLER(p[i].value.x, +0.4f);
-
-				ModelTransform* edit = it.entity(i).get_mut<ModelTransform>();
-
-				if (edit->matrix.row4.z > -42 && edit->matrix.row4.z < +42)
+				if (xaxis != 0)
 				{
-					GW::MATH::GMatrix::TranslateLocalF(edit->matrix, GW::MATH::GVECTORF{ -p[i].value.x, p[i].value.y, 0, 1 }, edit->matrix);
-					if (edit->matrix.row4.z < -40)
-						edit->matrix.row4.z = -40;
-					else if (edit->matrix.row4.z > 40)
-						edit->matrix.row4.z = 40;
+					p[i].value.x += xaxis * it.delta_time() * speed;
 
-					levelData->levelTransforms[edit->rendererIndex] = edit->matrix;
+					// limit the player to stay within -1 to +1 NDC
+					p[i].value.x = G_LARGER(p[i].value.x, -0.4f);
+					p[i].value.x = G_SMALLER(p[i].value.x, +0.4f);
+
+					ModelTransform* edit = it.entity(i).get_mut<ModelTransform>();
+
+					if (edit->matrix.row4.x > -42 && edit->matrix.row4.x < +42)
+					{
+						GW::MATH::GMatrix::TranslateLocalF(edit->matrix, GW::MATH::GVECTORF{ -p[i].value.x, p[i].value.y, 0, 1 }, edit->matrix);
+						if (edit->matrix.row4.x < -40)
+							edit->matrix.row4.x = -40;
+						else if (edit->matrix.row4.x > 40)
+							edit->matrix.row4.x = 40;
+
+						levelData->levelTransforms[edit->rendererIndex] = edit->matrix;
+					}
 				}
 
 				//flecs::entity bull;
@@ -93,10 +99,10 @@ bool GA::PlayerLogic::Init(std::shared_ptr<flecs::world> _game,
 				//{
 				//	// fire weapon if they are in a firing state
 				if (it.entity(i).has<Firing>()) {
-					Position offset = p[i];
+					//Position offset = p[i];
 					//offset.value.x = p[i].value.x;
-					offset.value.y = 0.05;
-					FireLasers(it.entity(i).world(), offset);
+					//offset.value.y = 0.05;
+					FireLasers(it.entity(i).world(), p[i]);
 					//if (offset.value.y >= 50)
 					it.entity(i).remove<Firing>();
 				}
