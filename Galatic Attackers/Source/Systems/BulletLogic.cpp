@@ -25,7 +25,7 @@ bool GA::BulletLogic::Init(	std::shared_ptr<flecs::world> _game,
 		{
 			e.each<CollidedWith>([&e, d, p, this](flecs::entity hit) {
 				if (hit.has<Health>() && hit.has<Enemy>()) {
-					//levelData->levelTransforms[68];
+					//levelData->levelTransforms[68]
 					auto enemy = hit.get<Position>()->value.y;
 					auto bullet = e.get<Position>()->value.y;
 					int currentHealth = hit.get<Health>()->value;
@@ -65,7 +65,7 @@ bool GA::BulletLogic::Init(	std::shared_ptr<flecs::world> _game,
 				else {
 					// play hit sound
 					e.destruct();
-					std::cout << "Hit Enemy Bullet Destroyed\n";
+					//std::cout << "Hit Enemy Bullet Destroyed\n";
 				}
 			}
 		}

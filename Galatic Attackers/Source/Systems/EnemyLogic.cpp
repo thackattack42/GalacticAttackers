@@ -58,15 +58,21 @@ bool GA::EnemyLogic::Init(std::shared_ptr<flecs::world> _game,
 				timer--;
 				if (timer <= 0)
 				{
-					GW::MATH::GMatrix::TranslateGlobalF(edit->matrix, GW::MATH::GVECTORF{ 0.2666, 0, 0, 1 }, edit->matrix);
+					GW::MATH::GMatrix::TranslateGlobalF(edit->matrix, GW::MATH::GVECTORF{ 0.75, 0, 0, 1 }, edit->matrix);
 					levelData->levelTransforms[edit->rendererIndex] = edit->matrix;
 					e.get_mut<ModelBoundary>()->obb.center.x = edit->matrix.row4.x;
 					e.get_mut<ModelBoundary>()->obb.center.y = edit->matrix.row4.y;
+					std::cout << e.get_mut<ModelBoundary>()->obb.extent.x << "\n";
+					std::cout << e.get_mut<ModelBoundary>()->obb.extent.y << "\n";
+					std::cout << e.get_mut<ModelBoundary>()->obb.extent.z << "\n";
+					std::cout << e.get_mut<ModelBoundary>()->obb.center.x << "\n";
+					std::cout << e.get_mut<ModelBoundary>()->obb.center.y << "\n";
+					std::cout << e.get_mut<ModelBoundary>()->obb.center.z << "\n";
 
 					tm->timesMoved++;
-					timer = e.delta_time() * 100;
+					timer = e.delta_time() * 20;
 
-					if (tm->timesMoved >= 140)
+					if (tm->timesMoved >= 28)
 					{
 						GW::MATH::GMatrix::TranslateGlobalF(edit->matrix, GW::MATH::GVECTORF{ 0, -3, 0, 1 }, edit->matrix);
 						levelData->levelTransforms[edit->rendererIndex] = edit->matrix;
@@ -83,13 +89,13 @@ bool GA::EnemyLogic::Init(std::shared_ptr<flecs::world> _game,
 				timer--;
 				if (timer <= 0)
 				{
-					GW::MATH::GMatrix::TranslateGlobalF(edit->matrix, GW::MATH::GVECTORF{ -0.2666, 0, 0, 1 }, edit->matrix);
+					GW::MATH::GMatrix::TranslateGlobalF(edit->matrix, GW::MATH::GVECTORF{ -0.75, 0, 0, 1 }, edit->matrix);
 					levelData->levelTransforms[edit->rendererIndex] = edit->matrix;
 					e.get_mut<ModelBoundary>()->obb.center.x = edit->matrix.row4.x;
 					e.get_mut<ModelBoundary>()->obb.center.y = edit->matrix.row4.y;
 
 					tm->timesMoved--;
-					timer = e.delta_time() * 100;
+					timer = e.delta_time() * 20;
 
 					if (tm->timesMoved <= 0)
 					{
@@ -113,6 +119,7 @@ bool GA::EnemyLogic::Init(std::shared_ptr<flecs::world> _game,
 					auto a = game->lookup("shield");
 					if (a.is_valid()) {
 						a.destruct();
+						(*enemyCount)--;
 					}
 					shieldon1 = false;
 				}

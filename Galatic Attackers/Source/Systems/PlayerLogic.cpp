@@ -102,7 +102,8 @@ bool GA::PlayerLogic::Init(std::shared_ptr<flecs::world> _game,
 					//Position offset = p[i];
 					//offset.value.x = p[i].value.x;
 					//offset.value.y = 0.05;
-					FireLasers(it.entity(i).world(), p[i]);
+					ModelTransform* edit = it.entity(i).get_mut<ModelTransform>();
+					FireLasers(it.entity(i).world(), edit->matrix.row4);
 					//if (offset.value.y >= 50)
 					it.entity(i).remove<Firing>();
 				}
@@ -130,7 +131,7 @@ bool GA::PlayerLogic::Init(std::shared_ptr<flecs::world> _game,
 		GA::PLAY_EVENT event; GA::PLAY_EVENT_DATA eventData;
 		if (+e.Read(event, eventData) && event == GA::PLAY_EVENT::ENEMY_DESTROYED) {
 			// only in here if event matches
-			std::cout << "Enemy Was Destroyed!\n";
+			//std::cout << "Enemy Was Destroyed!\n";
 		}
 		});
 
@@ -252,7 +253,7 @@ bool GA::PlayerLogic::ProcessInputEvents(flecs::world& stage)
 }
 
 // play sound and launch two laser rounds
-bool GA::PlayerLogic::FireLasers(flecs::world& stage, Position& origin)
+bool GA::PlayerLogic::FireLasers(flecs::world& stage, GW::MATH::GVECTORF& origin)
 {
 	// Grab the prefab for a laser round
 	flecs::entity bullet;
@@ -263,7 +264,14 @@ bool GA::PlayerLogic::FireLasers(flecs::world& stage, Position& origin)
 	//flecs::entity bulletRay[] = { bullet, bullet2 };
 
 	auto laserLeft = stage.entity().is_a(bullet)
-		.set<Position>(origin);
+		.set<Position>({ origin.x, origin.y });
+
+	ModelTransform* bulletT = bullet.get_mut<ModelTransform>();
+	bulletT->matrix.row4.x = origin.x;
+
+	/*std::cout << laserLeft.get_mut<ModelBoundary>()->obb.extent.x << "\n";
+	std::cout << laserLeft.get_mut<ModelBoundary>()->obb.extent.y << "\n";
+	std::cout << laserLeft.get_mut<ModelBoundary>()->obb.extent.z << "\n";*/
 
 	/*ModelTransform* bulletT = bullet.get_mut<ModelTransform>();
 

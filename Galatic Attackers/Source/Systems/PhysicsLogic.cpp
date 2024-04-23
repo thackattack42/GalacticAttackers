@@ -32,10 +32,10 @@ bool GA::PhysicsLogic::Init(	std::shared_ptr<flecs::world> _game,
 
 		if(e.has<Bullet>())
 		{
-			auto a = p.value;
+			//auto a = p.value;
 			ModelTransform* bulletT = e.get_mut<ModelTransform>();
-			GW::MATH::GMatrix::TranslateGlobalF(bulletT->matrix, GW::MATH::GVECTORF{ p.value.x, p.value.y, 0, 1 }, bulletT->matrix);
 			levelData->levelTransforms[bulletT->rendererIndex] = bulletT->matrix;
+			GW::MATH::GMatrix::TranslateGlobalF(bulletT->matrix, GW::MATH::GVECTORF{ 0, p.value.y, 0, 1 }, bulletT->matrix);
 
 			e.get_mut<ModelBoundary>()->obb.center.x = bulletT->matrix.row4.x;
 			e.get_mut<ModelBoundary>()->obb.center.y = bulletT->matrix.row4.y;
@@ -46,8 +46,7 @@ bool GA::PhysicsLogic::Init(	std::shared_ptr<flecs::world> _game,
 	// clean up any objects that end up offscreen
 	game->system<const Position>("Cleanup System")
 		.each([](flecs::entity e, const Position& p) {
-		if (p.value.x > 10.5f || p.value.x < -10.5f ||
-			p.value.y > 200.0f || p.value.y < -0.0f) {
+		if (p.value.y > 200.0f || p.value.y < -0.0f) {
 				e.destruct();
 
 				//std::cout << "Cleanup";

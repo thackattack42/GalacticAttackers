@@ -47,11 +47,6 @@ bool GA::EnemyData::Load(std::shared_ptr<flecs::world> _game,
 		.override<Position>()
 		.override<Enemy>() // Tag this prefab as an enemy (for queries/systems)
 		.override<Collidable>(); // can be collided with
-	/*if (enemyPrefab.has<Collidable>())
-	{
-		std::cout << "ship got bound: " << enemyPrefab.get_mut<ModelBoundary>() << '\n';
-		std::cout << "ship orig bound: " << _game->prefab("Spaceship5").get_mut<ModelBoundary>() << '\n';
-	}*/
 
 	auto enemyPrefab1 = _game->prefab("Spaceship5.001")
 		// .set<> in a prefab means components are shared (instanced)
@@ -247,120 +242,120 @@ bool GA::EnemyData::Load(std::shared_ptr<flecs::world> _game,
 		.set<Orientation>({ world })
 		.set<ModelBoundary*>(_game->prefab("Spaceship5").get_mut<ModelBoundary>());*/
 
-	auto r = _game->lookup("Spaceship5.014");
-	if (r.is_valid()) {
+	auto enemy1 = _game->lookup("Spaceship5.014");
+	if (enemy1.is_valid()) {
 		//a.add<Health>(health);
-		r.override<Enemy>();
-		r.set_override<Health>({ health });
-		r.add<Orientation>();
-		r.add<Position>();
-		r.add<Collidable>();
+		enemy1.override<Enemy>();
+		enemy1.set_override<Health>({ health });
+		enemy1.add<Orientation>();
+		enemy1.add<Position>();
+		enemy1.add<Collidable>();
 	}
-	auto q = _game->lookup("Spaceship5.013");
-	if (q.is_valid()) {
+	auto enemy2 = _game->lookup("Spaceship5.013");
+	if (enemy2.is_valid()) {
 		//a.add<Health>(health);
-		q.override<Enemy>();
-		q.set_override<Health>({ health });
-		q.add<Orientation>();
-		q.add<Position>();
-		q.add<Collidable>();
+		enemy2.override<Enemy>();
+		enemy2.set_override<Health>({ health });
+		enemy2.add<Orientation>();
+		enemy2.add<Position>();
+		enemy2.add<Collidable>();
 	}
-	auto s = _game->lookup("Spaceship5.012");
-	if (s.is_valid()) {
+	auto enemy3 = _game->lookup("Spaceship5.012");
+	if (enemy3.is_valid()) {
 		//a.add<Health>(health);
-		s.override<Enemy>();
-		s.set_override<Health>({ health });
-		s.add<Orientation>();
-		s.add<Position>();
-		s.add<Collidable>();
+		enemy3.override<Enemy>();
+		enemy3.set_override<Health>({ health });
+		enemy3.add<Orientation>();
+		enemy3.add<Position>();
+		enemy3.add<Collidable>();
 	}
-	auto x = _game->lookup("Spaceship5.011");
-	if (x.is_valid()) {
-		x.override<Enemy>();
-		x.set_override<Health>({ health });
-		x.add<Orientation>();
-		x.add<Position>();
-		x.add<Collidable>();
+	auto enemy4 = _game->lookup("Spaceship5.011");
+	if (enemy4.is_valid()) {
+		enemy4.override<Enemy>();
+		enemy4.set_override<Health>({ health });
+		enemy4.add<Orientation>();
+		enemy4.add<Position>();
+		enemy4.add<Collidable>();
 	}
-	auto z = _game->lookup("Spaceship5.0010");
-	if (z.is_valid()) {
-		z.override<Enemy>();
-		z.set_override<Health>({ health });
-		z.add<Orientation>();
-		z.add<Position>();
-		z.add<Collidable>();
+	auto enemy5 = _game->lookup("Spaceship5.0010");
+	if (enemy5.is_valid()) {
+		enemy5.override<Enemy>();
+		enemy5.set_override<Health>({ health });
+		enemy5.add<Orientation>();
+		enemy5.add<Position>();
+		enemy5.add<Collidable>();
 	}
-	auto p = _game->lookup("Spaceship5.009");
-	if (p.is_valid()) {
-		p.override<Enemy>();
-		p.set_override<Health>({ health });
-		p.add<Orientation>();
-		p.add<Position>();
-		p.add<Collidable>();
+	auto enemy6 = _game->lookup("Spaceship5.009");
+	if (enemy6.is_valid()) {
+		enemy6.override<Enemy>();
+		enemy6.set_override<Health>({ health });
+		enemy6.add<Orientation>();
+		enemy6.add<Position>();
+		enemy6.add<Collidable>();
 	}
-	auto a = _game->lookup("Spaceship5.008");
-	if (a.is_valid()) {
-		a.override<Enemy>();
-		a.set_override<Health>({ health });
-		a.add<Orientation>();
-		a.add<Position>();
-		a.add<Collidable>();
+	auto enemy7 = _game->lookup("Spaceship5.008");
+	if (enemy7.is_valid()) {
+		enemy7.override<Enemy>();
+		enemy7.set_override<Health>({ health });
+		enemy7.add<Orientation>();
+		enemy7.add<Position>();
+		enemy7.add<Collidable>();
 	}
-	auto b = _game->lookup("Spaceship5.007");
-	if (b.is_valid()) {
-		b.override<Enemy>();
-		b.add<Orientation>();
-		b.add<Position>();
-		b.add<Collidable>();
+	auto enemy8 = _game->lookup("Spaceship5.007");
+	if (enemy8.is_valid()) {
+		enemy8.override<Enemy>();
+		enemy8.add<Orientation>();
+		enemy8.add<Position>();
+		enemy8.add<Collidable>();
 	}
-	auto c = _game->lookup("Spaceship5.006");
-	if (c.is_valid()) {
-		c.override<Enemy>();
-		c.add<Orientation>();
-		c.add<Position>();
-		c.add<Collidable>();
+	auto enemy9 = _game->lookup("Spaceship5.006");
+	if (enemy9.is_valid()) {
+		enemy9.override<Enemy>();
+		enemy9.add<Orientation>();
+		enemy9.add<Position>();
+		enemy9.add<Collidable>();
 	}
-	auto d = _game->lookup("Spaceship5.005");
-	if (d.is_valid()) {
-		d.override<Enemy>();
-		d.add<Orientation>();
-		d.add<Position>();
-		d.add<Collidable>();
+	auto enemy10 = _game->lookup("Spaceship5.005");
+	if (enemy9.is_valid()) {
+		enemy9.override<Enemy>();
+		enemy9.add<Orientation>();
+		enemy9.add<Position>();
+		enemy9.add<Collidable>();
 	}
-	auto e = _game->lookup("Spaceship5.004");
-	if (e.is_valid()) {
-		e.override<Enemy>();
-		e.add<Orientation>();
-		e.add<Position>();
-		e.add<Collidable>();
+	auto enemy11 = _game->lookup("Spaceship5.004");
+	if (enemy10.is_valid()) {
+		enemy10.override<Enemy>();
+		enemy10.add<Orientation>();
+		enemy10.add<Position>();
+		enemy10.add<Collidable>();
 	}
-	auto f = _game->lookup("Spaceship5.003");
-	if (f.is_valid()) {
-		f.override<Enemy>();
-		f.add<Orientation>();
-		f.add<Position>();
-		f.add<Collidable>();
+	auto enemy12 = _game->lookup("Spaceship5.003");
+	if (enemy11.is_valid()) {
+		enemy11.override<Enemy>();
+		enemy11.add<Orientation>();
+		enemy11.add<Position>();
+		enemy11.add<Collidable>();
 	}
-	auto g = _game->lookup("Spaceship5.002");
-	if (g.is_valid()) {
-		g.override<Enemy>();
-		g.add<Orientation>();
-		g.add<Position>();
-		g.add<Collidable>();
+	auto enemy13 = _game->lookup("Spaceship5.002");
+	if (enemy12.is_valid()) {
+		enemy12.override<Enemy>();
+		enemy12.add<Orientation>();
+		enemy12.add<Position>();
+		enemy12.add<Collidable>();
 	}
-	auto h = _game->lookup("Spaceship5.001");
-	if (h.is_valid()) {
-		h.override<Enemy>();
-		h.add<Orientation>();
-		h.add<Position>();
-		h.add<Collidable>();
+	auto enemy14 = _game->lookup("Spaceship5.001");
+	if (enemy13.is_valid()) {
+		enemy13.override<Enemy>();
+		enemy13.add<Orientation>();
+		enemy13.add<Position>();
+		enemy13.add<Collidable>();
 	}
-	auto i = _game->lookup("Spaceship5");
-	if (i.is_valid()) {
-		i.override<Enemy>();
-		i.add<Orientation>();
-		i.add<Position>();
-		i.add<Collidable>();
+	auto enemy15 = _game->lookup("Spaceship5");
+	if (enemy14.is_valid()) {
+		enemy14.override<Enemy>();
+		enemy14.add<Orientation>();
+		enemy14.add<Position>();
+		enemy14.add<Collidable>();
 	}
 		 
 

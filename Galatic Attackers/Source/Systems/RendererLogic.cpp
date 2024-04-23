@@ -241,7 +241,7 @@ bool GA::D3DRendererLogic::LoadUniforms()
 	direct11.GetAspectRatio(ratio);
 	proxy.ProjectionDirectXLHF(G_DEGREE_TO_RADIAN(65.0f), ratio, 0.1f, 200.0f, projectionMatrix);
 
-	lightDir = { -1.0f, -1.0f, -2.0f, 1.0f };
+	lightDir = { 1.0f, 1.0f, 2.0f, 1.0f };
 	lightColor = { 0.9f, 0.9f,1.0f, 1.0f };
 
 

@@ -64,7 +64,8 @@ namespace GA
 		static constexpr unsigned int Max_Frame_Events = 32;
 		// helper routines
 		bool ProcessInputEvents(flecs::world& stage);
-		bool FireLasers(flecs::world& stage, GA::Position& origin);
+		//bool FireLasers(flecs::world& stage, GA::Position& origin);
+		bool FireLasers(flecs::world& stage, GW::MATH::GVECTORF& origin);
 	};
 
 };
