@@ -18,7 +18,8 @@ bool GA::EnemyLogic::Init(std::shared_ptr<flecs::world> _game,
 	std::shared_ptr<bool> _pause,
 	std::vector<flecs::entity> _entityVect,
 	std::shared_ptr<bool> _youWin,
-	std::shared_ptr<int> _enemyCount)
+	std::shared_ptr<int> _enemyCount,
+	std::shared_ptr<int> _score)
 {
 	// save a handle to the ECS & game settings
 	game = _game;
@@ -30,6 +31,7 @@ bool GA::EnemyLogic::Init(std::shared_ptr<flecs::world> _game,
 	youWin = _youWin;
 	enemyCount = _enemyCount;
 	(*enemyCount) = 12;
+	score = _score;
 
 	// destroy any bullets that have the CollidedWith relationship
 	game->system<Enemy, Health, Position>("Enemy System")
@@ -45,6 +47,7 @@ bool GA::EnemyLogic::Init(std::shared_ptr<flecs::world> _game,
 				eventPusher.Push(explode);
 				e.destruct();
 				(*enemyCount)--;
+				*score += 100;
 			}
 
 			ModelTransform* edit = e.get_mut<ModelTransform>();

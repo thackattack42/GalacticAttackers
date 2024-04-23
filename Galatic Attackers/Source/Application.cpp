@@ -25,6 +25,7 @@ bool Application::Init()
 	youLose = std::make_shared<bool>();
 	youWin = std::make_shared<bool>();
 	pause = std::make_shared<bool>();
+	score = std::make_shared<int>();
 	*youLose = false;
 	*youWin = false;
 	*pause = false;
@@ -238,13 +239,13 @@ bool Application::InitSystems()
 		return false;
 	if (levelSystem.Init(game, gameConfig, audioEngine, levelData) == false)
 		return false;
-	if (d3dRenderingSystem.Init(game, gameConfig, d3d11, window, levelData, levelChange, youWin, youLose, entityVec, currentLevel) == false)
+	if (d3dRenderingSystem.Init(game, gameConfig, d3d11, window, levelData, levelChange, youWin, youLose, entityVec, currentLevel, score) == false)
 		return false;
 	if (physicsSystem.Init(game, gameConfig, levelData) == false)
 		return false;
 	if (bulletSystem.Init(game, gameConfig, levelData) == false)
 		return false;
-	if (enemySystem.Init(game, gameConfig, eventPusher, levelData, pause, entityVec, youWin, enemyCount) == false)
+	if (enemySystem.Init(game, gameConfig, eventPusher, levelData, pause, entityVec, youWin, enemyCount, score) == false)
 		return false;
 
 	return true;
