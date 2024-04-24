@@ -65,12 +65,6 @@ bool GA::EnemyLogic::Init(std::shared_ptr<flecs::world> _game,
 					levelData->levelTransforms[edit->rendererIndex] = edit->matrix;
 					e.get_mut<ModelBoundary>()->obb.center.x = edit->matrix.row4.x;
 					e.get_mut<ModelBoundary>()->obb.center.y = edit->matrix.row4.y;
-					std::cout << e.get_mut<ModelBoundary>()->obb.extent.x << "\n";
-					std::cout << e.get_mut<ModelBoundary>()->obb.extent.y << "\n";
-					std::cout << e.get_mut<ModelBoundary>()->obb.extent.z << "\n";
-					std::cout << e.get_mut<ModelBoundary>()->obb.center.x << "\n";
-					std::cout << e.get_mut<ModelBoundary>()->obb.center.y << "\n";
-					std::cout << e.get_mut<ModelBoundary>()->obb.center.z << "\n";
 
 					tm->timesMoved++;
 					timer = e.delta_time() * 20;

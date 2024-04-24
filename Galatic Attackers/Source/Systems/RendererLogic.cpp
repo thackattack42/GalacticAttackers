@@ -909,9 +909,11 @@ bool GA::D3DRendererLogic::SetupDrawcalls() // I SCREWED THIS UP MAKES SO MUCH S
 		inputProxy.GetState(G_KEY_R, r);
 		if (r != 0.0f)
 		{
+			GW::SYSTEM::GLog log;
 			(*currentLevel) = 1;
 			(*levelChange) = true;
 			(*youLose) = false;
+			levelData->LoadLevel("../GameLevel_1.txt", "../Models", log);
 		}
 
 			});
@@ -1024,31 +1026,6 @@ void GA::D3DRendererLogic::UIDraw()
 	memcpy(HSmsr.pData, HSverts.data(), sizeof(TextVertex) * HSverts.size());
 	curHandles.context->Unmap(vertexBufferDynamicTextHS.Get(), 0);
 
-	//dynamicTextHS.SetText("00000000" + std::to_string(int(elapsedSec)));
-	
-	/*if (elapsedSec >= 10)
-	{
-		if (elapsedSec >= 10)
-		{
-			dynamicTextHS.SetText("0000000" + std::to_string(int(elapsedSec)));
-		}
-		if (elapsedMin >= 100)
-		{
-			dynamicTextHS.SetText("000000" + std::to_string(int(elapsedSec)));
-		}
-		if (elapsedMin >= 1000)
-		{
-			dynamicTextHS.SetText("00000" + std::to_string(int(elapsedSec)));
-		}
-		if (elapsedMin >= 10000)
-		{
-			dynamicTextHS.SetText("0000" + std::to_string(int(elapsedSec)));
-		}
-		if (elapsedMin >= 100000)
-		{
-			dynamicTextHS.SetText("000" + std::to_string(int(elapsedSec)));
-		}
-	}*/
 	if (*score >= 100)
 	{
 		dynamicTextHS.SetText("000000" + std::to_string(int(*score)));
