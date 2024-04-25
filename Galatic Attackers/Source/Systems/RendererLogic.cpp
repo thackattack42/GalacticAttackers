@@ -55,8 +55,6 @@ bool GA::D3DRendererLogic::Init(std::shared_ptr<flecs::world> _game,
 		return false;
 	if (LoadGeometry() == false)
 		return false;
-	//if (SetupPipeline() == false)
-	//	return false;
 	// Setup drawing engine
 	if (SetupDrawcalls() == false)
 		return false;
@@ -903,8 +901,6 @@ bool GA::D3DRendererLogic::SetupDrawcalls() // I SCREWED THIS UP MAKES SO MUCH S
 		}
 		ReleasePipelineHandles(curHandles);
 		UIDraw();
-		LevelSwitch();
-		ChooseLevel();
 		float r = 0;
 		inputProxy.GetState(G_KEY_R, r);
 		if (r != 0.0f)
@@ -913,7 +909,8 @@ bool GA::D3DRendererLogic::SetupDrawcalls() // I SCREWED THIS UP MAKES SO MUCH S
 			(*currentLevel) = 1;
 			(*levelChange) = true;
 			(*youLose) = false;
-			levelData->LoadLevel("../GameLevel_1.txt", "../Models", log);
+			LevelSwitch();
+			//levelData->LoadLevel("../GameLevel_1.txt", "../Models", log);
 		}
 
 			});
@@ -1026,24 +1023,8 @@ void GA::D3DRendererLogic::UIDraw()
 	memcpy(HSmsr.pData, HSverts.data(), sizeof(TextVertex) * HSverts.size());
 	curHandles.context->Unmap(vertexBufferDynamicTextHS.Get(), 0);
 
-	if (*score >= 100)
-	{
-		dynamicTextHS.SetText("000000" + std::to_string(int(*score)));
-	}
-	else if (*score >= 1000)
-	{
-		dynamicTextHS.SetText("00000" + std::to_string(int(*score)));
-	}
-	else if (*score >= 10000)
-	{
-		dynamicTextHS.SetText("0000" + std::to_string(int(*score)));
-	}
-	else if (*score >= 100000)
-	{
-		dynamicTextHS.SetText("000" + std::to_string(int(*score)));
-	}
-	else
-		dynamicTextHS.SetText("00000000" + std::to_string(int(*score)));
+	//set score text based on score
+	dynamicTextHS.SetText(std::to_string(int(*score)));
 
 	dynamicTextHS.Update(width, height);
 	// upload the new information to the vertex buffer using map / unmap
@@ -1229,12 +1210,17 @@ void GA::D3DRendererLogic::LevelSwitch()
 		switch (*currentLevel)
 		{
 		case 1:
+		{
+			UpdateLevelEnt();
 			levelData->LoadLevel("../GameLevel_1.txt", "../Models", log);
 			break;
+		}
 		case 2:
+			UpdateLevelEnt();
 			levelData->LoadLevel("../GameLevel_2.txt", "../Models", log);
 			break;
 		case 3:
+			UpdateLevelEnt();
 			levelData->LoadLevel("../GameLevel_3.txt", "../Models", log);
 			break;
 		}
@@ -1253,7 +1239,8 @@ void GA::D3DRendererLogic::LevelSwitch()
 }
 void GA::D3DRendererLogic::UpdateLevelEnt()
 {
-	for (auto& i : levelData->blenderObjects) {
+	for (auto& i : levelData->blenderObjects) 
+	{
 		// create entity with same name as blender object
 		auto ent = game->entity(i.blendername);
 		ent.set<BlenderName>({ i.blendername });

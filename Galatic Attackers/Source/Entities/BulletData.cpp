@@ -46,33 +46,9 @@ bool GA::BulletData::Load(	std::shared_ptr<flecs::world> _game,
 		.set<Velocity>({ 0, speed })
 		.set_override<ModelTransform>(*_game->lookup("Crystal3").get_mut<ModelTransform>())
 		.set_override<ModelBoundary>(*_game->lookup("Crystal3").get_mut<ModelBoundary>())
-		//.set<Collidable*>(_game->prefab("Crystal3").get_mut<Collidable>())
 		.set<GW::AUDIO::GSound>(shoot.Relinquish())
 		// .override<> ensures a component is unique to each entity created from a prefab 
 		.set_override<Damage>({ dmg })
-		//.set_override<ChargedShot>({ 2 })
-		.override<Position>()
-		.override<Bullet>() // Tag this prefab as a bullet (for queries/systems)
-		.add<BulletTest>()
-		.override<Collidable>(); // can be collided with
-
-	if (lazerPrefab.has<Collidable>())
-	{
-		std::cout << "ship got bound: " << lazerPrefab.get_mut<ModelBoundary>() << '\n';
-		std::cout << "ship orig bound: " << _game->prefab("Crystal3").get_mut<ModelBoundary>() << '\n';
-	}
-
-	auto lazerPrefab2 = _game->prefab("Lazer Bullet2")
-		// .set<> in a prefab means components are shared (instanced)
-		.set<Material>({ red, green, blue })
-		.set<Orientation>({ world })
-		.set<Acceleration>({ 0, 0 })
-		.set<Velocity>({ 0, speed })
-		.set<ModelTransform*>(_game->lookup("Crystal3.001").get_mut<ModelTransform>())
-		.set<GW::AUDIO::GSound>(shoot.Relinquish())
-		// .override<> ensures a component is unique to each entity created from a prefab 
-		.set_override<Damage>({ dmg })
-		//.set_override<ChargedShot>({ 2 })
 		.override<Position>()
 		.override<Bullet>() // Tag this prefab as a bullet (for queries/systems)
 		.override<Collidable>(); // can be collided with
@@ -83,10 +59,7 @@ bool GA::BulletData::Load(	std::shared_ptr<flecs::world> _game,
 		.set<GW::AUDIO::GSound>(death.Relinquish());
 	// register this prefab by name so other systems can use it
 	RegisterPrefab("Lazer Bullet", lazerPrefab);
-	RegisterPrefab("Lazer Bullet2", lazerPrefab2);
 	RegisterPrefab("Death", deathPrefab);
-
-	flecs::entity arrayFabs[] = { lazerPrefab, lazerPrefab2 };
 
 	return true;
 }

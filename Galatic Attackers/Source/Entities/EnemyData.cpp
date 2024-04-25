@@ -33,8 +33,6 @@ bool GA::EnemyData::Load(std::shared_ptr<flecs::world> _game,
 		GW::MATH2D::GVECTOR2F{ xscale, yscale }, world);
 
 	// add prefab to ECS
-	//ECS_PREFAB(_game->get_world(), enemyPrefab, Material, Orientation, ModelBoundary, Health, ACCEL, Velocity, Position, Enemy, Collidable);
-
 	auto enemyPrefab = _game->prefab("Spaceship5")
 		 //.set<> in a prefab means components are shared (instanced)
 		.set<Material>({ red, green, blue })
@@ -58,11 +56,9 @@ bool GA::EnemyData::Load(std::shared_ptr<flecs::world> _game,
 		.override<Velocity>()
 		.override<Position>()
 		.override<Enemy>() // Tag this prefab as an enemy (for queries/systems)
-		//.override<PrefabEnemy>() // Tag this prefab as an enemy (for queries/systems)
 		.override<Collidable>(); // can be collided with
 	auto enemyPrefab2 = _game->prefab("Spaceship5.002")
 		// .set<> in a prefab means components are shared (instanced)
-		//.set(spaceship)
 		.set<Material>({ red, green, blue })
 		.set<Orientation>({ world })
 		// .override<> ensures a component is unique to each entity created from a prefab
@@ -71,12 +67,10 @@ bool GA::EnemyData::Load(std::shared_ptr<flecs::world> _game,
 		.override<Velocity>()
 		.override<Position>()
 		.override<Enemy>() // Tag this prefab as an enemy (for queries/systems)
-		//.override<PrefabEnemy>() // Tag this prefab as an enemy (for queries/systems)
 		.override<Collidable>(); // can be collided with
 
 	auto enemyPrefab3 = _game->prefab("Spaceship5.003")
 		// .set<> in a prefab means components are shared (instanced)
-		//.set(spaceship)
 		.set<Material>({ red, green, blue })
 		.set<Orientation>({ world })
 		// .override<> ensures a component is unique to each entity created from a prefab
@@ -85,12 +79,10 @@ bool GA::EnemyData::Load(std::shared_ptr<flecs::world> _game,
 		.override<Velocity>()
 		.override<Position>()
 		.override<Enemy>() // Tag this prefab as an enemy (for queries/systems)
-		//.override<PrefabEnemy>() // Tag this prefab as an enemy (for queries/systems)
 		.override<Collidable>(); // can be collided with
 
 	auto enemyPrefab4 = _game->prefab("Spaceship5.004")
 		// .set<> in a prefab means components are shared (instanced)
-		//.set(spaceship)
 		.set<Material>({ red, green, blue })
 		.set<Orientation>({ world })
 		// .override<> ensures a component is unique to each entity created from a prefab
@@ -99,12 +91,10 @@ bool GA::EnemyData::Load(std::shared_ptr<flecs::world> _game,
 		.override<Velocity>()
 		.override<Position>()
 		.override<Enemy>() // Tag this prefab as an enemy (for queries/systems)
-		//.override<PrefabEnemy>() // Tag this prefab as an enemy (for queries/systems)
 		.override<Collidable>(); // can be collided with
 
 	auto enemyPrefab5 = _game->prefab("Spaceship5.005")
 		// .set<> in a prefab means components are shared (instanced)
-		//.set(spaceship)
 		.set<Material>({ red, green, blue })
 		.set<Orientation>({ world })
 		// .override<> ensures a component is unique to each entity created from a prefab
@@ -113,12 +103,10 @@ bool GA::EnemyData::Load(std::shared_ptr<flecs::world> _game,
 		.override<Velocity>()
 		.override<Position>()
 		.override<Enemy>() // Tag this prefab as an enemy (for queries/systems)
-		//.override<PrefabEnemy>() // Tag this prefab as an enemy (for queries/systems)
 		.override<Collidable>(); // can be collided with
 
 	auto enemyPrefab6 = _game->prefab("Spaceship5.006")
 		// .set<> in a prefab means components are shared (instanced)
-		//.set(spaceship)
 		.set<Material>({ red, green, blue })
 		.set<Orientation>({ world })
 		// .override<> ensures a component is unique to each entity created from a prefab
@@ -127,12 +115,10 @@ bool GA::EnemyData::Load(std::shared_ptr<flecs::world> _game,
 		.override<Velocity>()
 		.override<Position>()
 		.override<Enemy>() // Tag this prefab as an enemy (for queries/systems)
-		//.override<PrefabEnemy>() // Tag this prefab as an enemy (for queries/systems)
 		.override<Collidable>(); // can be collided with
 
 	auto enemyPrefab7 = _game->prefab("Spaceship5.007")
 		// .set<> in a prefab means components are shared (instanced)
-		//.set(spaceship)
 		.set<Material>({ red, green, blue })
 		.set<Orientation>({ world })
 		// .override<> ensures a component is unique to each entity created from a prefab
@@ -141,12 +127,10 @@ bool GA::EnemyData::Load(std::shared_ptr<flecs::world> _game,
 		.override<Velocity>()
 		.override<Position>()
 		.override<Enemy>() // Tag this prefab as an enemy (for queries/systems)
-		//.override<PrefabEnemy>() // Tag this prefab as an enemy (for queries/systems)
 		.override<Collidable>(); // can be collided with
 
 	auto enemyPrefab8 = _game->prefab("Spaceship5.008")
 		//.set<> in a prefab means components are shared (instanced)
-	   //.set(spaceship)
 		.set<Material>({ red, green, blue })
 		.set<Orientation>({ world })
 		//.override<> ensures a component is unique to each entity created from a prefab
@@ -155,11 +139,9 @@ bool GA::EnemyData::Load(std::shared_ptr<flecs::world> _game,
 		.override<Velocity>()
 		.override<Position>()
 		.override<Enemy>() // Tag this prefab as an enemy (for queries/systems)
-		//.override<PrefabEnemy>() // Tag this prefab as an enemy (for queries/systems)
 		.override<Collidable>(); // can be collided with
 	auto enemyPrefab9 = _game->prefab("Spaceship5.009")
 		//.set<> in a prefab means components are shared (instanced)
-	   //.set(spaceship)
 		.set<Material>({ red, green, blue })
 		.set<Orientation>({ world })
 		//.override<> ensures a component is unique to each entity created from a prefab
@@ -168,11 +150,9 @@ bool GA::EnemyData::Load(std::shared_ptr<flecs::world> _game,
 		.override<Velocity>()
 		.override<Position>()
 		.override<Enemy>() // Tag this prefab as an enemy (for queries/systems)
-		//.override<PrefabEnemy>() // Tag this prefab as an enemy (for queries/systems)
 		.override<Collidable>(); // can be collided with
 	auto enemyPrefab10 = _game->prefab("Spaceship5.010")
 		//.set<> in a prefab means components are shared (instanced)
-	   //.set(spaceship)
 		.set<Material>({ red, green, blue })
 		.set<Orientation>({ world })
 		//.override<> ensures a component is unique to each entity created from a prefab
@@ -181,11 +161,9 @@ bool GA::EnemyData::Load(std::shared_ptr<flecs::world> _game,
 		.override<Velocity>()
 		.override<Position>()
 		.override<Enemy>() // Tag this prefab as an enemy (for queries/systems)
-		//.override<PrefabEnemy>() // Tag this prefab as an enemy (for queries/systems)
 		.override<Collidable>(); // can be collided with
 	auto enemyPrefab11 = _game->prefab("Spaceship5.011")
 		//.set<> in a prefab means components are shared (instanced)
-	   //.set(spaceship)
 		.set<Material>({ red, green, blue })
 		.set<Orientation>({ world })
 		//.override<> ensures a component is unique to each entity created from a prefab
@@ -194,11 +172,9 @@ bool GA::EnemyData::Load(std::shared_ptr<flecs::world> _game,
 		.override<Velocity>()
 		.override<Position>()
 		.override<Enemy>() // Tag this prefab as an enemy (for queries/systems)
-		//.override<PrefabEnemy>() // Tag this prefab as an enemy (for queries/systems)
 		.override<Collidable>(); // can be collided with
 	auto enemyPrefab12 = _game->prefab("Spaceship5.012")
 		//.set<> in a prefab means components are shared (instanced)
-	   //.set(spaceship)
 		.set<Material>({ red, green, blue })
 		.set<Orientation>({ world })
 		//.override<> ensures a component is unique to each entity created from a prefab
@@ -207,11 +183,9 @@ bool GA::EnemyData::Load(std::shared_ptr<flecs::world> _game,
 		.override<Velocity>()
 		.override<Position>()
 		.override<Enemy>() // Tag this prefab as an enemy (for queries/systems)
-		//.override<PrefabEnemy>() // Tag this prefab as an enemy (for queries/systems)
 		.override<Collidable>(); // can be collided with
 	auto enemyPrefab13 = _game->prefab("Spaceship5.013")
 		//.set<> in a prefab means components are shared (instanced)
-	   //.set(spaceship)
 		.set<Material>({ red, green, blue })
 		.set<Orientation>({ world })
 		//.override<> ensures a component is unique to each entity created from a prefab
@@ -220,11 +194,9 @@ bool GA::EnemyData::Load(std::shared_ptr<flecs::world> _game,
 		.override<Velocity>()
 		.override<Position>()
 		.override<Enemy>() // Tag this prefab as an enemy (for queries/systems)
-		//.override<PrefabEnemy>() // Tag this prefab as an enemy (for queries/systems)
 		.override<Collidable>(); // can be collided with
 	auto enemyPrefab14 = _game->prefab("Spaceship5.014")
 		//.set<> in a prefab means components are shared (instanced)
-	   //.set(spaceship)
 		.set<Material>({ red, green, blue })
 		.set<Orientation>({ world })
 		//.override<> ensures a component is unique to each entity created from a prefab
@@ -233,18 +205,10 @@ bool GA::EnemyData::Load(std::shared_ptr<flecs::world> _game,
 		.override<Velocity>()
 		.override<Position>()
 		.override<Enemy>() // Tag this prefab as an enemy (for queries/systems)
-		//.override<PrefabEnemy>() // Tag this prefab as an enemy (for queries/systems)
 		.override<Collidable>(); // can be collided with
-
-	/*auto ent = enemyPrefab.world().entity().is_a(enemyPrefab)
-		.set<Position>({ 100, 100 })
-		.set<Material>({ red, green, blue })
-		.set<Orientation>({ world })
-		.set<ModelBoundary*>(_game->prefab("Spaceship5").get_mut<ModelBoundary>());*/
 
 	auto enemy1 = _game->lookup("Spaceship5.014");
 	if (enemy1.is_valid()) {
-		//a.add<Health>(health);
 		enemy1.override<Enemy>();
 		enemy1.set_override<Health>({ health });
 		enemy1.add<Orientation>();
@@ -253,7 +217,6 @@ bool GA::EnemyData::Load(std::shared_ptr<flecs::world> _game,
 	}
 	auto enemy2 = _game->lookup("Spaceship5.013");
 	if (enemy2.is_valid()) {
-		//a.add<Health>(health);
 		enemy2.override<Enemy>();
 		enemy2.set_override<Health>({ health });
 		enemy2.add<Orientation>();
@@ -262,7 +225,6 @@ bool GA::EnemyData::Load(std::shared_ptr<flecs::world> _game,
 	}
 	auto enemy3 = _game->lookup("Spaceship5.012");
 	if (enemy3.is_valid()) {
-		//a.add<Health>(health);
 		enemy3.override<Enemy>();
 		enemy3.set_override<Health>({ health });
 		enemy3.add<Orientation>();
@@ -375,7 +337,6 @@ bool GA::EnemyData::Load(std::shared_ptr<flecs::world> _game,
 	RegisterPrefab("Enemy Type13", enemyPrefab12);
 	RegisterPrefab("Enemy Type14", enemyPrefab13);
 	RegisterPrefab("Enemy Type15", enemyPrefab14);
-	//RegisterPrefab("Spaceship5", ent);
 
 	return true;
 }

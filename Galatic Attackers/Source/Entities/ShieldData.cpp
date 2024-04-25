@@ -42,10 +42,8 @@ bool GA::ShieldData::Load(std::shared_ptr<flecs::world> _game,
 		.set<GW::AUDIO::GSound>(shoot.Relinquish())
 		// .override<> ensures a component is unique to each entity created from a prefab 
 		.set_override<Damage>({ dmg })
-		//.set_override<ChargedShot>({ 2 })
 		.override<Position>()
 		.override<Shield>(); // Tag this prefab as a bullet (for queries/systems)
-		//.override<Collidable>(); // can be collided with
 
 	// register this prefab by name so other systems can use it
 	RegisterPrefab("Shield", shieldPrefab);

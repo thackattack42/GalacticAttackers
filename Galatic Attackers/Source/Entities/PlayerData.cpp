@@ -23,17 +23,6 @@ bool GA::PlayerData::Load(  std::shared_ptr<flecs::world> _game,
 	float ystart = (*readCfg).at("Player").at("ystart").as<float>();
 	float scale = (*readCfg).at("Player").at("scale").as<float>();
 
-	//// Create Player One
-	//_game->entity("Player One")
-	//.set([&](Position& p, Orientation& o, Material& m, ControllerID& c) {
-	//	c = { 0 };
-	//	p = { xstart, ystart };
-	//	m = { red, green, blue };
-	//	o = { GW::MATH2D::GIdentityMatrix2F };
-	//	GW::MATH2D::GMatrix2D::Scale2F(o.value, GW::MATH2D::GVECTOR2F{ scale, scale }, o.value);
-	//})
-	//.add<Player>(); // Tag this entity as a Player
-
 	auto e = _game->lookup("Player");
 	// if the entity is valid
 	if (e.is_valid()) {
@@ -45,7 +34,6 @@ bool GA::PlayerData::Load(  std::shared_ptr<flecs::world> _game,
 	}
 	auto a = _game->lookup("shield");
 	if (a.is_valid()) {
-		//a.add<Collidable>();
 		a.set<Material>({ red1, green1, blue1 });
 	}
 	return true;

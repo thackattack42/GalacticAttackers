@@ -121,7 +121,6 @@ bool GA::PlayerLogic::Init(std::shared_ptr<flecs::world> _game,
 		GA::PLAY_EVENT event; GA::PLAY_EVENT_DATA eventData;
 		if (+e.Read(event, eventData) && event == GA::PLAY_EVENT::ENEMY_DESTROYED) {
 			// only in here if event matches
-			//std::cout << "Enemy Was Destroyed!\n";
 		}
 		});
 
@@ -136,7 +135,7 @@ bool GA::PlayerLogic::Init(std::shared_ptr<flecs::world> _game,
 		}
 		});
 
-	resetLevel.Create([this](const GW::GEvent& e) {
+	/*resetLevel.Create([this](const GW::GEvent& e) {
 		GA::PLAY_EVENT event; GA::PLAY_EVENT_DATA eventData;
 		if (+e.Read(event, eventData) && event == GA::PLAY_EVENT::RESET_LEVEL) {
 			// only in here if event matches
@@ -145,7 +144,7 @@ bool GA::PlayerLogic::Init(std::shared_ptr<flecs::world> _game,
 			(*levelChange) == true;
 			levelData->LoadLevel("../GameLevel_1.txt", "../Models", log);
 		}
-		});
+		});*/
 
 	youWon.Create([this](const GW::GEvent& e) {
 		GA::PLAY_EVENT event; GA::PLAY_EVENT_DATA eventData;
@@ -212,22 +211,8 @@ bool GA::PlayerLogic::ProcessInputEvents(flecs::world& stage)
 					RetreivePrefab("Lazer Bullet", bullet);
 					GW::AUDIO::GSound shoot = *bullet.get<GW::AUDIO::GSound>();
 					shoot.Play();
-					//chargeStart = stage.time();
-				}
-				if (k_data.data == G_KEY_0)
-				{
-					//allow shield to turn off and on
-					///stage.entity("Player").add<
 				}
 			}
-			//if (keyboard == GBufferedInput::Events::KEYRELEASED) {
-			//	if (k_data.data == G_KEY_SPACE) {
-			//		//chargeEnd = stage.time();
-			//		if (chargeEnd - chargeStart >= chargeTime) {
-			//			fire = true;
-			//		}
-			//	}
-			//}
 		}
 		else if (+event.Read(controller, c_data)) {
 			if (controller == GController::Events::CONTROLLERBUTTONVALUECHANGED) {
@@ -248,11 +233,7 @@ bool GA::PlayerLogic::FireLasers(flecs::world& stage, GW::MATH::GVECTORF& origin
 {
 	// Grab the prefab for a laser round
 	flecs::entity bullet;
-	//flecs::entity bullet2;
 	RetreivePrefab("Lazer Bullet", bullet);
-	//RetreivePrefab("Lazer Bullet2", bullet2);
-
-	//flecs::entity bulletRay[] = { bullet, bullet2 };
 
 	auto laserLeft = stage.entity().is_a(bullet)
 		.set<Position>({ origin.x, origin.y });

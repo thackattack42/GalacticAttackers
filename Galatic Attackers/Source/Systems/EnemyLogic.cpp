@@ -104,7 +104,6 @@ bool GA::EnemyLogic::Init(std::shared_ptr<flecs::world> _game,
 						move->moveRight = true;
 					}
 				}
-
 			}
 
 			if (shieldon1)
@@ -159,7 +158,6 @@ bool GA::EnemyLogic::Init(std::shared_ptr<flecs::world> _game,
 						}
 					}
 				}
-
 			}
 			p.value = { 0, 0 };
 		}
@@ -205,8 +203,6 @@ bool GA::EnemyLogic::FireLasersEnemy(flecs::world& stage, Position origin)
 	origin.value.x += 0.1f;
 	auto laserRight = stage.entity().is_a(bullet)
 		.set<Position>(origin);
-
-	// Tank shot
 
 	return true;
 }

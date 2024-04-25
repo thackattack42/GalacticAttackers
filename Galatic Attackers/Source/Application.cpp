@@ -31,41 +31,8 @@ bool Application::Init()
 	*pause = false;
 	ispaused = false;
 	*(currentLevel) = 1;
-	//for changing level data				level positioning		level obj/mtl
-	//switch (currentLevel)
-	//{
-	//case 1:
-	//	level = gameConfig->at("LevelFile").at("levelone").as<std::string>();
-	//	break;
-	//case 2:
-	//	level = gameConfig->at("LevelFile").at("leveltwo").as<std::string>();
-	//	break;
-	//case 3:
-	//	level = gameConfig->at("LevelFile").at("levelthree").as<std::string>();
-	//	break;
-	//case 4:
-	//	level = gameConfig->at("LevelFile").at("levelstarting").as<std::string>();
-	//	break;
-	//default:
-	//	level = gameConfig->at("LevelFile").at("levelone").as<std::string>();
-	//	break;
-	//}
-	//
-	//models = gameConfig->at("ModelFolder").at("models").as<std::string>();
-
-	//if (levelData->LoadLevel(level.c_str(), models.c_str(), log) == false)
-	//	return false;
-	//UpdateLevelData();
 	LoadLevel(*currentLevel);
-	// for now just print objects added to FLECS
-	/*auto f = game->filter<BlenderName, ModelTransform>();
-	f.each([&log](BlenderName& n, ModelTransform& t) {
-		std::string obj = "FLECS Entity ";
-		obj += n.name + " located at X " + std::to_string(t.matrix.row4.x) +
-			" Y " + std::to_string(t.matrix.row4.y) + " Z " + std::to_string(t.matrix.row4.z);
-		log.LogCategorized("GAMEPLAY", obj.c_str());
-		});*/
-
+	
 	// init all other systems
 	if (InitWindow() == false) 
 		return false;
@@ -268,7 +235,7 @@ bool Application::GameLoop()
 			*pause = false;
 			ispaused = true;
 		}
-		else//if(*pause == false)
+		else
 		{
 			*pause = true;
 			ispaused = false;

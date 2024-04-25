@@ -61,7 +61,6 @@ bool GA::LevelLogic::Init(	std::shared_ptr<flecs::world> _game,
 				.set<Velocity>({ 0,0 })
 				.set<Acceleration>({ 0, accel })
 				.set<Position>({ Xstart, enemy1startY });
-				//.set<Position>({ levelData->levelTransforms[et1.get<ModelTransform>()->rendererIndex].row4.x, levelData->levelTransforms[et1.get<ModelTransform>()->rendererIndex].row4.y });
 			///provide a set matrix     
 			// be sure to unlock when done so the main thread can safely merge the changes
 			gameLock.UnlockSyncWrite();
