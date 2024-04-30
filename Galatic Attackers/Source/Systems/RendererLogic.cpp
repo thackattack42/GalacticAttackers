@@ -741,7 +741,7 @@ bool GA::D3DRendererLogic::LoadGeometry()
 	creator->CreateBuffer(&lssvbDesc, &lssvbData, vertexBufferStaticTextLose.ReleaseAndGetAddressOf());
 
 	staticTextLoseR = Text();
-	staticTextLoseR.SetText("Press [R] to Restart");
+	//staticTextLoseR.SetText("Press [R] to Restart");
 	staticTextLoseR.SetFont(&consolas32);
 	staticTextLoseR.SetPosition(0.0f, -0.1f);
 	staticTextLoseR.SetScale(1.0f, 1.0f);
@@ -901,17 +901,17 @@ bool GA::D3DRendererLogic::SetupDrawcalls() // I SCREWED THIS UP MAKES SO MUCH S
 		}
 		ReleasePipelineHandles(curHandles);
 		UIDraw();
-		float r = 0;
-		inputProxy.GetState(G_KEY_R, r);
-		if (r != 0.0f)
-		{
-			GW::SYSTEM::GLog log;
-			(*currentLevel) = 1;
-			(*levelChange) = true;
-			(*youLose) = false;
-			LevelSwitch();
-			//levelData->LoadLevel("../GameLevel_1.txt", "../Models", log);
-		}
+		//float r = 0;
+		//inputProxy.GetState(G_KEY_R, r);
+		//if (r != 0.0f)
+		//{
+		//	GW::SYSTEM::GLog log;
+		//	(*currentLevel) = 1;
+		//	(*levelChange) = true;
+		//	(*youLose) = false;
+		//	LevelSwitch();
+		//	//levelData->LoadLevel("../GameLevel_1.txt", "../Models", log);
+		//}
 
 			});
 	// NOTE: I went with multi-system approach for the ease of passing lambdas with "this"
