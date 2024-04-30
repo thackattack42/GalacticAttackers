@@ -68,6 +68,7 @@ namespace GA
 		std::shared_ptr<bool> youWin;
 		std::shared_ptr<bool> youLose;
 		std::shared_ptr<int> currentLevel;
+		std::shared_ptr<int> score;
 		std::vector<flecs::entity> entityVec;
 		// Directx11 resources used for rendering
 		std::shared_ptr<Level_Data> levelData;
@@ -150,7 +151,7 @@ namespace GA
 			GW::GRAPHICS::GDirectX11Surface _direct11,
 			GW::SYSTEM::GWindow _window, std::shared_ptr<Level_Data> _levelData, 
 			std::shared_ptr<bool> _levelChange, std::shared_ptr<bool> _youWin, std::shared_ptr<bool> _youLose,
-			std::vector<flecs::entity> _entityVec, std::shared_ptr<int> _currentLevel);
+			std::vector<flecs::entity> _entityVec, std::shared_ptr<int> _currentLevel, std::shared_ptr<int> _score);
 		// control if the system is actively running
 		bool Activate(bool runSystem);
 		// release any resources allocated by the system

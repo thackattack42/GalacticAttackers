@@ -20,41 +20,48 @@ void PrintLabeledDebugString(const char* label, const char* toPrint)
 #endif
 }
 
-bool GA::D3DRendererLogic::Init(	std::shared_ptr<flecs::world> _game, 
-								std::weak_ptr<const GameConfig> _gameConfig,
-								GW::GRAPHICS::GDirectX11Surface d3d11,
-								GW::SYSTEM::GWindow _window, std::shared_ptr<Level_Data> _levelData, std::shared_ptr<bool> _levelChange,
-								std::shared_ptr<bool> _youWin, std::shared_ptr<bool> _youLose, std::vector<flecs::entity> _entityVec, std::shared_ptr<int> _currentLevel)
+bool GA::D3DRendererLogic::Init(std::shared_ptr<flecs::world> _game,
+	std::weak_ptr<const GameConfig> _gameConfig,
+	GW::GRAPHICS::GDirectX11Surface d3d11,
+	GW::SYSTEM::GWindow _window,
+	std::shared_ptr<Level_Data> _levelData,
+	std::shared_ptr<bool> _levelChange,
+	std::shared_ptr<bool> _youWin,
+	std::shared_ptr<bool> _youLose,
+	std::vector<flecs::entity> _entityVec,
+	std::shared_ptr<int> _currentLevel,
+	std::shared_ptr<int> _score)
 {
-// save a handle to the ECS & game settings
-game = _game;
-gameConfig = _gameConfig;
-direct11 = d3d11;
-window = _window;
-levelData = _levelData;
-levelChange = _levelChange;
-youWin = _youWin;
-youLose = _youLose;
-entityVec = _entityVec;
-currentLevel = _currentLevel;
-// Setup all vulkan resources
-if (LoadShaders3D() == false)
-return false;
-if (LoadShaders2D() == false)
-return false;
-if (LoadUniforms() == false)
-return false;
-if (LoadGeometry() == false)
-return false;
-//if (SetupPipeline() == false)
-//	return false;
-// Setup drawing engine
-if (SetupDrawcalls() == false)
-return false;
-// GVulkanSurface will inform us when to release any allocated resources
-InitializeGraphics();
+	// save a handle to the ECS & game settings
+	game = _game;
+	gameConfig = _gameConfig;
+	direct11 = d3d11;
+	window = _window;
+	levelData = _levelData;
+	levelChange = _levelChange;
+	youWin = _youWin;
+	youLose = _youLose;
+	entityVec = _entityVec;
+	currentLevel = _currentLevel;
+	score = _score;
+	*score = 0;
 
-return true;
+	// Setup all vulkan resources
+	if (LoadShaders3D() == false)
+		return false;
+	if (LoadShaders2D() == false)
+		return false;
+	if (LoadUniforms() == false)
+		return false;
+	if (LoadGeometry() == false)
+		return false;
+	// Setup drawing engine
+	if (SetupDrawcalls() == false)
+		return false;
+	// GVulkanSurface will inform us when to release any allocated resources
+	InitializeGraphics();
+
+	return true;
 }
 
 std::vector<Sprite>	GA::D3DRendererLogic::LoadHudFromXML(std::string filepath)
@@ -178,7 +185,7 @@ bool GA::D3DRendererLogic::LoadShaders3D()
 	std::shared_ptr<const GameConfig> readCfg = gameConfig.lock();
 	vertexShader3DSource = (*readCfg).at("Shaders").at("vertex3D").as<std::string>();
 	pixelShader3DSource = (*readCfg).at("Shaders").at("pixel3D").as<std::string>();
-	
+
 	if (vertexShader3DSource.empty() || pixelShader3DSource.empty())
 		return false;
 
@@ -187,7 +194,7 @@ bool GA::D3DRendererLogic::LoadShaders3D()
 
 	if (vertexShader3DSource.empty() || pixelShader3DSource.empty())
 		return false;
-	
+
 	return true;
 }
 bool GA::D3DRendererLogic::LoadShaders2D()
@@ -222,13 +229,13 @@ void GA::D3DRendererLogic::InitializeGraphics()
 }
 bool GA::D3DRendererLogic::LoadUniforms()
 {
-//	// uniform buffers created
+	//	// uniform buffers created
 	ID3D11Device* creator;
 	direct11.GetDevice((void**)&creator);
 	proxy.Create();
 
 	/*viewTranslation = { 55.0f,5.0f, 25.0f, 1.0f };*/
-	viewTranslation = { 140.0f, 5.0f, 0.0f, 1.0f };
+	viewTranslation = { 0.0f, 0.0f, -140.0f, 1.0f };
 	//ViewMatrix
 	GW::MATH::GVECTORF viewCenter = { 0.0, 1.0f, 0.0f, 1.0f };
 	GW::MATH::GVECTORF viewUp = { 0.0f, 1.0f, 0.0f, 1.0f };
@@ -241,7 +248,7 @@ bool GA::D3DRendererLogic::LoadUniforms()
 	direct11.GetAspectRatio(ratio);
 	proxy.ProjectionDirectXLHF(G_DEGREE_TO_RADIAN(65.0f), ratio, 0.1f, 200.0f, projectionMatrix);
 
-	lightDir = { -1.0f, -1.0f, -2.0f, 1.0f };
+	lightDir = { 1.0f, 1.0f, 2.0f, 1.0f };
 	lightColor = { 0.9f, 0.9f,1.0f, 1.0f };
 
 
@@ -249,7 +256,7 @@ bool GA::D3DRendererLogic::LoadUniforms()
 	scene.projectionMatrix = projectionMatrix;
 	scene.sunColor = lightColor;
 	scene.sunDirection = lightDir;
-	
+
 
 	lightAmbient = { 0.25f, 0.25f, 0.35f, 1.0f };
 	scene.sunAmbient = lightAmbient;
@@ -623,7 +630,7 @@ bool GA::D3DRendererLogic::LoadGeometry()
 	staticTextHS = Text();
 	staticTextHS.SetText("HIGHSCORE:");
 	staticTextHS.SetFont(&consolas32);
-	staticTextHS.SetPosition(0.67f, 0.7f);
+	staticTextHS.SetPosition(0.65f, 0.7f);
 	staticTextHS.SetScale(0.75f, 0.5f);
 	staticTextHS.SetRotation(0.0f);
 	staticTextHS.SetDepth(0.0f);
@@ -639,7 +646,7 @@ bool GA::D3DRendererLogic::LoadGeometry()
 
 	dynamicTextHS = Text();
 	dynamicTextHS.SetFont(&consolas32);
-	dynamicTextHS.SetPosition(0.67f, 0.65f);
+	dynamicTextHS.SetPosition(0.65f, 0.65f);
 	dynamicTextHS.SetScale(0.75f, 0.5f);
 	dynamicTextHS.SetRotation(0.0f);
 	dynamicTextHS.SetDepth(0.0f);
@@ -654,7 +661,7 @@ bool GA::D3DRendererLogic::LoadGeometry()
 	staticTextTime = Text();
 	staticTextTime.SetText("TIME:");
 	staticTextTime.SetFont(&consolas32);
-	staticTextTime.SetPosition(0.67f, 0.85f);
+	staticTextTime.SetPosition(0.65f, 0.85f);
 	staticTextTime.SetScale(0.75f, 0.5f);
 	staticTextTime.SetRotation(0.0f);
 	staticTextTime.SetDepth(0.0f);
@@ -670,7 +677,7 @@ bool GA::D3DRendererLogic::LoadGeometry()
 
 	dynamicTextTime = Text();
 	dynamicTextTime.SetFont(&consolas32);
-	dynamicTextTime.SetPosition(0.67f, 0.8f);
+	dynamicTextTime.SetPosition(0.65f, 0.8f);
 	dynamicTextTime.SetScale(0.75f, 0.5f);
 	dynamicTextTime.SetRotation(0.0f);
 	dynamicTextTime.SetDepth(0.0f);
@@ -713,7 +720,7 @@ bool GA::D3DRendererLogic::LoadGeometry()
 	// vertex buffer creation for the staticText
 	const auto& WstaticVerts = staticTextWin.GetVertices();
 	D3D11_SUBRESOURCE_DATA wsvbData = { WstaticVerts.data(), 0, 0 };
-	CD3D11_BUFFER_DESC wsvbDesc(sizeof(TextVertex)* WstaticVerts.size(), D3D11_BIND_VERTEX_BUFFER);
+	CD3D11_BUFFER_DESC wsvbDesc(sizeof(TextVertex) * WstaticVerts.size(), D3D11_BIND_VERTEX_BUFFER);
 	creator->CreateBuffer(&wsvbDesc, &wsvbData, vertexBufferStaticTextWin.ReleaseAndGetAddressOf());
 
 	staticTextLose = Text();
@@ -730,7 +737,7 @@ bool GA::D3DRendererLogic::LoadGeometry()
 	// vertex buffer creation for the staticText
 	const auto& LSstaticVerts = staticTextLose.GetVertices();
 	D3D11_SUBRESOURCE_DATA lssvbData = { LSstaticVerts.data(), 0, 0 };
-	CD3D11_BUFFER_DESC lssvbDesc(sizeof(TextVertex)* LSstaticVerts.size(), D3D11_BIND_VERTEX_BUFFER);
+	CD3D11_BUFFER_DESC lssvbDesc(sizeof(TextVertex) * LSstaticVerts.size(), D3D11_BIND_VERTEX_BUFFER);
 	creator->CreateBuffer(&lssvbDesc, &lssvbData, vertexBufferStaticTextLose.ReleaseAndGetAddressOf());
 
 	staticTextLoseR = Text();
@@ -747,7 +754,7 @@ bool GA::D3DRendererLogic::LoadGeometry()
 	// vertex buffer creation for the staticText
 	const auto& LRSstaticVerts = staticTextLoseR.GetVertices();
 	D3D11_SUBRESOURCE_DATA lrssvbData = { LRSstaticVerts.data(), 0, 0 };
-	CD3D11_BUFFER_DESC lrssvbDesc(sizeof(TextVertex)* LRSstaticVerts.size(), D3D11_BIND_VERTEX_BUFFER);
+	CD3D11_BUFFER_DESC lrssvbDesc(sizeof(TextVertex) * LRSstaticVerts.size(), D3D11_BIND_VERTEX_BUFFER);
 	creator->CreateBuffer(&lrssvbDesc, &lrssvbData, vertexBufferStaticTextLoseR.ReleaseAndGetAddressOf());
 
 	creator->Release();
@@ -769,7 +776,7 @@ void GA::D3DRendererLogic::SetUpPipeline(PipelineHandles handles)
 	//Set Render Targets
 	ID3D11RenderTargetView* const views[] = { handles.targetView };
 	handles.context->OMSetRenderTargets(ARRAYSIZE(views), views, handles.depthStencil);
-	
+
 	handles.context->OMSetBlendState(blendState.Get(), NULL, 0xFFFFFFFF);
 	// set the depth stencil state for depth comparison [useful for transparency with the hud objects]
 	handles.context->OMSetDepthStencilState(depthStencilState.Get(), 0xFFFFFFFF);
@@ -818,7 +825,7 @@ void GA::D3DRendererLogic::SetUpPipeline(PipelineHandles handles)
 	//
 
 	//// Depth-Stencil State
-	
+
 }
 
 void GA::D3DRendererLogic::ReleasePipelineHandles(PipelineHandles toRelease)
@@ -860,7 +867,7 @@ bool GA::D3DRendererLogic::SetupDrawcalls() // I SCREWED THIS UP MAKES SO MUCH S
 		.each([this](flecs::entity e, Position& p, Orientation& o, Material& m) {
 		// copy all data to our instancing array
 
-		
+
 			});
 
 	// runs once per frame after updateDraw
@@ -894,17 +901,18 @@ bool GA::D3DRendererLogic::SetupDrawcalls() // I SCREWED THIS UP MAKES SO MUCH S
 		}
 		ReleasePipelineHandles(curHandles);
 		UIDraw();
-		LevelSwitch();
-		ChooseLevel();
 		float r = 0;
 		inputProxy.GetState(G_KEY_R, r);
 		if (r != 0.0f)
 		{
+			GW::SYSTEM::GLog log;
 			(*currentLevel) = 1;
 			(*levelChange) = true;
 			(*youLose) = false;
+			LevelSwitch();
+			//levelData->LoadLevel("../GameLevel_1.txt", "../Models", log);
 		}
-		
+
 			});
 	// NOTE: I went with multi-system approach for the ease of passing lambdas with "this"
 	// There is a built-in solution for this problem referred to as a "custom runner":
@@ -959,7 +967,7 @@ void GA::D3DRendererLogic::UIDraw()
 	double elapsedcopy = elapsedSec;
 	if (int(elapsedcopy) >= 60)
 	{
-		elapsedcopy -= 60 * int(elapsedSec /60);
+		elapsedcopy -= 60 * int(elapsedSec / 60);
 	}
 	dynamicTextTime.SetText("0" + std::to_string(int(elapsedMin)) + ":" + "0" + std::to_string(int(elapsedcopy)));
 	if (elapsedSec >= 10 || elapsedMin >= 10)
@@ -981,7 +989,7 @@ void GA::D3DRendererLogic::UIDraw()
 	curHandles.context->Map(vertexBufferDynamicTextTime.Get(), 0, D3D11_MAP_WRITE_DISCARD, 0, &msr);
 	memcpy(msr.pData, verts.data(), sizeof(TextVertex) * verts.size());
 	curHandles.context->Unmap(vertexBufferDynamicTextTime.Get(), 0);
-	
+
 	curHandles.context->IASetVertexBuffers(0, 1, vertexBufferDynamicTextTime.GetAddressOf(), strides, offsets);
 	// change the topology to a triangle list
 	curHandles.context->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
@@ -1006,7 +1014,7 @@ void GA::D3DRendererLogic::UIDraw()
 	// draw the static text using the number of vertices
 	curHandles.context->Draw(staticTextHS.GetVertices().size(), 0);
 
-	dynamicTextHS.SetText(std::to_string(elapsedSec));
+	//dynamicTextHS.SetText(std::to_string(elapsedSec));
 	// update the dynamic text so we create the vertices
 	dynamicTextHS.Update(width, height);
 	const auto& HSverts = dynamicTextHS.GetVertices();
@@ -1015,30 +1023,9 @@ void GA::D3DRendererLogic::UIDraw()
 	memcpy(HSmsr.pData, HSverts.data(), sizeof(TextVertex) * HSverts.size());
 	curHandles.context->Unmap(vertexBufferDynamicTextHS.Get(), 0);
 
-	dynamicTextHS.SetText("00000000" + std::to_string(int(elapsedSec)));
-	if (elapsedSec >= 10)
-	{
-		if (elapsedSec >= 10)
-		{
-			dynamicTextHS.SetText("0000000" + std::to_string(int(elapsedSec)));
-		}
-		if (elapsedMin >= 100)
-		{
-			dynamicTextHS.SetText("000000" + std::to_string(int(elapsedSec)));
-		}
-		if (elapsedMin >= 1000)
-		{
-			dynamicTextHS.SetText("00000" + std::to_string(int(elapsedSec)));
-		}
-		if (elapsedMin >= 10000)
-		{
-			dynamicTextHS.SetText("0000" + std::to_string(int(elapsedSec)));
-		}
-		if (elapsedMin >= 100000)
-		{
-			dynamicTextHS.SetText("000" + std::to_string(int(elapsedSec)));
-		}
-	}
+	//set score text based on score
+	dynamicTextHS.SetText(std::to_string(int(*score)));
+
 	dynamicTextHS.Update(width, height);
 	// upload the new information to the vertex buffer using map / unmap
 	const auto& Hverts = dynamicTextHS.GetVertices();
@@ -1220,19 +1207,24 @@ void GA::D3DRendererLogic::LevelSwitch()
 			entityVec[i].destruct();
 		}
 		entityVec.clear();
-		switch(*currentLevel)
+		switch (*currentLevel)
 		{
 		case 1:
+		{
+			UpdateLevelEnt();
 			levelData->LoadLevel("../GameLevel_1.txt", "../Models", log);
 			break;
+		}
 		case 2:
-			 levelData->LoadLevel("../GameLevel_2.txt", "../Models", log);
+			UpdateLevelEnt();
+			levelData->LoadLevel("../GameLevel_2.txt", "../Models", log);
 			break;
 		case 3:
+			UpdateLevelEnt();
 			levelData->LoadLevel("../GameLevel_3.txt", "../Models", log);
 			break;
 		}
-		
+
 		createEnt = true;
 		if (LoadGeometry())
 		{
@@ -1243,11 +1235,12 @@ void GA::D3DRendererLogic::LevelSwitch()
 		(*levelChange) = false;
 		(*youWin) = false;
 	}
-	
+
 }
 void GA::D3DRendererLogic::UpdateLevelEnt()
 {
-	for (auto& i : levelData->blenderObjects) {
+	for (auto& i : levelData->blenderObjects) 
+	{
 		// create entity with same name as blender object
 		auto ent = game->entity(i.blendername);
 		ent.set<BlenderName>({ i.blendername });
@@ -1313,7 +1306,7 @@ void GA::D3DRendererLogic::CreatePlayer()
 
 void GA::D3DRendererLogic::CreateBullets()
 {
-	
+
 }
 
 void GA::D3DRendererLogic::CreateEnemies()

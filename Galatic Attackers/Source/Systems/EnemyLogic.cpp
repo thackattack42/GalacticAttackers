@@ -18,7 +18,8 @@ bool GA::EnemyLogic::Init(std::shared_ptr<flecs::world> _game,
 	std::shared_ptr<bool> _pause,
 	std::vector<flecs::entity> _entityVect,
 	std::shared_ptr<bool> _youWin,
-	std::shared_ptr<int> _enemyCount)
+	std::shared_ptr<int> _enemyCount,
+	std::shared_ptr<int> _score)
 {
 	// save a handle to the ECS & game settings
 	game = _game;
@@ -29,7 +30,8 @@ bool GA::EnemyLogic::Init(std::shared_ptr<flecs::world> _game,
 	entityVect = _entityVect;
 	youWin = _youWin;
 	enemyCount = _enemyCount;
-	(*enemyCount) = 9;
+	(*enemyCount) = 12;
+	score = _score;
 
 	// destroy any bullets that have the CollidedWith relationship
 	game->system<Enemy, Health, Position>("Enemy System")
@@ -45,6 +47,7 @@ bool GA::EnemyLogic::Init(std::shared_ptr<flecs::world> _game,
 				eventPusher.Push(explode);
 				e.destruct();
 				(*enemyCount)--;
+				*score += 100;
 			}
 
 			ModelTransform* edit = e.get_mut<ModelTransform>();
@@ -58,15 +61,15 @@ bool GA::EnemyLogic::Init(std::shared_ptr<flecs::world> _game,
 				timer--;
 				if (timer <= 0)
 				{
-					GW::MATH::GMatrix::TranslateGlobalF(edit->matrix, GW::MATH::GVECTORF{ 0, 0, 0.02666, 1 }, edit->matrix);
+					GW::MATH::GMatrix::TranslateGlobalF(edit->matrix, GW::MATH::GVECTORF{ 0.75, 0, 0, 1 }, edit->matrix);
 					levelData->levelTransforms[edit->rendererIndex] = edit->matrix;
 					e.get_mut<ModelBoundary>()->obb.center.x = edit->matrix.row4.x;
 					e.get_mut<ModelBoundary>()->obb.center.y = edit->matrix.row4.y;
 
 					tm->timesMoved++;
-					timer = e.delta_time() * 1000;
+					timer = e.delta_time() * 20;
 
-					if (tm->timesMoved >= 1000)
+					if (tm->timesMoved >= 28)
 					{
 						GW::MATH::GMatrix::TranslateGlobalF(edit->matrix, GW::MATH::GVECTORF{ 0, -3, 0, 1 }, edit->matrix);
 						levelData->levelTransforms[edit->rendererIndex] = edit->matrix;
@@ -83,13 +86,13 @@ bool GA::EnemyLogic::Init(std::shared_ptr<flecs::world> _game,
 				timer--;
 				if (timer <= 0)
 				{
-					GW::MATH::GMatrix::TranslateGlobalF(edit->matrix, GW::MATH::GVECTORF{ 0, 0, -0.02666, 1 }, edit->matrix);
+					GW::MATH::GMatrix::TranslateGlobalF(edit->matrix, GW::MATH::GVECTORF{ -0.75, 0, 0, 1 }, edit->matrix);
 					levelData->levelTransforms[edit->rendererIndex] = edit->matrix;
 					e.get_mut<ModelBoundary>()->obb.center.x = edit->matrix.row4.x;
 					e.get_mut<ModelBoundary>()->obb.center.y = edit->matrix.row4.y;
 
 					tm->timesMoved--;
-					timer = e.delta_time() * 1000;
+					timer = e.delta_time() * 20;
 
 					if (tm->timesMoved <= 0)
 					{
@@ -101,23 +104,18 @@ bool GA::EnemyLogic::Init(std::shared_ptr<flecs::world> _game,
 						move->moveRight = true;
 					}
 				}
-
 			}
 
-			//std::cout << "Moving " << edit->matrix.row4.x << " " << edit->matrix.row4.y << " " << edit->matrix.row4.z << std::endl;
 			if (shieldon1)
 			{
 				if (edit->matrix.row4.y <= loc->location)
 				{
 					GW::MATH::GMatrix::TranslateGlobalF(edit->matrix, GW::MATH::GVECTORF{ 0, 500, 0, 1 }, edit->matrix);
 					levelData->levelTransforms[edit->rendererIndex] = edit->matrix;
-					//e.destruct();
-					//e.set<Health>({ 0 });
-					//e.set<Material>({ 0, 0, 0 });
 					auto a = game->lookup("shield");
 					if (a.is_valid()) {
-						//a.set<Material>({ 0, 0, 0 });
 						a.destruct();
+						(*enemyCount)--;
 					}
 					shieldon1 = false;
 				}
@@ -160,12 +158,10 @@ bool GA::EnemyLogic::Init(std::shared_ptr<flecs::world> _game,
 						}
 					}
 				}
-
 			}
 			p.value = { 0, 0 };
 		}
 
-		//FireLasersEnemy(e.world(), p);
 			});
 
 	return true;
@@ -207,8 +203,6 @@ bool GA::EnemyLogic::FireLasersEnemy(flecs::world& stage, Position origin)
 	origin.value.x += 0.1f;
 	auto laserRight = stage.entity().is_a(bullet)
 		.set<Position>(origin);
-
-	// Tank shot
 
 	return true;
 }
